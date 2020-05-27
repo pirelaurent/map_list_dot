@@ -1,0 +1,36 @@
+[
+  {
+    "category": "food",
+    "quiz":
+    {
+      "name": "pizza",
+      "questions": [
+        {
+          "name": "preference",
+          "text":"What is your preferred Pizza ?",
+          "options":
+          [
+            { "answer":  "Margarita",
+              "id" : 1
+            },
+            { "answer":  "Regina",
+              "id" : 2
+            },
+            { "answer":  "Neapolitan",
+              "id" : 3
+            },
+            { "answer":  "None of them",
+              "id" : 99
+            }
+          ]
+        }
+      ]
+      }
+    },
+  {
+    "category": "politic",
+    "quiz": {
+       "name": "your favorite president"
+    }
+  }
+]

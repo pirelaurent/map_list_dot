@@ -8,6 +8,34 @@ abstract class JsonXpath {
     mixin method to simplify usage
    */
   dynamic xpath(String aPath) => JsonXpath.xpathOnJson(this.toJson(), aPath);
+
+
+
+
+
+  static dynamic xpathOnJson2(var someJson, String compositeProperty) {
+    dynamic root = someJson;
+    var parts = compositeProperty.split('.');
+    for (var part in parts){
+
+
+
+
+    }
+
+
+  }
+
+
+
+
+
+
+
+
+
+
+
   /*
    extractor shared method
    */
@@ -47,3 +75,7 @@ abstract class JsonXpath {
     return returnedValue;
   }
 }
+
+
+
+

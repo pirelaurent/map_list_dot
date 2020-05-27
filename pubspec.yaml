@@ -2,7 +2,6 @@ name: json_xpath
 description: A new Flutter package project.
 version: 0.0.1
 author:
-homepage:
 
 environment:
   sdk: ">=2.7.0 <3.0.0"
@@ -17,7 +16,7 @@ dev_dependencies:
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter.
-flutter:
+#flutter:
 
   # To add assets to your package, add an assets section, like this:
   # assets:
