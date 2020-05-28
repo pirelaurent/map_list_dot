@@ -1,0 +1,24 @@
+name: "health"
+quiz:
+  name: "food"
+  questions:
+    - name: "preference"
+      text: "What is your preferred Pizza ?"
+      options:
+        - answer:  "Margarita"
+          id: 1
+        - answer:  "Regina"
+          id: 2
+        - answer:  "Neapolitan"
+          id: 3
+        - answer:  "None of them"
+          id: 99
+    - name: "bibere"
+      text: "What would you like to drink ?"
+      options:
+        - answer:  "Italian Red wine"
+          id: 1
+        - answer:  "Sicilian white wine"
+          id: 2
+        - answer:  "coca dirt"
+          id: 3

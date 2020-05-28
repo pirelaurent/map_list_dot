@@ -1,3 +1,5 @@
+import 'dart:io';
+
 abstract class JsonXpath {
   /*
    methods to implements by followers
@@ -15,7 +17,7 @@ abstract class JsonXpath {
  optional [ digits optional .. digits   ]
  end by a dot
  */
-  static final scalp = RegExp("^[a-zA-Z0-9]*(\\[[0-9]*(\\.\\.)?[0-9]*\\])?\\.");
+  static final scalp = RegExp("^[a-zA-Z0-9_]*(\\[[0-9]*(\\.\\.)?[0-9]*\\])?\\.");
 // [1..23]
   static final brackets = RegExp("\\[[0-9.]*\\]");
   /*
@@ -35,7 +37,7 @@ abstract class JsonXpath {
    */
     if (found != null) {
       item = found.group(0);
-      path = path.replaceAll(item, '');
+      path = path.replaceFirst(item, '');
       item = item.substring(0, item.length - 1);
     } else {
       item = path;
@@ -101,20 +103,21 @@ abstract class JsonXpath {
     with a value between brackets
     verify range
     */
-    if ((first < 0) || (first > jsonStep.length)) return null;
+    if ((first < 0) || (first >= jsonStep.length)) return null;
     /*
      if only one element, take it and continue
      */
     if (last == null) {
       if (path == "")
         return jsonStep[first];
-      else
+      else{
         return xpathOnJson(jsonStep[first], path);
-    }
+    }}
     /*
      if a range .. verify and loop
      */
-    if ((last < first) || (last > jsonStep.length)) return null;
+    if ((last < first) ) return null;
+    if (last >= jsonStep.length) last = jsonStep.length-1;
     List res = [];
     for (int i = first; i <= last; i++) {
       if (path == "")

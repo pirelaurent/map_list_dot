@@ -8,7 +8,7 @@ class Person with JsonXpath{
 
   String name;
   String firstName;
-  BirthDate birthDate;
+  BirthDate birth_Date;
   List<Contact> contacts;
 
 
@@ -16,7 +16,7 @@ class Person with JsonXpath{
 		final Map<String, dynamic> data = new Map<String, dynamic>();
 		data['name'] = name;
 		data['firstName'] = firstName;
-		data['birthDate'] = birthDate == null ? null : birthDate.toJson();
+		data['birth_Date'] = birth_Date == null ? null : birth_Date.toJson();
 		data['contacts'] = contacts != null ? 
 			this.contacts.map((v) => v.toJson()).toList()
 			: null;
@@ -26,6 +26,6 @@ class Person with JsonXpath{
 	Person.fromJsonMap(Map<String, dynamic> map):
 				name = map["name"],
 				firstName = map["firstName"],
-				birthDate = BirthDate.fromJsonMap(map["birthDate"]),
+				birth_Date = BirthDate.fromJsonMap(map["birth_Date"]),
 				contacts = List<Contact>.from(map["contacts"].map((it) => Contact.fromJsonMap(it)));
 }

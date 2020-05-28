@@ -1,0 +1,117 @@
+show:
+  name: quiz on video
+  videos:
+    - name: introduction
+      url: myWeb.com/intro.mp4
+    #-----------
+    - name: japaneese fashion
+      url: myWeb.com/fashion.mp4
+      questions:
+        - name: clothes
+          content: What Japanese word does not mean a garment or a clothing accessory ?
+          image_url: myWeb.com/img/clothing.jpg
+          options:
+            - code: A1
+              answer: kimono
+              correct: false
+            - code: A2
+              answer: obi
+              correct: false
+            - code: A3
+              answer: origami
+              correct: true
+        - name: games
+          content: which one is not a game ?
+          image_url: myWeb.com/img/games.jpg
+          options:
+            - code: B1
+              answer: mikado
+              correct: false
+            - code: B2
+              answer: go
+              correct: false
+            - code: B3
+              answer: manga
+              correct: true
+            - code: B4
+              answer: sudoku
+              correct: false
+        - name: plants
+          content: Which word is not concerned by plants?
+          image_url: myWeb.com/img/plants.jpg
+          options:
+            - code: C1
+              answer: Bonsaï
+              correct: false
+            - code: C2
+              answer: Hara-kiri
+              correct: true
+            - code: C3
+              answer: Kaki
+              correct: false
+    #-----------
+    - name: Martial Arts
+      url: myWeb.com/marts.mp4
+      questions:
+        - name: fighting
+          content: which one is not a combat sport ?
+          image_url: myWeb.com/img/plants.jpg
+          options:
+            - code: M1
+              answer: judo
+              correct: false
+            - code: M2
+              answer: jujitsu
+              correct: false
+            - code: M3
+              answer: sumo
+              correct: false
+            - code: M4
+              answer: keirin
+              correct: true
+        - name: characters
+          content: What name is NOT that of a character ?
+          image_url: myWeb.com/img/characters.jpg
+          options:
+            - code: CH1
+              answer: Yakusa
+              correct: false
+            - code: CH2
+              answer:  Bushido
+              correct: true
+            - code: CH3
+              answer: Shogun
+              correct: false
+            - code: CH4
+              answer: Samouraï
+              correct: false
+        - name: divine wind
+          content: What could we translate by 'divine wind'?
+          image_url: myWeb.com/img/wind.jpg
+          options:
+            - code: W1
+              answer: Kamikaze
+              correct: false
+            - code: W2
+              answer: Tsunami
+              correct: true
+            - code: W3
+              answer: Karaoke
+              correct: false
+    #----------
+    - name: Fish preparation
+      url: myWeb.com/fish.mp4
+      questions:
+        - name: fish
+          content: What a traditional Japanese dish is made of raw fish slices ?
+          options:
+            - code: F1
+              answer: Sashimi
+              correct: false
+            - code: F2
+              answer: Sushi
+              correct: true
+            - code: F3
+              answer: Saké
+              correct: false
+

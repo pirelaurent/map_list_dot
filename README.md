@@ -2,39 +2,42 @@
 ## Motivation
 A dart json is made of Maps, Lists and values.  
 In code, it's easy to walk through the structure with respect of syntax:  
-`someJson["store"]["book"][0]["author"];`  
+    someJson["store"]["book"][0]["author"];  
 If this is good at compile time when you know the structure, there is no
-easy way to read the path later and apply it with some eval(...).
+easy way to read the path later and apply it .
 
-We plan to use a simplified xpath notation string like :  
-`'store.book[0].author'`  
+We propose a simplified xpath notation string like :  
+    'store.book[0].author'  
 As we use a string definition, this can be used later in any kind of
 dynamic interpreter.
 ## Raw static method in class JsonXpath
-The method  
-`static dynamic xpathOnJson(var jsonStep, String path)`  
-take a json dart on entry with a path,  
-is recursive, hence the term *jsonStep* and return the following :
+The following method do the job:
+    static dynamic xpathOnJson(var jsonStep, String path)  
+It takes a json on entry and a searched path.   
+The method is recursive (hence the term *jsonStep*) and returns the following :
 ### xpath mini syntax
-| syntax                  | result                                  | sample              |    |
-|:------------------------|:----------------------------------------|:--------------------|:---|
-| store.bicycle.color     | value                                   | "red"               |    |
-| store.book[1].author    | first book, single value                | "Evelyn Waugh"      |    |
-| store.book[0..2].price  | price of the 3 first books. array       | [8.95, 12.99, 8.99] |    |
-| store.book[1..1].author | single value. Force to be an array      | ["Evelyn Waugh"     |    |
-| store.book.author       | authors from all books. array of values | ["A" ,"B"  , ...]   |    |
-| store.book              | all books. array of books               | json                |    |
-|                         |                                         |                     |    |
+| syntax                  | result                                  | sample              |
+|:------------------------|:----------------------------------------|:--------------------|
+| store.bicycle.color     | value                                   | "red"               |
+| store.book[1].author    | first book, single value                | "Evelyn Waugh"      |
+| store.book[0..2].price  | price of the 3 first books: array       | [8.95, 12.99, 8.99] |
+| store.book[1..1].author | single value. Force to be an array      | ["Evelyn Waugh"]    |
+| store.book.author       | authors from all books. array of values | ["A" ,"B"  , ...]   |
+| store.book              | all books. array of books               | json                |
+| store.book[0..6].price |  price of the first books, up to 7. if less return less             |array
 
 
-| Equivalence    | All books                       |
+   
+| equivalent syntax to get all books    |                       |
 |:---------------|:--------------------------------|
-| store.book     | simplest                        |
-| store.book[]   | remember result could be a List |
-| store.book[..] | \" \"                           |
+| store.book     | simplest way                         |
+| store.book[]   | help to remember that result could be a List |
+| store.book[..] | help to remember that result could be a List with range                         |
 
-(rare) case a Json starts as an anonymous collection :  
-[{"name": "Polo" } ,  {"name": "Magellan"  }]
+#### Anonymous collection
+In some (rare) case a valid Json can start as an anonymous collection   
+    *\[ {"name": "Polo" } ,  {"name": "Magellan"  } \]*    
+In this case, there is no name at the beginning of the structure.
 
 | syntax      | result | sample              |
 |:------------|:-------|:--------------------|
@@ -52,12 +55,14 @@ The following happens:
 |:----------------------|:-----------------------|:-----------------------|
 | store.bicycle.height  | unknown property       | null                   |
 | store.book[37].author | out of range           | null                   |
-| store.book.isbn       | some book with no isbn | array of existing isbn |
+| store.book[9..12]     | beginning out of range     | null|
+| store.book.isbn       | some book with isbn, some without | array of existing isbn |
 | store.book.isbn10     | none of the book       | null                   |
 
-#### with null
+#### Option : JsonXpath.withNull
 A global option can be set to change the behavior around null :  
-`withNull = true;`  
+    JsonXpath.withNull = false;  // the default 
+    JsonXpath.withNull = true;  // returns also the null   
  Some examples :
 
 | question          | standard without null          | with null                                  |
@@ -65,48 +70,64 @@ A global option can be set to change the behavior around null :
 | store.book.isbn   | [0-553-21311-3, 0-395-19395-8] | [null, null, 0-553-21311-3, 0-395-19395-8] |
 | store.book.isbn10 | null                           | [null, null, null, null]                   |
 
-This can be useful is some case when you want to reconcile two lists,
-books with price and books with isbn for example.
-
+This can be useful is some case when you want to reconcile two lists,books with price and books with isbn for example.   
+ Results have the same number and same order of entries.   
 See unit tests for more examples.
 
-# Mixin:\"with JsonXpath\"
+# Mixin for any class: \"with JsonXpath\"
 
 Any class can declare the mixin with JsonXpath, as long it respect the
-contract:
-### to provide : dynamic toJson();
-The class must return the json structure it want to expose.  
+following contract:
+### Provides a toJson() method
+The class must return the json structure it want to expose (and only what it wants to expose).  
 This is less powerful than a full reflection, but allow to choice
-visibility and it works for class and simple json.
+exposed data.    
+Returning a json allows to work with class as with any simple json.
 
-### to use : .xpath(String aPath)
-Once the toJson method in place, the class inherits the method dynamic
+### myObject.xpath(String aPath)
+Once the *toJson* method in place, the class inherits the dynamic method
 xpath(String aPath).  
 For example, assuming a class Person, made of a name, a structured
-birthDate and a list of Contact, returning a json by toJson and
+birth_Date and a list of Contact, returning a json by toJson and
 declaring with JsonXpath, the following is available :  
-`print(who1.xpath('birthDate.year')); //1254`  
-`print(who2.xpath('birthDate.month')); // 3`  
-`print(who1.xpath('contacts[1].mail')); //'marco@venitia.com');`
+    print(who1.xpath('birth_Date.year')); //1254 
+    print(who2.xpath('birth_Date.month')); // 3  
+    print(who1.xpath('contacts[1].mail')); //'marco@venitia.com');
 
-## Wrapping any json in a JsonObject class
-A convenient class JsonObject can hold a json internally and return it
-by toJson().  
-As this class declare the mixin so we can use xpath.  
+# Wrapping any json in a JsonObject class
+A convenient class *JsonObject* can hold a json internally and return it
+by *toJson()*.  
+As this class declare the mixin, it can use *xpath.* notation.  
 Class provides two constructors :
-- JsonObject.fromString(String message)
-- JsonObject(this._json) with an already existing Json.
+- *JsonObject.fromString(String message)*
+- *JsonObject(this._json)*    with an already existing Json.
 
-### sample
- Working with messages :  
-` var x = JsonObject(message);  `  
-` if (x.xpath('origin.id')=='myFriend')   `  
-` print(x.xpath('origin.conversation.theme');`
+### Sample
+ Working with text messages (structured) :
+    
+    var x = JsonObject.fromString(message); //decode text message in json. wrap in a class   
+    if (x.xpath('origin.id')=='myFriend') print(x.xpath('origin.conversation.theme');    
+As xpath can return a subtree, one can make it a JsonObject and continue (see quiz ewample) : 
 
+    var question = JsonObject( aShow.xpath('show.videos[2].questions[0]'));       
+    print( question.xpath('name'));        
+    print( question.xpath('options.answer'));        
 
+## Working with Yaml
+ You can use xpath on a Yaml loaded with the dart yaml package.  
+ The *store_test* shows a small example, *quiz_test* a large one.  
+ The Yaml package uses read-only specific YamlMap and YamlList.  
+ As they respond to 'is List' or 'is Map', xpath works directly on the yaml structure.    
+ #### warning
+ remember that no modifications are allowed on a yaml structure in memory. This can be an issue.  
+ Waiting for a more standard yaml package, for the day you can allways reparse a yaml in standard json by :    
+    
+    var xJson = json.decode(json.encode(xYaml));
 
+ # Further work
+ This package was designed for a simple use and do a small part of xpath equivalence.    
+ We do not plan to enhance it as there is most powerful ways than xpath (like GraphQL) to query a json.
 
-
-
-
+ HTH
+ 
 

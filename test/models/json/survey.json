@@ -1,6 +1,5 @@
-[
-  {
-    "category": "food",
+ {
+    "name": "food",
     "quiz":
     {
       "name": "pizza",
@@ -33,4 +32,3 @@
        "name": "your favorite president"
     }
   }
-]

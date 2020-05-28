@@ -2,7 +2,7 @@
   {
     "name": "Polo",
     "firstName": "marco",
-    "birthDate": {
+    "birth_Date": {
       "day": 15,
       "month": 9,
       "year": 1254
@@ -21,7 +21,7 @@
   {
     "name": "Magellan",
     "firstName": "Fernando",
-    "birthDate": {
+    "birth_Date": {
       "day": 15,
       "month": 3,
       "year": 1480

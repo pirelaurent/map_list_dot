@@ -13,11 +13,12 @@ void main() {
   var jsonString = file.readAsStringSync();
   var jsonStore = json.decode(jsonString);
 /*
-we can scan a json by :
+You can explore directly this json by :
   assert(JsonXpath.xpathOnJson(jsonStore,"store.bicycle.color")=="red");
-or transform it first in a jsonObject and test by:
+
+You can wrap it in a jsonObject to simplify access
   assert(aStore.xpath("store.bicycle.color")=="red");
-we use the second way but first way is available.
+
  */
   JsonObject myStore = JsonObject.fromString(jsonString);
   Function eqList = const ListEquality().equals;
@@ -51,9 +52,12 @@ we use the second way but first way is available.
   test("test wrong path ",()
   {
     assert(myStore.xpath("store.banana.price")== null);
+    // wrong number
     assert(myStore.xpath("store.book[-1]")== null);
+    // range over capacity
     assert(myStore.xpath("store.book[200]")== null);
-    assert(myStore.xpath("store.book[2..200]")== null);
+    // first is over collection
+    assert(myStore.xpath("store.book[8..15]")== null);
 
   });
   test("test with without null option",()
