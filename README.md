@@ -112,26 +112,27 @@ Class provides two constructors :
     
     var x = JsonObject.fromString(message); //decode text message in json. wrap in a class   
     if (x.xpath('origin.id')=='myFriend') print(x.xpath('origin.conversation.theme');    
-As xpath can return a subtree, one can make it a JsonObject and continue (see quiz ewample) : 
+As xpath can return a subtree, one can make it again a JsonObject and continue (see quiz example) : 
 
     var question = JsonObject( aShow.xpath('show.videos[2].questions[0]'));       
     print( question.xpath('name'));        
     print( question.xpath('options.answer'));        
 
 ## Working with Yaml
- You can use xpath on a Yaml loaded with the dart yaml package.  
+ You can use *xpath* on a Yaml loaded with the dart yaml package.  
  The *store_test* shows a small example, *quiz_test* a larger one.  
  The Yaml package uses read-only specific *YamlMap* and *YamlList*.  
  As they respond to *is List* or *is Map*, xpath works directly on the yaml structure.    
  #### warning
- remember that no modifications are allowed on a yaml structure in memory. This can be an issue.  
+ Remember that no modification is allowed on a yaml structure in memory. This can be an issue.  
  Waiting for a more standard yaml package, for the day you can allways reparse a yaml in standard json by :    
     
     var xJson = json.decode(json.encode(xYaml));
 
- # Further work
- This package was designed for a simple use and do a small part of xpath equivalence.    
- We do not plan to enhance it as there is most powerful ways than xpath (like GraphQL) to query a json.
+ # Status
+ This package was designed for a simple use and provides only a small part of xpath equivalence.  
+ We do not plan a better coverage.      
+  
 
  HTH
  
