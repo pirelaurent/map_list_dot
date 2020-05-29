@@ -1,17 +1,19 @@
 # Simple xpath on json
 ## Motivation
 A dart json is made of Maps, Lists and values.  
-In code, it's easy to walk through the structure with respect of syntax:  
+In code, it's quite easy to walk through the structure with respect of syntax:  
     someJson["store"]["book"][0]["author"];  
 If this is good at compile time when you know the structure, there is no
-easy way to read the path later and apply it .
+easy way to read the path later and apply it.    
+You have no interpreter to read such a String and apply it to get data. 
 
 We propose a simplified xpath notation string like :  
-    'store.book[0].author'  
+    *store.book[0].author*    
 As we use a string definition, this can be used later in any kind of
 dynamic interpreter.
 ## Raw static method in class JsonXpath
 The following method do the job:
+
     static dynamic xpathOnJson(var jsonStep, String path)  
 It takes a json on entry and a searched path.   
 The method is recursive (hence the term *jsonStep*) and returns the following :
@@ -60,8 +62,9 @@ The following happens:
 | store.book.isbn10     | none of the book       | null                   |
 
 #### Option : JsonXpath.withNull
-A global option can be set to change the behavior around null :  
-    JsonXpath.withNull = false;  // the default 
+A global option can be set to change the behavior around null :
+  
+    JsonXpath.withNull = false;  // the default    
     JsonXpath.withNull = true;  // returns also the null   
  Some examples :
 
@@ -86,10 +89,12 @@ Returning a json allows to work with class as with any simple json.
 
 ### myObject.xpath(String aPath)
 Once the *toJson* method in place, the class inherits the dynamic method
-xpath(String aPath).  
-For example, assuming a class Person, made of a name, a structured
-birth_Date and a list of Contact, returning a json by toJson and
-declaring with JsonXpath, the following is available :  
+*xpath(String aPath)*.  
+##### Example:   
+A class Person is made of a name, a structured birth_Date and a list 'contacts' of structured Contact.   
+The class declare the mixin with JsonXpath and return data by its toJson method.   
+The following is available : 
+ 
     print(who1.xpath('birth_Date.year')); //1254 
     print(who2.xpath('birth_Date.month')); // 3  
     print(who1.xpath('contacts[1].mail')); //'marco@venitia.com');
@@ -115,9 +120,9 @@ As xpath can return a subtree, one can make it a JsonObject and continue (see qu
 
 ## Working with Yaml
  You can use xpath on a Yaml loaded with the dart yaml package.  
- The *store_test* shows a small example, *quiz_test* a large one.  
- The Yaml package uses read-only specific YamlMap and YamlList.  
- As they respond to 'is List' or 'is Map', xpath works directly on the yaml structure.    
+ The *store_test* shows a small example, *quiz_test* a larger one.  
+ The Yaml package uses read-only specific *YamlMap* and *YamlList*.  
+ As they respond to *is List* or *is Map*, xpath works directly on the yaml structure.    
  #### warning
  remember that no modifications are allowed on a yaml structure in memory. This can be an issue.  
  Waiting for a more standard yaml package, for the day you can allways reparse a yaml in standard json by :    
