@@ -1,139 +1,88 @@
-# Simple xpath on json
+# Dot notation to Access data
 ## Motivation
-A dart json is made of Maps, Lists and values.  
-In code, it's quite easy to walk through the structure with respect of syntax:  
-    someJson["store"]["book"][0]["author"];  
-If this is good at compile time when you know the structure, there is no
-easy way to read the path later and apply it.    
-You have no interpreter to read such a String and apply it to get data. 
+In Dart, a data structure can always be defined through Maps, Lists
+and values.  
+In particular, this is the case with a ***json*** object
 
-We propose a simplified xpath notation string like :  
-    *store.book[0].author*    
-As we use a string definition, this can be used later in any kind of
-dynamic interpreter.
-## Raw static method in class JsonXpath
-The following method do the job:
+With or without an object model made of classes behind, you can always
+use the maps and lists notation like:
 
-    static dynamic xpathOnJson(var jsonStep, String path)  
-It takes a json on entry and a searched path.   
-The method is recursive (hence the term *jsonStep*) and returns the following :
-### xpath mini syntax
-| syntax                  | result                                  | sample              |
-|:------------------------|:----------------------------------------|:--------------------|
-| store.bicycle.color     | value                                   | "red"               |
-| store.book[1].author    | first book, single value                | "Evelyn Waugh"      |
-| store.book[0..2].price  | price of the 3 first books: array       | [8.95, 12.99, 8.99] |
-| store.book[1..1].author | single value. Force to be an array      | ["Evelyn Waugh"]    |
-| store.book.author       | authors from all books. array of values | ["A" ,"B"  , ...]   |
-| store.book              | all books. array of books               | json                |
-| store.book[0..6].price |  price of the first books, up to 7. if less return less             |array
+`root["show"]["videos"][1]["name"]`
 
+Which use a map *root*, a list *videos* made of maps with property
+*name*
 
-   
-| equivalent syntax to get all books    |                       |
-|:---------------|:--------------------------------|
-| store.book     | simplest way                         |
-| store.book[]   | help to remember that result could be a List |
-| store.book[..] | help to remember that result could be a List with range                         |
+## MapList allows to use .notation on Maps and Lists
+Using a MapList on the same previous structure allows to use a dot notation :
 
-#### Anonymous collection
-In some (rare) case a valid Json can start as an anonymous collection   
-    *\[ {"name": "Polo" } ,  {"name": "Magellan"  } \]*    
-In this case, there is no name at the beginning of the structure.
+    root.show.videos[1].name
 
-| syntax      | result | sample              |
-|:------------|:-------|:--------------------|
-| [1].name    | value  | "Magellan"          |
-| [0..1].name | array  | ["Polo","Magellan"] |
-| [].name     | array  | ["Polo","Magellan"] |
-| .name       | array  | ["Polo","Magellan"] |
+## More : can be used with an internal interpreter :
 
+    root.interpret("show.videos[1].name")
 
-### null value & missing data
-By default, the extractor don't hold back missing values in Lists.  
-The following happens:
+# use case
+## Act on a json as if it was structured classes
+On receipt of a json message, one can create a root class:
 
-| sample                | problem                | result                 |
-|:----------------------|:-----------------------|:-----------------------|
-| store.bicycle.height  | unknown property       | null                   |
-| store.book[37].author | out of range           | null                   |
-| store.book[9..12]     | beginning out of range     | null|
-| store.book.isbn       | some book with isbn, some without | array of existing isbn |
-| store.book.isbn10     | none of the book       | null                   |
+    dynamic root = MapList(jsonString);
+    // Allows also a direct MapList(jsonStructure)
 
-#### Option : JsonXpath.withNull
-A global option can be set to change the behavior around null :
-  
-    JsonXpath.withNull = false;  // the default    
-    JsonXpath.withNull = true;  // returns also the null   
- Some examples :
+*( this polymorphism of constructor is hand made : the type of parameter
+is checked in the MapList class)*
 
-| question          | standard without null          | with null                                  |
-|:------------------|:-------------------------------|:-------------------------------------------|
-| store.book.isbn   | [0-553-21311-3, 0-395-19395-8] | [null, null, 0-553-21311-3, 0-395-19395-8] |
-| store.book.isbn10 | null                           | [null, null, null, null]                   |
+Once loaded, the getter are available, from root or from any level of
+relay :
 
-This can be useful is some case when you want to reconcile two lists,books with price and books with isbn for example.   
- Results have the same number and same order of entries.   
-See unit tests for more examples.
+    if (root.store.bikes[1].color == "grey") ...   
+    dynamic store =root.store;
+    if (store.bikes[1].color == "grey") ...  
+    dynamic bicycles = root.store.bikes;  
+    if (bicycle[1].color == "grey") ... 
 
-# Mixin for any class: \"with JsonXpath\"
+## Create data structure on the fly
 
-Any class can declare the mixin with JsonXpath, as long it respect the
-following contract:
-### Provides a toJson() method
-The class must return the json structure it want to expose (and only what it wants to expose).  
-This is less powerful than a full reflection, but allow to choice
-exposed data.    
-Returning a json allows to work with class as with any simple json.
+    void main (){  
+    dynamic root = MapList({});  
+    root.name = "experiment one";  
+    root.results = [];  
+    root.results.add({"elapsed time": "15", "temperature":33.1});  
+    root.results.add({"elapsed time": "30", "temperature":35.0});  
+    assert(root.results[1].temperature == 35);  
+    }
 
-### myObject.xpath(String aPath)
-Once the *toJson* method in place, the class inherits the dynamic method
-*xpath(String aPath)*.  
-##### Example:   
-A class Person is made of a name, a structured birth_Date and a list 'contacts' of structured Contact.   
-The class declare the mixin with JsonXpath and return data by its toJson method.   
-The following is available : 
- 
-    print(who1.xpath('birth_Date.year')); //1254 
-    print(who2.xpath('birth_Date.month')); // 3  
-    print(who1.xpath('contacts[1].mail')); //'marco@venitia.com');
+## Interpretation capacity
+You can also use a String to access to data :
 
-# Wrapping any json in a JsonObject class
-A convenient class *JsonObject* can hold a json internally and return it
-by *toJson()*.  
-As this class declare the mixin, it can use *xpath.* notation.  
-Class provides two constructors :
-- *JsonObject.fromString(String message)*
-- *JsonObject(this._json)*    with an already existing Json.
+    var result = root.interpret("store.bikes[1].color");
+    if (result == "grey") ... 
 
-### Sample
- Working with text messages (structured) :
+You can also use simple setters in a script :
+
+    var script = "store.bikes[1].color = blue";
+    root.interpret(script); 
+
+And also create and assign a value in a script :
+
+    store.interpret("bikes[0].battery = true ");
+
+## Tiny interpreter
+The goal is not to make a full interpreter , but only to be able to get
+and set data .  
+This leaves the package to a defined scope, while a full interpreter
+will be done in another package, which one will use the accessors of
+MapList.
+
+## About working with Yaml
+ You can use MapList on a Yaml loaded with the dart yaml package.  
+ If this is ok for all the getters, this is not for the setters :  
+ The default Yaml Maps and Lists are read only.
+
+ Waiting for a more standard yaml package, for the day you can always
+ reparse a yaml in standard json *( as do dot_access_test ) *by :
     
-    var x = JsonObject.fromString(message); //decode text message in json. wrap in a class   
-    if (x.xpath('origin.id')=='myFriend') print(x.xpath('origin.conversation.theme');    
-As xpath can return a subtree, one can make it again a JsonObject and continue (see quiz example) : 
+    var xYaml = loadYaml(yamlString);
+    dynamic root = MapList(json.decode(json.encode(xYaml)));;
 
-    var question = JsonObject( aShow.xpath('show.videos[2].questions[0]'));       
-    print( question.xpath('name'));        
-    print( question.xpath('options.answer'));        
 
-## Working with Yaml
- You can use *xpath* on a Yaml loaded with the dart yaml package.  
- The *store_test* shows a small example, *quiz_test* a larger one.  
- The Yaml package uses read-only specific *YamlMap* and *YamlList*.  
- As they respond to *is List* or *is Map*, xpath works directly on the yaml structure.    
- #### warning
- Remember that no modification is allowed on a yaml structure in memory. This can be an issue.  
- Waiting for a more standard yaml package, for the day you can allways reparse a yaml in standard json by :    
-    
-    var xJson = json.decode(json.encode(xYaml));
-
- # Status
- This package was designed for a simple use and provides only a small part of xpath equivalence.  
- We do not plan a better coverage.      
-  
-
- HTH
- 
 

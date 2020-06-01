@@ -1,31 +1,44 @@
 { "store": {
   "book": [
-    { "category": "reference",
-      "author": "Nigel Rees",
-      "title": "Sayings of the Century",
-      "price": 8.95
+    { "category": "computer",
+      "author": "Gilad Braca",
+      "title": "The Dart programming language",
+      "price": 64.15,
+      "isbn": "978-1-78899-879-6"
     },
-    { "category": "fiction",
-      "author": "Evelyn Waugh",
-      "title": "Sword of Honour",
-      "price": 12.99
+    { "category": "computer",
+      "author": " Dmitrijs Cudihins",
+      "title": "Hands-On Computer Vision with Julia",
+      "price": 34.80
     },
-    { "category": "fiction",
-      "author": "Herman Melville",
-      "title": "Moby Dick",
-      "isbn": "0-553-21311-3",
-      "price": 8.99
+    { "category": "computer",
+      "author": "Achim Nierbeck",
+      "title": "Apache Karaf cookbook",
+      "isbn": "978-1-78398-508-1",
+      "price": 27.59
     },
     { "category": "fiction",
       "author": "J. R. R. Tolkien",
       "title": "The Lord of the Rings",
       "isbn": "0-395-19395-8",
-      "price": 22.99
+      "price": 23.42
     }
   ],
-  "bicycle": {
-    "color": "red",
-    "price": 19.95
-  }
+
+  "bikes":[
+    {"category": "road",
+      "model": "TCR advanced",
+      "color": "black",
+      "price": 1800
+    },
+
+    {"category": "road",
+      "model": "Propel advanced Disc ",
+      "color": "grey",
+      "price": 2900,
+      "length": 2.20
+    }
+
+  ]
 }
 }

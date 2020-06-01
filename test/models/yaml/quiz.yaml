@@ -24,6 +24,9 @@ show:
           content: which one is not a game ?
           image_url: myWeb.com/img/games.jpg
           options:
+            - code: B0
+              answer: chess
+              correct: false
             - code: B1
               answer: mikado
               correct: false
