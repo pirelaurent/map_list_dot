@@ -136,7 +136,7 @@ class MapList {
 
       var parts = script.split("=");
       // restore the = for the invocation
-      script = parts[0];
+      script = parts[0].trim();
       // no = sign
       if (parts.length == 1) {
         dynamic where = advanceInTree(script);

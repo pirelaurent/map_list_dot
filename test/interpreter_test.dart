@@ -42,10 +42,12 @@ noSuchMethod: Symbol("color="): [green]
   assertShow(store.bikes[0].color, "violet");
  //
  // print('ok for set by code');
+
+  store.interpret("bikes[0].color = violet ");
+  print(store.bikes[0].color);
+  assertShow(store.bikes[0].color, "violet");
+print('ok for violet');
 */
-
-
-
 
   test('basic verification on dot access ', () {
     assertShow(store.bikes[1].color, "grey");
