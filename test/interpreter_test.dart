@@ -13,41 +13,12 @@ void assertShow(var what, var expected) {
 
 void main() {
   var testFile =
-      path.join(Directory.current.path, 'test', 'models', 'json', 'store.json');
+  path.join(Directory.current.path, 'test', 'models', 'json', 'store.json');
   var file = File(testFile);
   var jsonString = file.readAsStringSync();
   dynamic root = MapList(jsonString);
   dynamic store = root.store;
 
-  /*
-
-   debug
-
-
- // assertShow(store.interpret("bikes[0].color"),"black");
- //print('ok for assertShow');
- // à pister
-  //print(store.runtimeType);
-  //print(store.bikes.runtimeType);
-
-  store.bikes[0].color = "green";
- print('-------------- set color green by code ok ');
- noSuchMethod: Symbol("store"): []
-noSuchMethod: Symbol("bikes"): []
-noSuchMethod: Symbol("color="): [green]
-
-
-  store.interpret("bikes[0].color= violet ");
-  print(store.bikes[0].color);
-  assertShow(store.bikes[0].color, "violet");
- //
- // print('ok for set by code');
-
-  store.interpret("bikes[0].color = violet ");
-  print(store.bikes[0].color);
-  assertShow(store.bikes[0].color, "violet");
-print('ok for violet');
-*/
 
   test('basic verification on dot access ', () {
     assertShow(store.bikes[1].color, "grey");
@@ -63,42 +34,55 @@ print('ok for violet');
   });
 
   test('check length property', () {
-    assertShow(store.interpret("book").length, 4);
+    assertShow(store
+        .interpret("book")
+        .length, 4);
     // check interpreted property length
     assertShow(store.interpret("book.length"), 4);
     assertShow(store.interpret("bikes.length"), 2);
     assertShow(store.interpret("bikes[1].length"), 2.2);
   });
 
-  test('try assignements ', () {
-    assertShow(store.interpret("bikes[0].color"),"black");
+  test('try assignments ', () {
+    assertShow(store.interpret("bikes[0].color"), "black");
 
     store.bikes[0].color = "green";
-    assertShow(store.interpret("bikes[0].color"),"green");
+    assertShow(store.interpret("bikes[0].color"), "green");
     store.interpret("bikes[0].color = blue ");
     print(store.bikes[0].color);
-    assertShow(store.interpret("bikes[0].color"),"blue");
+    assertShow(store.interpret("bikes[0].color"), "blue");
 
-    assertShow(store.interpret("book[3].price"),23.42);
+    assertShow(store.interpret("book[3].price"), 23.42);
     store.interpret("book[3].price= 20.00 ");
-    assertShow(store.interpret("book[3].price"),20.00);
-
+    assertShow(store.interpret("book[3].price"), 20.00);
   });
 
   test('try new values non existing', () {
-
-
-
     store.interpret("bikes[0].battery = true ");
-    assertShow(store.interpret("bikes[0].battery"),true);
+    assertShow(store.interpret("bikes[0].battery"), true);
     store.interpret("bikes[1].battery = false ");
-    assertShow(store.interpret("bikes[1].battery"),false);
-    store.interpret("book").add({"category": "children", "name":"sleeping beauty"});
-    assertShow(store.interpret("book[4].category"),"children");
+    assertShow(store.interpret("bikes[1].battery"), false);
+    store.interpret("book").add(
+        {"category": "children", "name": "sleeping beauty"});
+    assertShow(store.interpret("book[4].category"), "children");
+
   });
 
+  test('try Types in string ', () {
+    // strings in quotes
+    store.interpret("bikes[1].color = 'violet'");
+    assertShow(store.bikes[1].color, "violet");
+    store.interpret('bikes[1].color = "yellow"');
+    assertShow(store.bikes[1].color, "yellow");
+    store.interpret("bikes[1].color = maroon");
+    assertShow(store.bikes[1].color, "maroon");
+  });
 
+  test('try new values non existing with problems ', () {
+//
+    print('----------------------plus ');
+    store.interpret("book[0].plus = []");
+    print(store.book[0].plus.length);
 
-
-
+  });
 }

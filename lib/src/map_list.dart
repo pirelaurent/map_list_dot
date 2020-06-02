@@ -1,6 +1,6 @@
-import 'dart:collection';
 import 'dart:mirrors';
 import 'dart:convert';
+import 'package:json_xpath/map_list_lib.dart';
 
 /*
  Wrapper on a combined structure (maps and lists) to allow dot notation access.
@@ -10,8 +10,13 @@ import 'dart:convert';
 
  */
 class MapList {
-  // internal collection of Lists, Maps and leaf Values
-  var _json;
+  /*
+   internal collection of Lists, Maps and leaf Values
+   as we separate classes in several files, cannot stay private _json
+   */
+  var wrapped_json;
+
+  get getJson => wrapped_json;
 
 /*
  set the root node on right type
@@ -23,13 +28,14 @@ class MapList {
     if (jsonInput is String) jsonInput = json.decode(jsonInput);
     if (jsonInput is List) return MapListList.json(jsonInput);
     if (jsonInput is Map) return MapListMap.json(jsonInput);
+    return MapListBlackHole.json('');
   }
 
   /*
   common constructor. Just set the internal collection
   */
-  MapList.json(dynamic json) {
-    _json = json;
+  MapList.json(dynamic jsonInput) {
+    wrapped_json = jsonInput;
   }
 
 /*
@@ -42,6 +48,42 @@ class MapList {
   operator []=(Object key, dynamic value);
 
   /*
+   when coming by interpreter, the string is not all time the good type
+   */
+  dynamic adjustParam(var param) {
+    // if between ' or between " extract and leaves as String
+    if ((param[0] == '"') && param.endsWith('"')) {
+      return param.substring(1, param.length - 1);
+    }
+    if ((param[0] == "'") && param.endsWith("'")) {
+      return param.substring(1, param.length - 1);
+    }
+    if (param == "true") return true;
+    if (param == "false") return false;
+
+    var number = num.tryParse(param);
+    if (number != null) return number;
+/*
+ if betwwen [ ] oer between { } consider it's a json string
+ */
+    var found = reg_mapList.firstMatch(param);
+    if (found != null) {
+      try {
+        var jsonVar = json.decode(found.group(0));
+        return jsonVar;
+      } catch (e) {
+        print("error parsing json string $e");
+        // return something to avoid crash if some .notation after
+        if (param[0] == '[') return [];
+        if (param[0] == '{') return {};
+      }
+    }
+    // nothing special
+
+    return param;
+  }
+
+  /*
    invocation.memberName: Symbol("root")
    */
   @override
@@ -52,33 +94,40 @@ class MapList {
     get :   Symbol("name"): []
     set:    Symbol("name="): [quizine]
    */
-    //print('noSuchMethod: $member: ${invocation.positionalArguments}');
+    print('noSuchMethod: $member: ${invocation.positionalArguments}');
     String name;
     if (member is Symbol) {
       name = MirrorSystem.getName(member);
+      // setters
       if (name.endsWith('=')) {
         name = name.replaceAll("=", "");
         dynamic param = invocation.positionalArguments[0];
-
+        if (param is String) param = adjustParam(param);
         this[name] = param;
-
-        return null;
-      } else
-        return this[name];
+        //return nothing after a setter
+      } else {
+        // getter
+        if (this[name] != null) return this[name];
+        // to allow continuation return a blackHole
+        return MapListBlackHole.json("");
+      }
     }
   }
 
 /*
- from beginning
- letter, digit in any number
- optional [ digits optional .. digits   ]
- end by a dot
+scalp the first part of path before a . toto.  rip[12].
+ from beginning : letter, digit in any number.
+  end by a dot
+ ( optional [ first .. last   ] allowed for future extension )
  */
-  static final scalp =
+  static final reg_scalp =
       RegExp("^[a-zA-Z0-9_]*(\\[[0-9]*(\\.\\.)?[0-9]*\\])?\\.");
 
 // [1..23]
-  static final brackets = RegExp("\\[[0-9]*\\]");
+  static final reg_brackets = RegExp("\\[[0-9]*\\]");
+
+// json begin and end by [ ] or { }
+  static final reg_mapList = RegExp("^[\\[\\{].*[\\}\\]]");
 
   dynamic advanceInTree(String item) {
     /*   arrives here with book   book[1]   isbn
@@ -87,7 +136,7 @@ class MapList {
      */
     dynamic where;
     int rank;
-    var found = brackets.firstMatch(item);
+    var found = reg_brackets.firstMatch(item);
     if (found != null) {
       //found sample :rawRank-> [1]
       var rawRank = found.group(0);
@@ -116,7 +165,7 @@ class MapList {
     var item;
     // sample book[1].isbn
 
-    var found = scalp.firstMatch(script);
+    var found = reg_scalp.firstMatch(script);
     if (found != null) {
       item = found.group(0);
       // clean this part -> isbn
@@ -142,7 +191,7 @@ class MapList {
         dynamic where = advanceInTree(script);
 
         if (script == "length" && where == null) {
-          return (_json.length);
+          return (wrapped_json.length);
         }
         return where;
       } else
@@ -152,96 +201,14 @@ class MapList {
         script = script + "=";
         var paramString = parts[1].trim();
 
-        dynamic param = paramString;
-        var number = num.tryParse(paramString);
-        if (number != null) param = number;
-        if (paramString == "true") param = true;
-        if (paramString == "false") param = false;
-
-        Invocation invocation = Invocation.setter(Symbol(script), param);
+        Invocation invocation = Invocation.setter(Symbol(script), paramString);
         noSuchMethod(invocation);
-        // it's ok here, but outside not set . direct assignment is ok.
-        print('after invocation : $this  ');
-
       } // item with end dot not found
     }
-  }
-}
-
-/*
- a MapListList is a List as it realizes ListMixin
-
- */
-class MapListList extends MapList with ListMixin {
-  MapListList.json(dynamic json) : super.json(json);
-
-  get length => _json.length;
-
-  set length(int len) {
-    _json.length = len;
-  }
-
-  /*
-   Setter in a list position.
-   Must be an integer, but common operator is more general.
-   */
-  @override
-  operator []=(Object key, dynamic value) {
-    //if (key is! int) );
-    if (key is int) {
-      _json[key] = value;
-    } else {
-      print('******** warning call List[] with a ${key.runtimeType}');
-      // do nothing
-    }
-  }
-
-  @override
-  operator [](Object key) {
-    if (key is int) {
-      var next = _json[key];
-      if (next is List || next is Map)
-        return MapList(next);
-      else
-        return next;
-    }
-    return null;
-  }
-
-  void add(dynamic value) {
-    _json.add(value);
   }
 
   @override
   String toString() {
-    return _json.toString();
-  }
-}
-
-/*
- Map wrapper
- */
-class MapListMap extends MapList with MapMixin {
-  MapListMap.json(dynamic json) : super.json(json);
-
-  get keys => _json.keys;
-
-//type 'double' is not a subtype of type 'String' of 'value'
-  operator []=(Object key, dynamic value) => {_json[key] = value};
-
-  operator [](Object key) {
-    var next = _json[key];
-    if (next is List || next is Map)
-      return MapList(next);
-    else
-      return next;
-  }
-
-  void clear() {
-    _json.clear();
-  }
-
-  void remove(var key) {
-    _json.remove(key);
+    return wrapped_json.toString();
   }
 }
