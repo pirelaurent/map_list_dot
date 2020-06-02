@@ -19,6 +19,34 @@ void main() {
   dynamic root = MapList(jsonString);
   dynamic store = root.store;
 
+  /*
+
+   debug
+
+
+ // assertShow(store.interpret("bikes[0].color"),"black");
+ //print('ok for assertShow');
+ // à pister
+  //print(store.runtimeType);
+  //print(store.bikes.runtimeType);
+
+  store.bikes[0].color = "green";
+ print('-------------- set color green by code ok ');
+ noSuchMethod: Symbol("store"): []
+noSuchMethod: Symbol("bikes"): []
+noSuchMethod: Symbol("color="): [green]
+
+
+  store.interpret("bikes[0].color= violet ");
+  print(store.bikes[0].color);
+  assertShow(store.bikes[0].color, "violet");
+ //
+ // print('ok for set by code');
+*/
+
+
+
+
   test('basic verification on dot access ', () {
     assertShow(store.bikes[1].color, "grey");
     assertShow(store.book.length, 4);
@@ -42,8 +70,11 @@ void main() {
 
   test('try assignements ', () {
     assertShow(store.interpret("bikes[0].color"),"black");
+
+    store.bikes[0].color = "green";
+    assertShow(store.interpret("bikes[0].color"),"green");
     store.interpret("bikes[0].color = blue ");
-    store.interpret('bikes[0].color = "blue"');
+    print(store.bikes[0].color);
     assertShow(store.interpret("bikes[0].color"),"blue");
 
     assertShow(store.interpret("book[3].price"),23.42);
@@ -63,6 +94,9 @@ void main() {
     store.interpret("book").add({"category": "children", "name":"sleeping beauty"});
     assertShow(store.interpret("book[4].category"),"children");
   });
+
+
+
 
 
 }

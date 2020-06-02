@@ -52,14 +52,17 @@ class MapList {
     get :   Symbol("name"): []
     set:    Symbol("name="): [quizine]
    */
+    //print('noSuchMethod: $member: ${invocation.positionalArguments}');
     String name;
     if (member is Symbol) {
       name = MirrorSystem.getName(member);
       if (name.endsWith('=')) {
         name = name.replaceAll("=", "");
         dynamic param = invocation.positionalArguments[0];
-        // question : clean the 'xx' or "xx" ?
+
         this[name] = param;
+
+        return null;
       } else
         return this[name];
     }
@@ -72,7 +75,7 @@ class MapList {
  end by a dot
  */
   static final scalp =
-  RegExp("^[a-zA-Z0-9_]*(\\[[0-9]*(\\.\\.)?[0-9]*\\])?\\.");
+      RegExp("^[a-zA-Z0-9_]*(\\[[0-9]*(\\.\\.)?[0-9]*\\])?\\.");
 
 // [1..23]
   static final brackets = RegExp("\\[[0-9]*\\]");
@@ -112,6 +115,7 @@ class MapList {
     dynamic where = this;
     var item;
     // sample book[1].isbn
+
     var found = scalp.firstMatch(script);
     if (found != null) {
       item = found.group(0);
@@ -123,6 +127,7 @@ class MapList {
       return advanceInTree(item).interpret(script);
     } else {
       /*
+      no dot at the end
        end leaf return expected data
        special case : ends by .length
        if "length" is not a key , returns the .length property
@@ -130,33 +135,38 @@ class MapList {
        */
 
       var parts = script.split("=");
-      script = parts[0].trim();
+      // restore the = for the invocation
+      script = parts[0];
+      // no = sign
       if (parts.length == 1) {
         dynamic where = advanceInTree(script);
+
         if (script == "length" && where == null) {
           return (_json.length);
         }
         return where;
       } else
-        // with parameters
-          {
+      // with parameters
+      {
+        // restore = necessary for invocation
+        script = script + "=";
         var paramString = parts[1].trim();
+
+        dynamic param = paramString;
         var number = num.tryParse(paramString);
-        if (number != null) {
-          _json[script] = number;
-          return;
-        }
+        if (number != null) param = number;
+        if (paramString == "true") param = true;
+        if (paramString == "false") param = false;
 
-        if (paramString == "true") {_json[script] = true; return;}
-        if (paramString == "false") {_json[script] = false; return;}
+        Invocation invocation = Invocation.setter(Symbol(script), param);
+        noSuchMethod(invocation);
+        // it's ok here, but outside not set . direct assignment is ok.
+        print('after invocation : $this  ');
 
-        _json[script] = paramString;
       } // item with end dot not found
     }
   }
 }
-
-
 
 /*
  a MapListList is a List as it realizes ListMixin
@@ -215,6 +225,7 @@ class MapListMap extends MapList with MapMixin {
   MapListMap.json(dynamic json) : super.json(json);
 
   get keys => _json.keys;
+
 //type 'double' is not a subtype of type 'String' of 'value'
   operator []=(Object key, dynamic value) => {_json[key] = value};
 

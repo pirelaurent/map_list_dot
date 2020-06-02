@@ -86,3 +86,14 @@ MapList.
 
 
 
+# Internal
+The root of data must be a *MapList* and subtrees must be accessed
+through the dot notation and be declared as dynamic:
+
+    dynamic root = MapList(jsonString);
+    dynamic store = root.store;  
+
+When *root* receive a *.store* , it find the corresponding json subtree
+then return it as a MapList to allow further steps.
+
+
