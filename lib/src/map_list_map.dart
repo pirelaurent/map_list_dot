@@ -25,7 +25,13 @@ class MapListMap extends MapList with MapMixin {
     wrapped_json.clear();
   }
 
+  @override
   void remove(var key) {
     wrapped_json.remove(key);
+  }
+
+  @override
+  bool get isEmpty {
+    return (keys.length == 0);
   }
 }

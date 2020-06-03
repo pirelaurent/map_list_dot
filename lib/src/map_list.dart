@@ -18,6 +18,14 @@ class MapList {
 
   get getJson => wrapped_json;
 
+  // to be override in maplistmap
+  bool get  isEmpty;
+  // overriden in MapListList
+  int get length;
+
+  // for more explicit error messages on [ ] calls errors
+  static String lastInvocation;
+
 /*
  set the root node on right type
  (root of a valid json could also be a List)
@@ -28,7 +36,8 @@ class MapList {
     if (jsonInput is String) jsonInput = json.decode(jsonInput);
     if (jsonInput is List) return MapListList.json(jsonInput);
     if (jsonInput is Map) return MapListMap.json(jsonInput);
-    return MapListBlackHole.json('');
+    // if empty, create a map
+    return MapListMap.json({});
   }
 
   /*
@@ -47,6 +56,9 @@ class MapList {
 
   operator []=(Object key, dynamic value);
 
+  remove(Object key);
+
+
   /*
    when coming by interpreter, the string is not all time the good type
    */
@@ -64,7 +76,7 @@ class MapList {
     var number = num.tryParse(param);
     if (number != null) return number;
 /*
- if betwwen [ ] oer between { } consider it's a json string
+ if betwwen [ ] or between { } consider it's a json string
  */
     var found = reg_mapList.firstMatch(param);
     if (found != null) {
@@ -72,7 +84,7 @@ class MapList {
         var jsonVar = json.decode(found.group(0));
         return jsonVar;
       } catch (e) {
-        print("error parsing json string $e");
+        print("** On invocation \"$lastInvocation\" : error json $e");
         // return something to avoid crash if some .notation after
         if (param[0] == '[') return [];
         if (param[0] == '{') return {};
@@ -89,30 +101,39 @@ class MapList {
   @override
   dynamic noSuchMethod(Invocation invocation) {
     var member = invocation.memberName;
+
     /*
-    print('noSuchMethod: $member: ${invocation.positionalArguments}');
     get :   Symbol("name"): []
     set:    Symbol("name="): [quizine]
    */
-    print('noSuchMethod: $member: ${invocation.positionalArguments}');
+    //print('invocation: $member: ${invocation.positionalArguments} on $this');
     String name;
     if (member is Symbol) {
       name = MirrorSystem.getName(member);
+      MapList.lastInvocation = name;
       // setters
       if (name.endsWith('=')) {
         name = name.replaceAll("=", "");
         dynamic param = invocation.positionalArguments[0];
         if (param is String) param = adjustParam(param);
         this[name] = param;
+
         //return nothing after a setter
       } else {
-        // getter
-        if (this[name] != null) return this[name];
-        // to allow continuation return a blackHole
-        return MapListBlackHole.json("");
+        /*
+         getter : if unknown, create a new empty map
+         */
+        if (this[name] == null) {
+          //print(" trace : create $name ");
+          this[name] = MapList({});
+          return this[name];
+          //return null;
+        }
+          return this[name];
+        }
       }
     }
-  }
+
 
 /*
 scalp the first part of path before a . toto.  rip[12].
@@ -129,11 +150,12 @@ scalp the first part of path before a . toto.  rip[12].
 // json begin and end by [ ] or { }
   static final reg_mapList = RegExp("^[\\[\\{].*[\\}\\]]");
 
-  dynamic advanceInTree(String item) {
-    /*   arrives here with book   book[1]   isbn
+  /*   arrives here with book   book[1]   isbn
          is this item with brackets []?
           if yes, calculate rank
      */
+  dynamic advanceInTree(String item) {
+
     dynamic where;
     int rank;
     var found = reg_brackets.firstMatch(item);
@@ -150,7 +172,10 @@ scalp the first part of path before a . toto.  rip[12].
     Invocation invocation = Invocation.getter(Symbol(item));
     where = noSuchMethod(invocation);
     // if a rank, apply it
-    if (rank != null) where = where[rank];
+    if (rank != null) {
+      if (this is List) where = where[rank];
+      if (this is Map) where = where[rank];
+    }
     return where;
   }
 
@@ -161,11 +186,12 @@ scalp the first part of path before a . toto.  rip[12].
 
   dynamic interpret(String script) {
     script = script.trim();
-    dynamic where = this;
+    //dynamic where = this;
     var item;
     // sample book[1].isbn
 
     var found = reg_scalp.firstMatch(script);
+    // not an end of sentence : go on the road
     if (found != null) {
       item = found.group(0);
       // clean this part -> isbn
@@ -181,19 +207,32 @@ scalp the first part of path before a . toto.  rip[12].
        special case : ends by .length
        if "length" is not a key , returns the .length property
        if ends with some = xxx apply a setter
+       special case : isEmpty to relay to real method
        */
 
       var parts = script.split("=");
-      // restore the = for the invocation
+
       script = parts[0].trim();
       // no = sign
       if (parts.length == 1) {
-        dynamic where = advanceInTree(script);
+        // in interpreter some method must not be sent to noSuchMethod
+        if (script == "isEmpty") return isEmpty;
+        // length could be a user entry
+        if (script == "length")
+          {
+            if (this is List) return (length);
+            if (this is Map){
+              if (this["length"] == null) return length;
+            }
+            // otherwise leave it as standard search in case of [ ]
+        };
 
-        if (script == "length" && where == null) {
-          return (wrapped_json.length);
-        }
-        return where;
+
+
+        // try to get then entry named by last part 
+        dynamic value = advanceInTree(script);
+        // found a real entry value
+        return value;
       } else
       // with parameters
       {
@@ -211,4 +250,6 @@ scalp the first part of path before a . toto.  rip[12].
   String toString() {
     return wrapped_json.toString();
   }
+
+
 }

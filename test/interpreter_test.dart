@@ -24,19 +24,17 @@ void main() {
     assertShow(store.bikes[1].color, "grey");
     assertShow(store.book.length, 4);
     assertShow(store.book[0].isbn, "978-1-78899-879-6");
-    assertShow(store.book[1].isbn, null);
+    assertShow(store.book[1].isbn.isEmpty, true);
   });
 
   test('basic verification on interpreted access ', () {
     assertShow(store.interpret("bikes[1].color"), "grey");
     assertShow(store.interpret("book[0].isbn"), "978-1-78899-879-6");
-    assertShow(store.interpret("book[1].isbn"), null);
+    assertShow(store.interpret("book[1].isbn.isEmpty"), true);
   });
 
   test('check length property', () {
-    assertShow(store
-        .interpret("book")
-        .length, 4);
+    assertShow(store.interpret("book").length, 4);
     // check interpreted property length
     assertShow(store.interpret("book.length"), 4);
     assertShow(store.interpret("bikes.length"), 2);

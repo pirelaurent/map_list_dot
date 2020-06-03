@@ -1,37 +1,76 @@
 import 'package:json_xpath/src/map_list.dart';
+import 'package:test/test.dart';
 
 /*
   if wrong test , show what was expected and what we got
  */
 void assertShow(var what, var expected) {
-  assert(what == expected, "expected: $expected got: $what");
+  assert(what == expected,
+      "expected: $expected  ${expected.runtimeType} got: $what ${what.runtimeType}");
 }
 
-
-void main (){
-  // make a root as an empty map
+void main() {
   dynamic root = MapList({});
   // ad a name to the map and a list of results
   root.name = "experiment one";
   root.results = [];
-  // add some results to the list
-  root.results.add({"elapsed time": 15, "temperature":33.1});
-  root.results.add({"elapsed time": 30, "temperature":35.0});
-  assertShow(root.results[1].temperature,35);
-  // wrong indice
-  var x =root.results[11].temperature;
-  print(x.runtimeType);
-  print(x is Null);
 
-  assertShow(root.results[11].temperature,35);
+  test("test add json to a doted List , direct and interpreted  ", () {
+    root.results.add({"elapsed time": 15, "temperature": 33.1});
+    root.results.add({"elapsed time": 30, "temperature": 35.0});
+    assertShow(root.results[1].temperature, 35);
+    // now add another entry (a map) to the root by interpreter
+    root.interpret('conditions = {"méteo":37, "wind":53 } ');
+    assertShow(root.conditions.wind, 53);
+  });
 
-  // now add another map to the root by interpreter
-  root.interpret('conditions = {"méteo":37, "wind":53 } ');
-  assertShow(root.conditions.wind, 53);
-  // ad a wrong json . will be empty {}
-  root.interpret('conditionsBis = {"méteo":37, "wind":53 ,  } ');
-  assertShow(root.conditionsBis.wind, null);
-  // add a
+  test("dynamic creation of data with & without assignment", () {
+    // new entries create empty map to allow continuation
+    assertShow((root.conditions.sunrise is Map), true);
+    assertShow((root.conditions.sunrise.length), 0);
+    // new entries with assignement create an end leaf key-value
+    assertShow((root.conditions.sunrise = null), null);
+    // reuse can remplace current by another value in interpreter
+    root.interpret('conditions.sunrise = 17:30');
+    assertShow(root.conditions.sunrise, "17:30");
+    // add multilevel at once
+    root.nawak.moredumb.color = "blue";
+    assertShow(root.nawak.moredumb.color, "blue");
+  });
 
+  test(" exceptions not trapped on list index ", () {
+    // wrong index but tested before
+    if (root.results[11] != null)
+      assertShow(root.results[11].temperature, null);
+    // not tested, must do a try catch
+    try {
+      assertShow((root.results[11].temperature > 20), true);
+    } catch (e) {
+      print('--------------');
+      print("trapped exception by test code : $e");
+      print('--------------');
+    }
+  });
 
+  test("use index on a non list entry ", () {
+    root.map1.leaf2 = "hello";
+    print(root);
+    // can use index on  string :e :second letter of hello
+    assertShow (root.interpret("map1.leaf2[1]"),"e");
+    assertShow (root.map1.leaf2[1],"e");
+
+    /*
+     but cannot be tested in direct  : as map2 is a String
+     it's too late to catch the [] error on a String
+     */
+    try {
+    var result = root.map1.leaf2[1].value;
+      assertShow(result==null, true);
+    } catch (e) {
+      print('--------------');
+      print("trapped exception by test code : $e");
+      print('--------------');
+    }
+
+  });
 }

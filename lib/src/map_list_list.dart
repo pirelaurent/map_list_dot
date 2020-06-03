@@ -1,5 +1,6 @@
 import 'dart:collection';
 import 'package:json_xpath/map_list_lib.dart';
+
 /*
  a MapListList is a List as it realizes ListMixin
 
@@ -13,37 +14,34 @@ class MapListList extends MapList with ListMixin {
     wrapped_json.length = len;
   }
 
+
   /*
    Setter in a list position.
    Must be an integer, but common operator is more general.
    */
   @override
   operator []=(Object key, dynamic value) {
-    //if (key is! int) );
-    if (key is int) {
+    try {
       wrapped_json[key] = value;
-    } else {
-      print('******** warning call List[] with a ${key.runtimeType} $key');
-      // do nothing
-    }
+    } catch (e) {
+      print("** On List : \"${MapList.lastInvocation} [$key] = \" : $e");
+     }
   }
 
   @override
   operator [](Object key) {
-    if (key is int) {
-      if ((key>=0)&&(key<wrapped_json.length))
-      {
-        var next = wrapped_json[key];
-        // wrap result in a MapList to allow next dot notation
-        if (next is List || next is Map)
-          return MapList(next);
-        // if a leaf, return a simple value
-        else
-          return next;
-      }
+    try {
+      var next = wrapped_json[key];
+      // wrap result in a MapList to allow next dot notation
+      if (next is List || next is Map)
+        return MapList(next);
+      // if a leaf, return a simple value
+      else
+        return next;
+    } catch (e) {
+      print("** On Map: \"${MapList.lastInvocation} [$key]\" : $e");
+      return  null;
     }
-    // case nothing return : wrong rank or not an integer
-    return MapListBlackHole.json("");
   }
 
   void add(dynamic value) {
