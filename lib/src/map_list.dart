@@ -1,17 +1,29 @@
-import 'dart:collection';
 import 'dart:mirrors';
 import 'dart:convert';
+import 'package:json_xpath/map_list_lib.dart';
 
 /*
  Wrapper on a combined structure (maps and lists) to allow dot notation access.
  Useful to wrap a json as if it was already a set of classes
  MapList is an ancestor of MapListList and MapListMap
-   both dedicated to respond respectively to "is List" or "is Map"
-
+   dedicated to respond respectively to "is List" or "is Map"
  */
+
 class MapList {
-  // internal collection of Lists, Maps and leaf Values
-  var _json;
+  /*
+   internal collection of Lists, Maps and leaf Values of any types
+   public as we separate subClasses in several files and no protected option
+   */
+  var wrapped_json;
+  /*
+    When creating entry on the fly and don't set any value,
+    it defaults to a {} map (not on a null)
+    This cas be checked by isEmpty which is overriden in MapListLap
+   */
+  bool get  isEmpty => false;
+
+  // for more explicit error messages on [ ] calls retain the name used
+  static String lastInvocation;
 
 /*
  set the root node on right type
@@ -19,17 +31,19 @@ class MapList {
  can give a String or an already decoded json
  */
 
-  factory MapList(dynamic jsonInput) {
+  factory MapList([dynamic jsonInput]) {
     if (jsonInput is String) jsonInput = json.decode(jsonInput);
     if (jsonInput is List) return MapListList.json(jsonInput);
     if (jsonInput is Map) return MapListMap.json(jsonInput);
+    // if empty, create a simple map
+    return MapListMap.json({});
   }
 
   /*
-  common constructor. Just set the internal collection
+  common constructor. Just set the initial internal collection
   */
-  MapList.json(dynamic json) {
-    _json = json;
+  MapList.json(dynamic jsonInput) {
+    wrapped_json = jsonInput;
   }
 
 /*
@@ -41,50 +55,116 @@ class MapList {
 
   operator []=(Object key, dynamic value);
 
+  remove(Object key);
+
+
+  /*
+   when coming by interpreter with = xxxx we must analyse the string :
+   "someString" -> someString
+   'someString' -> someString
+   String true -> boolean true
+   String false -> boolean false
+   any String valid as number -> number
+   something between [ ] or { } -> json
+   */
+  dynamic adjustParam(var param) {
+    // if between ' or between " extract and leaves as String
+    if ((param[0] == '"') && param.endsWith('"')) {
+      return param.substring(1, param.length - 1);
+    }
+    if ((param[0] == "'") && param.endsWith("'")) {
+      return param.substring(1, param.length - 1);
+    }
+    if (param == "true") return true;
+    if (param == "false") return false;
+
+    var number = num.tryParse(param);
+    if (number != null) return number;
+/*
+ if between [ ] or between { } consider it's a json string
+ */
+    var found = reg_mapList.firstMatch(param);
+    if (found != null) {
+      try {
+        var jsonVar = json.decode(found.group(0));
+        return jsonVar;
+      } catch (e) {
+        print("** On invocation \"$lastInvocation\" : error json $e");
+        // return something to avoid crash if some .notation after
+        //if (param[0] == '[') return [];
+        //if (param[0] == '{') return {};
+        return null;
+      }
+    }
+    // nothing special
+
+    return param;
+  }
+
   /*
    invocation.memberName: Symbol("root")
    */
   @override
   dynamic noSuchMethod(Invocation invocation) {
     var member = invocation.memberName;
+
     /*
-    print('noSuchMethod: $member: ${invocation.positionalArguments}');
     get :   Symbol("name"): []
     set:    Symbol("name="): [quizine]
    */
+    //print('invocation: $member: ${invocation.positionalArguments} on $this');
     String name;
     if (member is Symbol) {
       name = MirrorSystem.getName(member);
+      MapList.lastInvocation = name;
+      // setters
       if (name.endsWith('=')) {
         name = name.replaceAll("=", "");
         dynamic param = invocation.positionalArguments[0];
-        // question : clean the 'xx' or "xx" ?
+        if (param is String) param = adjustParam(param);
         this[name] = param;
-      } else
-        return this[name];
+
+        //return nothing after a setter
+      } else {
+        /*
+         getter : if unknown, create a new empty map
+         */
+        if (this[name] == null) {
+          //print(" trace : create $name ");
+          this[name] = MapList({});
+          return this[name];
+          //return null;
+        }
+          return this[name];
+        }
+      }
     }
-  }
+
 
 /*
- from beginning
- letter, digit in any number
- optional [ digits optional .. digits   ]
- end by a dot
+scalp the first part of path before a . toto.  rip[12].
+ from beginning : letter, digit in any number.
+  end by a dot
+ ( optional [ first .. last   ] allowed for future extension )
  */
-  static final scalp =
-  RegExp("^[a-zA-Z0-9_]*(\\[[0-9]*(\\.\\.)?[0-9]*\\])?\\.");
+  static final reg_scalp =
+      RegExp("^[a-zA-Z0-9_]*(\\[[0-9]*(\\.\\.)?[0-9]*\\])?\\.");
 
 // [1..23]
-  static final brackets = RegExp("\\[[0-9]*\\]");
+  static final reg_brackets = RegExp("\\[[0-9]*\\]");
 
-  dynamic advanceInTree(String item) {
-    /*   arrives here with book   book[1]   isbn
+// json begin and end by [ ] or { }
+  static final reg_mapList = RegExp("^[\\[\\{].*[\\}\\]]");
+
+  /*   arrives here with book   book[1]   isbn
          is this item with brackets []?
           if yes, calculate rank
      */
+  dynamic advanceInTree(String item) {
+
     dynamic where;
     int rank;
-    var found = brackets.firstMatch(item);
+    var found = reg_brackets.firstMatch(item);
     if (found != null) {
       //found sample :rawRank-> [1]
       var rawRank = found.group(0);
@@ -98,7 +178,10 @@ class MapList {
     Invocation invocation = Invocation.getter(Symbol(item));
     where = noSuchMethod(invocation);
     // if a rank, apply it
-    if (rank != null) where = where[rank];
+    if (rank != null) {
+      if (this is List) where = where[rank];
+      if (this is Map) where = where[rank];
+    }
     return where;
   }
 
@@ -107,12 +190,14 @@ class MapList {
    getter only
    */
 
-  dynamic interpret(String script) {
+  dynamic path(String script) {
     script = script.trim();
-    dynamic where = this;
+    //dynamic where = this;
     var item;
     // sample book[1].isbn
-    var found = scalp.firstMatch(script);
+
+    var found = reg_scalp.firstMatch(script);
+    // not an end of sentence : go on the road
     if (found != null) {
       item = found.group(0);
       // clean this part -> isbn
@@ -120,117 +205,57 @@ class MapList {
       // remove the dot -> book[1]
       item = item.substring(0, item.length - 1);
       // let's responds the following
-      return advanceInTree(item).interpret(script);
+      return advanceInTree(item).path(script);
     } else {
       /*
+      no dot at the end
        end leaf return expected data
        special case : ends by .length
        if "length" is not a key , returns the .length property
        if ends with some = xxx apply a setter
+       special case : isEmpty to relay to real method
        */
 
       var parts = script.split("=");
+
       script = parts[0].trim();
+      // no = sign
       if (parts.length == 1) {
-        dynamic where = advanceInTree(script);
-        if (script == "length" && where == null) {
-          return (_json.length);
-        }
-        return where;
-      } else
-        // with parameters
+        // in interpreter some method must not be sent to noSuchMethod
+        if (script == "isEmpty") return isEmpty;
+        // length could be a user entry
+        if (script == "length")
           {
+            if (this is List) return (this.wrapped_json.length);
+            if (this is Map){
+              if (this["length"] == null) return this.wrapped_json.length;
+            }
+            // otherwise leave it as standard search in case of [ ]
+        };
+
+
+
+        // try to get then entry named by last part 
+        dynamic value = advanceInTree(script);
+        // found a real entry value
+        return value;
+      } else
+      // with parameters
+      {
+        // restore = necessary for invocation
+        script = script + "=";
         var paramString = parts[1].trim();
-        var number = num.tryParse(paramString);
-        if (number != null) {
-          _json[script] = number;
-          return;
-        }
 
-        if (paramString == "true") {_json[script] = true; return;}
-        if (paramString == "false") {_json[script] = false; return;}
-
-        _json[script] = paramString;
+        Invocation invocation = Invocation.setter(Symbol(script), paramString);
+        noSuchMethod(invocation);
       } // item with end dot not found
     }
-  }
-}
-
-
-
-/*
- a MapListList is a List as it realizes ListMixin
-
- */
-class MapListList extends MapList with ListMixin {
-  MapListList.json(dynamic json) : super.json(json);
-
-  get length => _json.length;
-
-  set length(int len) {
-    _json.length = len;
-  }
-
-  /*
-   Setter in a list position.
-   Must be an integer, but common operator is more general.
-   */
-  @override
-  operator []=(Object key, dynamic value) {
-    //if (key is! int) );
-    if (key is int) {
-      _json[key] = value;
-    } else {
-      print('******** warning call List[] with a ${key.runtimeType}');
-      // do nothing
-    }
-  }
-
-  @override
-  operator [](Object key) {
-    if (key is int) {
-      var next = _json[key];
-      if (next is List || next is Map)
-        return MapList(next);
-      else
-        return next;
-    }
-    return null;
-  }
-
-  void add(dynamic value) {
-    _json.add(value);
   }
 
   @override
   String toString() {
-    return _json.toString();
-  }
-}
-
-/*
- Map wrapper
- */
-class MapListMap extends MapList with MapMixin {
-  MapListMap.json(dynamic json) : super.json(json);
-
-  get keys => _json.keys;
-//type 'double' is not a subtype of type 'String' of 'value'
-  operator []=(Object key, dynamic value) => {_json[key] = value};
-
-  operator [](Object key) {
-    var next = _json[key];
-    if (next is List || next is Map)
-      return MapList(next);
-    else
-      return next;
+    return wrapped_json.toString();
   }
 
-  void clear() {
-    _json.clear();
-  }
 
-  void remove(var key) {
-    _json.remove(key);
-  }
 }
