@@ -28,59 +28,52 @@ void main() {
   });
 
   test('basic verification on interpreted access ', () {
-    assertShow(store.interpret("bikes[1].color"), "grey");
-    assertShow(store.interpret("book[0].isbn"), "978-1-78899-879-6");
-    assertShow(store.interpret("book[1].isbn.isEmpty"), true);
+    assertShow(store.path("bikes[1].color"), "grey");
+    assertShow(store.path("book[0].isbn"), "978-1-78899-879-6");
+    assertShow(store.path("book[1].isbn.isEmpty"), true);
   });
 
   test('check length property', () {
-    assertShow(store.interpret("book").length, 4);
+    assertShow(store.path("book").length, 4);
     // check interpreted property length
-    assertShow(store.interpret("book.length"), 4);
-    assertShow(store.interpret("bikes.length"), 2);
-    assertShow(store.interpret("bikes[1].length"), 2.2);
+    assertShow(store.path("book.length"), 4);
+    assertShow(store.path("bikes.length"), 2);
+    assertShow(store.path("bikes[1].length"), 2.2);
   });
 
   test('try assignments ', () {
-    assertShow(store.interpret("bikes[0].color"), "black");
+    assertShow(store.path("bikes[0].color"), "black");
 
     store.bikes[0].color = "green";
-    assertShow(store.interpret("bikes[0].color"), "green");
-    store.interpret("bikes[0].color = blue ");
-    print(store.bikes[0].color);
-    assertShow(store.interpret("bikes[0].color"), "blue");
+    assertShow(store.path("bikes[0].color"), "green");
+    store.path("bikes[0].color = blue ");
+    assertShow(store.path("bikes[0].color"), "blue");
 
-    assertShow(store.interpret("book[3].price"), 23.42);
-    store.interpret("book[3].price= 20.00 ");
-    assertShow(store.interpret("book[3].price"), 20.00);
+    assertShow(store.path("book[3].price"), 23.42);
+    store.path("book[3].price= 20.00 ");
+    assertShow(store.path("book[3].price"), 20.00);
   });
 
   test('try new values non existing', () {
-    store.interpret("bikes[0].battery = true ");
-    assertShow(store.interpret("bikes[0].battery"), true);
-    store.interpret("bikes[1].battery = false ");
-    assertShow(store.interpret("bikes[1].battery"), false);
-    store.interpret("book").add(
+    store.path("bikes[0].battery = true ");
+    assertShow(store.path("bikes[0].battery"), true);
+    store.path("bikes[1].battery = false ");
+    assertShow(store.path("bikes[1].battery"), false);
+    store.path("book").add(
         {"category": "children", "name": "sleeping beauty"});
-    assertShow(store.interpret("book[4].category"), "children");
+    assertShow(store.path("book[4].category"), "children");
 
   });
 
   test('try Types in string ', () {
     // strings in quotes
-    store.interpret("bikes[1].color = 'violet'");
+    store.path("bikes[1].color = 'violet'");
     assertShow(store.bikes[1].color, "violet");
-    store.interpret('bikes[1].color = "yellow"');
+    store.path('bikes[1].color = "yellow"');
     assertShow(store.bikes[1].color, "yellow");
-    store.interpret("bikes[1].color = maroon");
+    store.path("bikes[1].color = maroon");
     assertShow(store.bikes[1].color, "maroon");
   });
 
-  test('try new values non existing with problems ', () {
-//
-    print('----------------------plus ');
-    store.interpret("book[0].plus = []");
-    print(store.book[0].plus.length);
 
-  });
 }

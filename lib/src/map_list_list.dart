@@ -24,8 +24,9 @@ class MapListList extends MapList with ListMixin {
     try {
       wrapped_json[key] = value;
     } catch (e) {
-      print("** On List : \"${MapList.lastInvocation} [$key] = \" : $e");
-     }
+      //print("** On List : \"${MapList.lastInvocation} [$key] = \" : $e");
+      return null;
+    }
   }
 
   @override
@@ -39,7 +40,7 @@ class MapListList extends MapList with ListMixin {
       else
         return next;
     } catch (e) {
-      print("** On Map: \"${MapList.lastInvocation} [$key]\" : $e");
+      //print("** On Map: \"${MapList.lastInvocation} [$key]\" : $e");
       return  null;
     }
   }

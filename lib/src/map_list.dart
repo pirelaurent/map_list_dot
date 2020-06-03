@@ -6,24 +6,23 @@ import 'package:json_xpath/map_list_lib.dart';
  Wrapper on a combined structure (maps and lists) to allow dot notation access.
  Useful to wrap a json as if it was already a set of classes
  MapList is an ancestor of MapListList and MapListMap
-   both dedicated to respond respectively to "is List" or "is Map"
-
+   dedicated to respond respectively to "is List" or "is Map"
  */
+
 class MapList {
   /*
-   internal collection of Lists, Maps and leaf Values
-   as we separate classes in several files, cannot stay private _json
+   internal collection of Lists, Maps and leaf Values of any types
+   public as we separate subClasses in several files and no protected option
    */
   var wrapped_json;
+  /*
+    When creating entry on the fly and don't set any value,
+    it defaults to a {} map (not on a null)
+    This cas be checked by isEmpty which is overriden in MapListLap
+   */
+  bool get  isEmpty => false;
 
-  get getJson => wrapped_json;
-
-  // to be override in maplistmap
-  bool get  isEmpty;
-  // overriden in MapListList
-  int get length;
-
-  // for more explicit error messages on [ ] calls errors
+  // for more explicit error messages on [ ] calls retain the name used
   static String lastInvocation;
 
 /*
@@ -32,16 +31,16 @@ class MapList {
  can give a String or an already decoded json
  */
 
-  factory MapList(dynamic jsonInput) {
+  factory MapList([dynamic jsonInput]) {
     if (jsonInput is String) jsonInput = json.decode(jsonInput);
     if (jsonInput is List) return MapListList.json(jsonInput);
     if (jsonInput is Map) return MapListMap.json(jsonInput);
-    // if empty, create a map
+    // if empty, create a simple map
     return MapListMap.json({});
   }
 
   /*
-  common constructor. Just set the internal collection
+  common constructor. Just set the initial internal collection
   */
   MapList.json(dynamic jsonInput) {
     wrapped_json = jsonInput;
@@ -60,7 +59,13 @@ class MapList {
 
 
   /*
-   when coming by interpreter, the string is not all time the good type
+   when coming by interpreter with = xxxx we must analyse the string :
+   "someString" -> someString
+   'someString' -> someString
+   String true -> boolean true
+   String false -> boolean false
+   any String valid as number -> number
+   something between [ ] or { } -> json
    */
   dynamic adjustParam(var param) {
     // if between ' or between " extract and leaves as String
@@ -76,7 +81,7 @@ class MapList {
     var number = num.tryParse(param);
     if (number != null) return number;
 /*
- if betwwen [ ] or between { } consider it's a json string
+ if between [ ] or between { } consider it's a json string
  */
     var found = reg_mapList.firstMatch(param);
     if (found != null) {
@@ -86,8 +91,9 @@ class MapList {
       } catch (e) {
         print("** On invocation \"$lastInvocation\" : error json $e");
         // return something to avoid crash if some .notation after
-        if (param[0] == '[') return [];
-        if (param[0] == '{') return {};
+        //if (param[0] == '[') return [];
+        //if (param[0] == '{') return {};
+        return null;
       }
     }
     // nothing special
@@ -184,7 +190,7 @@ scalp the first part of path before a . toto.  rip[12].
    getter only
    */
 
-  dynamic interpret(String script) {
+  dynamic path(String script) {
     script = script.trim();
     //dynamic where = this;
     var item;
@@ -199,7 +205,7 @@ scalp the first part of path before a . toto.  rip[12].
       // remove the dot -> book[1]
       item = item.substring(0, item.length - 1);
       // let's responds the following
-      return advanceInTree(item).interpret(script);
+      return advanceInTree(item).path(script);
     } else {
       /*
       no dot at the end
@@ -220,9 +226,9 @@ scalp the first part of path before a . toto.  rip[12].
         // length could be a user entry
         if (script == "length")
           {
-            if (this is List) return (length);
+            if (this is List) return (this.wrapped_json.length);
             if (this is Map){
-              if (this["length"] == null) return length;
+              if (this["length"] == null) return this.wrapped_json.length;
             }
             // otherwise leave it as standard search in case of [ ]
         };
