@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:convert';
 import 'package:json_xpath/map_list_lib.dart';
 
 /*
@@ -30,9 +31,10 @@ class MapListList extends MapList with ListMixin {
   }
 
   @override
-  operator [](Object key) {
+  operator [](Object keyIndex) {
+
     try {
-      var next = wrapped_json[key];
+      var next = wrapped_json[keyIndex];
       // wrap result in a MapList to allow next dot notation
       if (next is List || next is Map)
         return MapList(next);
@@ -40,12 +42,30 @@ class MapListList extends MapList with ListMixin {
       else
         return next;
     } catch (e) {
-      //print("** On Map: \"${MapList.lastInvocation} [$key]\" : $e");
+      //print("** On List: \"${MapList.lastInvocation} [$keyIndex]\" : $e");
       return  null;
     }
   }
 
+/*
+ if add comes from interpreter, decode the json
+ if add comes from code, Dart has already done the job
+ but if data are homeneous, json can create a map <String, int>
+ like with {elapsed_time: 30, temperature: 18}// _InternalLinkedHashMap<String, int>
+ this avoid to add dynamicaly other types, o we convert
+
+ */
   void add(dynamic value) {
-    wrapped_json.add(value);
+    // @todo securise by try catch
+    if (value is String) {
+      value = json.decode(value);
+    };
+
+    if (value is Map) {
+      if(!(value.runtimeType is Map<dynamic, dynamic>));
+      Map <dynamic, dynamic> map = Map.fromEntries(value.entries);
+      value = map;
+    }
+      wrapped_json.add(value);
+    }
   }
-}

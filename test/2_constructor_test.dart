@@ -1,42 +1,82 @@
 import 'package:json_xpath/src/map_list.dart';
 import 'package:test/test.dart';
+import 'dart:convert';
 
 /*
   if wrong test , show what was expected and what we got
  */
 void assertShow(var what, var expected) {
   assert(what == expected,
-      "expected: $expected  ${expected.runtimeType} got: $what ${what.runtimeType}");
+      "\nexpected: $expected  ${expected.runtimeType} got: $what ${what.runtimeType}");
 }
 
 void main() {
-  dynamic root = MapList();
-  // ad a name to the map and a list of results
-  root.name = "experiment one";
-  root.results = [];
+  test('constructor empty ', () {
+    dynamic root = MapList();
+    assert(root is Map, true);
+    assert(root.isEmpty, true);
+    root.name = "toto";
+    assert(root.name == "toto");
+    // add is not a real map syntax but we tolerate this , as long this is a list of key:values
+    root.add({"age": 15, "weight": 65});
+    assert(root.name == "toto");
+  }
+  );
 
-  test("test add json to a doted List , direct and interpreted  ", () {
-    root.results.add({"elapsed time": 15, "temperature": 33.1});
-    root.results.add({"elapsed time": 30, "temperature": 35.0});
-    assertShow(root.results[1].temperature, 35);
-    // now add another entry (a map) to the root by interpreter
-    root.path('conditions = {"meteo":37, "wind":53 } ');
-    assertShow(root.conditions.wind, 53);
-  });
 
-  test("test add wrong json to a doted List , direct and interpreted  ", () {
+  test('constructor empty but List ', () {
+    dynamic root = MapList([]);
+    assert(root is List, true);
+    assert(root.isEmpty, true);
+    // add is not a real map syntax but we tolerate this , as long this is a list of key:values
+    root.add({"name": "toto", "age": 15, "weight": 65});
+    assert(root[0].name == "toto");
+  }
+  );
+
+
+
+  test('constructor with json String', () {
+   String sJson= r""" {"name": "toto", "age": 15, "weight": 65} """;
+   dynamic root = MapList(sJson);
+   assert(root is Map, true);
+   assert(root.name == "toto");
+  }
+  );
+
+  test('constructor with a json map made of int ', () {
+
+    dynamic root = MapList({"age": 15, "weight": 65});
+    assert(root is Map, true);
+    assert(root.age == 15);
+  }
+  );
+
+
+
+  test('constructor with json structured starting as List ', () {
+    String sJson= r""" [{"name": "toto", "age": 15, "weight": 65},{"name":"zaza", "age" :68}] """;
+    var jj = json.decode(sJson);
+    dynamic root = MapList(jj);
+    assert(root is List, true);
+    assert(root[1].name == "zaza");
+  }
+  );
+
+  /*
+  test("constructor add wrong json to a doted List , direct and interpreted  ", () {
     root.results.add({"elapsed time": 60, "temperature": 40  , });
  print(root);
     assertShow(root.results[2].temperature, 40);
     // now add another entry (a map) to the root by interpreter
-    root.path('conditions = {"meteo":37, "wind":53 , } ');
+    root.script('conditions = {"meteo":37, "wind":53 , } ');
     print(root);
     
     assertShow(root.conditions.isEmpty, true);
   });
+*/
 
-
-
+/*
   test("dynamic creation of data with & without assignment", () {
     // new entries create empty map to allow continuation
     assertShow((root.conditions.sunrise is Map), true);
@@ -44,7 +84,7 @@ void main() {
     // new entries with assignement create an end leaf key-value
     assertShow((root.conditions.sunrise = null), null);
     // reuse can remplace current by another value in interpreter
-    root.path('conditions.sunrise = 17:30');
+    root.script('conditions.sunrise = 17:30');
     assertShow(root.conditions.sunrise, "17:30");
     // add multilevel at once
     root.nawak.moredumb.color = "blue";
@@ -78,7 +118,7 @@ void main() {
     // range on a map return null
     assertShow(root.map1[0], null);
     // can use index on  string :e :second letter of hello
-    assertShow(root.path("map1.leaf2[1]"), "e");
+    assertShow(root.script("map1.leaf2[1]"), "e");
     assertShow(root.map1.leaf2[1], "e");
 
     /*
@@ -92,4 +132,6 @@ void main() {
       assertShow(e.runtimeType, NoSuchMethodError);
     }
   });
+  */
+
 }

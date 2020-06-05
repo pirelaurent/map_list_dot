@@ -10,8 +10,11 @@ class MapListMap extends MapList with MapMixin {
 
   get keys => wrapped_json.keys;
 
-//type 'double' is not a subtype of type 'String' of 'value'
-  operator []=(Object key, dynamic value) => {wrapped_json[key] = value};
+
+  operator []=(dynamic key, dynamic value) {
+
+  wrapped_json[key] = value;
+  }
 
   operator [](Object key) {
     var next = wrapped_json[key];
@@ -33,5 +36,20 @@ class MapListMap extends MapList with MapMixin {
   @override
   bool get isEmpty {
     return (keys.length == 0);
+  }
+
+  /*
+   tolerance
+   */
+  MapList add(var someMap){
+    print('----------add ');
+    if (someMap is Map){
+      someMap.forEach((key, value) {
+        this.wrapped_json[key]=value;
+      });
+      // to allow continuation
+      return MapList(this);
+    }
+    print('**** $someMap');
   }
 }

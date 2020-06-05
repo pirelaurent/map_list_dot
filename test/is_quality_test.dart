@@ -31,13 +31,13 @@ void main() {
 
   test("check map or list in interpreter ",()
   {
-    assertShow(root.path("members") is List, true);
-    assertShow(root.path("members[0]") is Map, true);
-    assertShow(root.path("members[0].name") is String, true);
-    assertShow(root.path("members[0].age") is int, true);
-    assertShow(root.path("members[0].powers") is List, true);
-    assertShow(root.path("members[1].powers[1]") is String, true);
-    assertShow(root.path("members[1].powers[1]"), "Damage resistance");
+    assertShow(root.script("members") is List, true);
+    assertShow(root.script("members[0]") is Map, true);
+    assertShow(root.script("members[0].name") is String, true);
+    assertShow(root.script("members[0].age") is int, true);
+    assertShow(root.script("members[0].powers") is List, true);
+    assertShow(root.script("members[1].powers[1]") is String, true);
+    assertShow(root.script("members[1].powers[1]"), "Damage resistance");
   });
 
 }

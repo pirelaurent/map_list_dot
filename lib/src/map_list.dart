@@ -15,12 +15,13 @@ class MapList {
    public as we separate subClasses in several files and no protected option
    */
   var wrapped_json;
+
   /*
     When creating entry on the fly and don't set any value,
     it defaults to a {} map (not on a null)
-    This cas be checked by isEmpty which is overriden in MapListLap
+    This cas be checked by isEmpty which is overriden in MapListMap
    */
-  bool get  isEmpty => false;
+  bool get isEmpty => false;
 
   // for more explicit error messages on [ ] calls retain the name used
   static String lastInvocation;
@@ -35,14 +36,23 @@ class MapList {
     if (jsonInput is String) jsonInput = json.decode(jsonInput);
     if (jsonInput is List) return MapListList.json(jsonInput);
     if (jsonInput is Map) return MapListMap.json(jsonInput);
-    // if empty, create a simple map
+    // if empty, create a simple Map<dynamic, dynamic>
     return MapListMap.json({});
   }
 
   /*
   common constructor. Just set the initial internal collection
+  if intial json is made of homeneous data, can be a specialized json
+  so, we generalize to allow further other types
+
   */
   MapList.json(dynamic jsonInput) {
+    if (jsonInput is Map) {
+      if (!(jsonInput.runtimeType is Map<dynamic, dynamic>)) {
+        Map<dynamic, dynamic> map = Map.fromEntries(jsonInput.entries);
+        jsonInput = map;
+      }
+    }
     wrapped_json = jsonInput;
   }
 
@@ -56,7 +66,6 @@ class MapList {
   operator []=(Object key, dynamic value);
 
   remove(Object key);
-
 
   /*
    when coming by interpreter with = xxxx we must analyse the string :
@@ -112,34 +121,44 @@ class MapList {
     get :   Symbol("name"): []
     set:    Symbol("name="): [quizine]
    */
-    //print('invocation: $member: ${invocation.positionalArguments} on $this');
+    //print('invocation: $member: ${invocation.positionalArguments} ');
     String name;
     if (member is Symbol) {
       name = MirrorSystem.getName(member);
       MapList.lastInvocation = name;
       // setters
       if (name.endsWith('=')) {
+        print(' on arrive avec $name');
         name = name.replaceAll("=", "");
         dynamic param = invocation.positionalArguments[0];
         if (param is String) param = adjustParam(param);
         this[name] = param;
-
-        //return nothing after a setter
+        print(' on a créé this[name] $this');
+        return;
       } else {
+        // special words add for Lists
+        var found = reg_add.firstMatch(name);
+        if ((found != null) && (this is List)) {
+          // remove add(   ) parts
+          String sJson = found.group(0);
+          sJson = sJson.substring(4, sJson.length - 1);
+          // check if valid json string
+          found = reg_mapList.firstMatch(sJson);
+          if (found != null) {
+            var aList = this as MapListList;
+            aList.add(found.group(0));
+            return;
+          }
+        }
         /*
-         getter : if unknown, create a new empty map
+         getter (if unknown, return null)
+         the [ ] of this will create a MapList
          */
-        if (this[name] == null) {
-          //print(" trace : create $name ");
-          this[name] = MapList({});
-          return this[name];
-          //return null;
-        }
-          return this[name];
-        }
+        print('ici on get $name sur $this');
+        return this[name];
       }
     }
-
+  }
 
 /*
 scalp the first part of path before a . toto.  rip[12].
@@ -148,7 +167,7 @@ scalp the first part of path before a . toto.  rip[12].
  ( optional [ first .. last   ] allowed for future extension )
  */
   static final reg_scalp =
-      RegExp("^[a-zA-Z0-9_]*(\\[[0-9]*(\\.\\.)?[0-9]*\\])?\\.");
+      RegExp("^[a-zA-Z0-9_]*(\\[[0-9]*(\\.\\.)?[0-9]*\\])?\\??\\.");
 
 // [1..23]
   static final reg_brackets = RegExp("\\[[0-9]*\\]");
@@ -156,12 +175,14 @@ scalp the first part of path before a . toto.  rip[12].
 // json begin and end by [ ] or { }
   static final reg_mapList = RegExp("^[\\[\\{].*[\\}\\]]");
 
+// static final detect add( some json )
+  static final reg_add = RegExp("^add\\(.*\\)");
+
   /*   arrives here with book   book[1]   isbn
          is this item with brackets []?
           if yes, calculate rank
-     */
+  */
   dynamic advanceInTree(String item) {
-
     dynamic where;
     int rank;
     var found = reg_brackets.firstMatch(item);
@@ -177,7 +198,8 @@ scalp the first part of path before a . toto.  rip[12].
     // first get the named part
     Invocation invocation = Invocation.getter(Symbol(item));
     where = noSuchMethod(invocation);
-    // if a rank, apply it
+    if (where == null) return where;
+    // found something correct : if a rank, apply it
     if (rank != null) {
       if (this is List) where = where[rank];
       if (this is Map) where = where[rank];
@@ -190,12 +212,13 @@ scalp the first part of path before a . toto.  rip[12].
    getter only
    */
 
-  dynamic path(String script) {
+  dynamic script(String script) {
     script = script.trim();
     //dynamic where = this;
     var item;
     // sample book[1].isbn
-
+    // in case of some?.
+    bool checkNull = false;
     var found = reg_scalp.firstMatch(script);
     // not an end of sentence : go on the road
     if (found != null) {
@@ -204,8 +227,17 @@ scalp the first part of path before a . toto.  rip[12].
       script = script.replaceFirst(item, '');
       // remove the dot -> book[1]
       item = item.substring(0, item.length - 1);
-      // let's responds the following
-      return advanceInTree(item).path(script);
+      // check if a checknull option ?
+      var c = item[item.length - 1];
+      if (c == '?') {
+        checkNull = true;
+        item = item.substring(0, item.length - 1);
+      }
+      // let's check  the following
+      var next = advanceInTree(item);
+      if ((next == null) && checkNull) return null;
+      // it's something correct (a MapList) go on
+      return next.script(script);
     } else {
       /*
       no dot at the end
@@ -213,7 +245,6 @@ scalp the first part of path before a . toto.  rip[12].
        special case : ends by .length
        if "length" is not a key , returns the .length property
        if ends with some = xxx apply a setter
-       special case : isEmpty to relay to real method
        */
 
       var parts = script.split("=");
@@ -224,18 +255,16 @@ scalp the first part of path before a . toto.  rip[12].
         // in interpreter some method must not be sent to noSuchMethod
         if (script == "isEmpty") return isEmpty;
         // length could be a user entry
-        if (script == "length")
-          {
-            if (this is List) return (this.wrapped_json.length);
-            if (this is Map){
-              if (this["length"] == null) return this.wrapped_json.length;
-            }
-            // otherwise leave it as standard search in case of [ ]
-        };
+        if (script == "length") {
+          if (this is List) return (this.wrapped_json.length);
+          if (this is Map) {
+            if (this["length"] == null) return this.wrapped_json.length;
+          }
+          // otherwise leave it as standard search in case of [ ]
+        }
+        ;
 
-
-
-        // try to get then entry named by last part 
+        // try to get then entry named by last part
         dynamic value = advanceInTree(script);
         // found a real entry value
         return value;
@@ -256,6 +285,4 @@ scalp the first part of path before a . toto.  rip[12].
   String toString() {
     return wrapped_json.toString();
   }
-
-
 }
