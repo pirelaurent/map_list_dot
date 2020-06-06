@@ -29,6 +29,9 @@ void main() {
     assert(root is List, true);
     assert(root.isEmpty, true);
     // add is not a real map syntax but we tolerate this , as long this is a list of key:values
+    var x = {"name": "toto", "age": 15, "weight": 65};
+    print( 'x: ${x.runtimeType} $x');
+
     root.add({"name": "toto", "age": 15, "weight": 65});
     assert(root[0].name == "toto");
   }
@@ -58,6 +61,7 @@ void main() {
     String sJson= r""" [{"name": "toto", "age": 15, "weight": 65},{"name":"zaza", "age" :68}] """;
     var jj = json.decode(sJson);
     dynamic root = MapList(jj);
+
     assert(root is List, true);
     assert(root[1].name == "zaza");
   }

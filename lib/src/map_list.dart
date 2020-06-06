@@ -47,12 +47,6 @@ class MapList {
 
   */
   MapList.json(dynamic jsonInput) {
-    if (jsonInput is Map) {
-      if (!(jsonInput.runtimeType is Map<dynamic, dynamic>)) {
-        Map<dynamic, dynamic> map = Map.fromEntries(jsonInput.entries);
-        jsonInput = map;
-      }
-    }
     wrapped_json = jsonInput;
   }
 
@@ -86,6 +80,8 @@ class MapList {
     }
     if (param == "true") return true;
     if (param == "false") return false;
+
+    if (param == 'null') return null;
 
     var number = num.tryParse(param);
     if (number != null) return number;
@@ -126,35 +122,35 @@ class MapList {
     if (member is Symbol) {
       name = MirrorSystem.getName(member);
       MapList.lastInvocation = name;
-      // setters
+      // ------------------ setters
       if (name.endsWith('=')) {
-        print(' on arrive avec $name');
         name = name.replaceAll("=", "");
         dynamic param = invocation.positionalArguments[0];
         if (param is String) param = adjustParam(param);
         this[name] = param;
-        print(' on a créé this[name] $this');
         return;
       } else {
         // special words add for Lists
         var found = reg_add.firstMatch(name);
         if ((found != null) && (this is List)) {
+          var aList = this as MapListList;
           // remove add(   ) parts
-          String sJson = found.group(0);
-          sJson = sJson.substring(4, sJson.length - 1);
+          String thingToAdd = found.group(0);
+
+          thingToAdd = thingToAdd.substring(4, thingToAdd.length - 1);
+          print('PLA : $thingToAdd');
           // check if valid json string
-          found = reg_mapList.firstMatch(sJson);
+          found = reg_mapList.firstMatch(thingToAdd);
           if (found != null) {
-            var aList = this as MapListList;
             aList.add(found.group(0));
             return;
           }
+          aList.add(thingToAdd);
         }
         /*
          getter (if unknown, return null)
          the [ ] of this will create a MapList
          */
-        print('ici on get $name sur $this');
         return this[name];
       }
     }

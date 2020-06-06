@@ -45,4 +45,21 @@ dynamic root;
     assertShow(root.show.verifications.length, 2);
     assertShow(root.show.verifications[1].name, "second");
   });
+
+  test("decoded variables in script",(){
+
+    test("creation of data at very beginning", () {
+      root.elapsed_time = 33;
+      assert(root.elapsed_time == 33);
+      assert(root.length ==2);
+      root.script('elapsed_time = null');
+      assert(root.elapsed_time == null);
+    });
+
+
+  });
+
+
+
+
 }

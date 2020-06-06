@@ -11,12 +11,41 @@ void assertShow(var what, var expected) {
 }
 
 void main() {
+  dynamic root;
+
+
+  test("add raw data in a List", () {
+    // reset
+    root = MapList();
+    root.data = [11,12,13];
+    assert(root.data[2]==13);
+    //print('${root.data.runtimeType}');//MapListList
+    root.data.add(14);
+    assert(root.data[3]==14);
+    root.script('data.add(15)');
+    assert(root.data[4]==15);
+  });
+
+  test("add raw heterogeneous data in a List", () {
+    // reset
+    root = MapList();
+    root.data = [11,12,13];
+    assert(root.data[2]==13);
+
+    root.data.add("hello");
+    assert(root.data[3]=="hello");
+    root.script('data.add(15.5)');
+    assert(root.data[4]==15.5);
+    //-------------assert(root.data[3]==14);
+  });
+
+
 
   /*
    sharing root between test to share data needs to run all tests,
    not one per one
    */
-  dynamic root = MapList();
+
     test(" add json to a doted List , direct and interpreted  ", () {
 
       root.results = [];
@@ -31,28 +60,44 @@ void main() {
   });
 
     test("Adding new entries on an existing map ", () {
-      print('-----------------------------');
-      print('root.results [1] ${root.results [1]}');
       // code
       root.results[1].time = "12:58:00";
       // script
-      print(root);
-      print('-----------------------------');
-     // root.script('results[1].duration = "01:00:00"');
-      print(root.results[1].time);
-      assert(root.results[1].time == "12:58:00");
-
-      print('root.results [1] ${root.results [1]}');
+      root.script('results[1].duration = "01:00:00"');
+      assert(root.results[1].duration is String, true);
 
     });
 
 
-  test("creation of data without assignment", () {
+  test("creation of data at very beginning", () {
     root.elapsed_time = 33;
      assert(root.elapsed_time == 33);
+     assert(root.length ==2);
+     root.script('elapsed_time = null');
+    assert(root.elapsed_time == null);
+  });
+
+
+
+
+  test("add a List to a List", () {
+    // reset
+    root = MapList();
+    root.data = [11,12,13];
+    assert(root.data[2]==13);
+
+    root.script('data.add[[31,32,33]]');
+    print(root);
+    //assert(root.data[3]==14);
+
 
 
   });
+
+
+
+
+
 /*
   test(" exceptions not trapped on list index ", () {
     // wrong index but tested before

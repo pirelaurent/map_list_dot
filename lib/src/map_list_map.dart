@@ -41,15 +41,19 @@ class MapListMap extends MapList with MapMixin {
   /*
    tolerance
    */
-  MapList add(var someMap){
-    print('----------add ');
-    if (someMap is Map){
-      someMap.forEach((key, value) {
+  MapList add(var something){
+    // add a Map to a List
+    if (something is Map){
+      print('found bad Map in Map ${something.runtimeType} $something');
+      something.forEach((key, value) {
         this.wrapped_json[key]=value;
       });
       // to allow continuation
       return MapList(this);
     }
-    print('**** $someMap');
+    //add a List to a List
+    if (something is List){
+      return MapList(this);
+    }
   }
 }
