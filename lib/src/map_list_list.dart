@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:convert';
 import 'package:json_xpath/map_list_lib.dart';
 
 /*
@@ -13,7 +14,6 @@ class MapListList extends MapList with ListMixin {
   set length(int len) {
     wrapped_json.length = len;
   }
-
 
   /*
    Setter in a list position.
@@ -30,9 +30,9 @@ class MapListList extends MapList with ListMixin {
   }
 
   @override
-  operator [](Object key) {
+  operator [](Object keyIndex) {
     try {
-      var next = wrapped_json[key];
+      var next = wrapped_json[keyIndex];
       // wrap result in a MapList to allow next dot notation
       if (next is List || next is Map)
         return MapList(next);
@@ -40,12 +40,20 @@ class MapListList extends MapList with ListMixin {
       else
         return next;
     } catch (e) {
-      //print("** On Map: \"${MapList.lastInvocation} [$key]\" : $e");
-      return  null;
+      //print("** On List: \"${MapList.lastInvocation} [$keyIndex]\" : $e");
+      return null;
     }
   }
 
-  void add(dynamic value) {
-    wrapped_json.add(value);
+/*
+ When call directly from code :
+ in case of List or Map, the something can be a restricted type
+ (aka a Lis<int> or a Map<String, String>
+ So we enlarge it with retype.
+
+ */
+  void add(dynamic something) {
+    something = retype(something);
+    wrapped_json.add(something);
   }
 }

@@ -10,8 +10,11 @@ class MapListMap extends MapList with MapMixin {
 
   get keys => wrapped_json.keys;
 
-//type 'double' is not a subtype of type 'String' of 'value'
-  operator []=(Object key, dynamic value) => {wrapped_json[key] = value};
+
+  operator []=(dynamic key, dynamic value) {
+
+  wrapped_json[key] = value;
+  }
 
   operator [](Object key) {
     var next = wrapped_json[key];
@@ -34,4 +37,25 @@ class MapListMap extends MapList with MapMixin {
   bool get isEmpty {
     return (keys.length == 0);
   }
-}
+
+  /*
+   In fact it's addALL filtered in MapList level
+   */
+  MapList add(var something){
+    // add new entries to the current map
+    if (something is Map){
+      something.forEach((key, value) {
+        this.wrapped_json[key]=value;
+      });
+      // to allow continuation
+      return MapList(this);
+    };
+
+    /*
+     adding anything else to a map is forbiddent
+     */
+    print('** error : trying to add non amp to current map $something to \n$this');
+      return MapList(this);
+    }
+  }
+
