@@ -9,24 +9,24 @@ void trace(dynamic x) {
 void main() {
   test(" test several input homogeneous  models ", () {
     var xInCode = {"age": 15, "weight": 65};
-    trace(xInCode); // _InternalLinkedHashMap<String, int>
+    //trace(xInCode); // _InternalLinkedHashMap<String, int>
     var xJson = json.decode('{"age": 15, "weight": 65}');
-    trace(xJson); // _InternalLinkedHashMap<String, dynamic>
+    //trace(xJson); // _InternalLinkedHashMap<String, dynamic>
     var xListInCode = [11, 12, 13];
-    trace(xListInCode); // List<int>
+    //trace(xListInCode); // List<int>
     xJson = json.decode('[11,12,13]');
-    trace(xJson); // List<dynamic>
+    //trace(xJson); // List<dynamic>
   });
 
   test(" test several input heterogenous  models ", () {
     var xInCode = {"age": 15, "name":"toto", "active": true};
-    trace(xInCode);// _InternalLinkedHashMap<String, Object>
+    //trace(xInCode);// _InternalLinkedHashMap<String, Object>
     var xJson = json.decode('{"age": 15, "name":"toto", "active": true}');
-    trace(xJson); //  _InternalLinkedHashMap<String, dynamic>
+    //trace(xJson); //  _InternalLinkedHashMap<String, dynamic>
     var xListInCode = [11, "pouet", true];
-    trace(xListInCode); // List<Object>
+    //trace(xListInCode); // List<Object>
     xJson = json.decode('[11, "pouet", true]');
-    trace(xJson); // List<dynamic>
+    //trace(xJson); // List<dynamic>
   });
 
 }

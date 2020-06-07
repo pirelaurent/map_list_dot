@@ -61,6 +61,8 @@ class MapList {
 
   remove(Object key);
 
+  add(var something);
+
   /*
    when coming by interpreter with = xxxx we must analyse the string :
    "someString" -> someString
@@ -120,35 +122,43 @@ class MapList {
       MapList.lastInvocation = name;
       // ------------------ setters
       if (name.endsWith('=')) {
+
         name = name.replaceAll("=", "");
         dynamic param = invocation.positionalArguments[0];
+        param = retype(param);// PLA4 new
         if (param is String) param = adjustParam(param);
+
         this[name] = param;
         return;
-      } else {
-        // special words add for Lists
-        var found = reg_add.firstMatch(name);
-        if ((found != null) && (this is List)) {
-          var aList = this as MapListList;
-          // remove add(   ) parts
-          String thingToAdd = found.group(0);
+      };
+       // ---- setters without = , check if .add
+      var found = reg_check_add.firstMatch(name);
 
+        // standard : List.add, commodity map.add
+        if ((found != null) && ((this is List)||(this is Map))) {
+
+            // remove add(   ) parts
+          String thingToAdd = found.group(0);
           thingToAdd = thingToAdd.substring(4, thingToAdd.length - 1);
-          print('PLA : $thingToAdd');
-          // check if valid json string
+          // check if parameter is valid json string ??? PLA5 why only string ?
           found = reg_mapList.firstMatch(thingToAdd);
           if (found != null) {
-            aList.add(found.group(0));
+               this.add(found.group(0));
             return;
           }
-          aList.add(thingToAdd);
+          // was not a json, add as is
+          this.add(thingToAdd);
+          return;
         }
-        /*
+
+      /*
+       was not .add, so it's a data
          getter (if unknown, return null)
          the [ ] of this will create a MapList
          */
-        return this[name];
-      }
+      return this[name];
+      //end setters
+
     }
   }
 
@@ -159,7 +169,7 @@ scalp the first part of path before a . toto.  rip[12].
  ( optional [ first .. last   ] allowed for future extension )
  */
   static final reg_scalp =
-      RegExp("^[a-zA-Z0-9_]*(\\[[0-9]*(\\.\\.)?[0-9]*\\])?\\??\\.");
+  RegExp("^[a-zA-Z0-9_]*(\\[[0-9]*(\\.\\.)?[0-9]*\\])?\\??\\.");
 
 // [1..23]
   static final reg_brackets = RegExp("\\[[0-9]*\\]");
@@ -168,7 +178,7 @@ scalp the first part of path before a . toto.  rip[12].
   static final reg_mapList = RegExp("^[\\[\\{].*[\\}\\]]");
 
 // static final detect add( some json )
-  static final reg_add = RegExp("^add\\(.*\\)");
+  static final reg_check_add = RegExp("^add\\(.*\\)");
 
   /*   arrives here with book   book[1]   isbn
          is this item with brackets []?
@@ -261,8 +271,8 @@ scalp the first part of path before a . toto.  rip[12].
         // found a real entry value
         return value;
       } else
-      // with parameters
-      {
+        // with parameters
+          {
         // restore = necessary for invocation
         script = script + "=";
         var paramString = parts[1].trim();
@@ -273,8 +283,42 @@ scalp the first part of path before a . toto.  rip[12].
     }
   }
 
-  @override
-  String toString() {
-    return wrapped_json.toString();
+
+
+
+
+  /*
+   retypes
+   */
+  dynamic retype(dynamic something) {
+    if (something is Map) {
+      if (!(something.runtimeType is Map<dynamic, dynamic>)) {
+        //print('found bad Map in List ${something.runtimeType} $something');
+        Map<dynamic, dynamic> map = Map.fromEntries(something.entries);
+        something = map;
+      }}
+
+      if (something is List) {
+        if (!(something.runtimeType is List<dynamic>)) {
+          //print('found a bad List in List ${something.runtimeType} $something');
+          List<dynamic> list = [];
+          something.forEach((element) {
+            list.add(element);
+          });
+          something = list;
+        }}
+
+        // return as is
+        return something;
+      }
+
+      /*
+       to see something
+       */
+
+      @override
+      String toString() {
+        return wrapped_json.toString();
+      }
+
   }
-}

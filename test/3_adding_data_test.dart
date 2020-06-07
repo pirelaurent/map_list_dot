@@ -24,7 +24,6 @@ void main() {
     assert(root.data[3]==14);
     root.script('data.add(15)');
     assert(root.data[4]==15);
-    print('ok');
   });
 
   test("add raw heterogeneous data in a List", () {
@@ -89,13 +88,10 @@ void main() {
     root = MapList();
     root.data = [11,12,13];
     assert(root.data[2]==13);
-
-    root.script('data.add[[31,32,33]]');
-    print(root);
-    //assert(root.data[3]==14);
-
-
-
+  // cannot write like this :
+    //root.script('root.data.add(31)');
+    //assert(root.data[3]==31);
+    print( '*** something todo on List on list ');
   });
 
 

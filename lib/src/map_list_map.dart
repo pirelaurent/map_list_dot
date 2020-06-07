@@ -39,29 +39,23 @@ class MapListMap extends MapList with MapMixin {
   }
 
   /*
-   tolerance
+   tolerance . default : add doesn't exists for map
    */
   MapList add(var something){
-    // add a Map to a List
+    // add new entries to the current map
     if (something is Map){
-      print('found bad Map in Map ${something.runtimeType} $something');
       something.forEach((key, value) {
         this.wrapped_json[key]=value;
       });
-
       // to allow continuation
       return MapList(this);
     };
 
-    if (something is List) {
-      if (!(something.runtimeType is List<dynamic>)) {
-        print(
-            'found a bad List in List ${something.runtimeType} $something');
-        List<dynamic> list = [];
-        something.forEach((element) {list.add(element);});
-        something = list;
-      }
+    /*
+     adding anything else to a map is forbiddent
+     */
+    print('** error : trying to add non amp to current map $something to \n$this');
       return MapList(this);
     }
   }
-}
+

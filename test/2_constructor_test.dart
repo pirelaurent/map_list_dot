@@ -30,8 +30,6 @@ void main() {
     assert(root.isEmpty, true);
     // add is not a real map syntax but we tolerate this , as long this is a list of key:values
     var x = {"name": "toto", "age": 15, "weight": 65};
-    print( 'x: ${x.runtimeType} $x');
-
     root.add({"name": "toto", "age": 15, "weight": 65});
     assert(root[0].name == "toto");
   }

@@ -54,40 +54,13 @@ class MapListList extends MapList with ListMixin {
 
  */
   void add(dynamic something) {
-    print('in List : add $something  ${something.runtimeType}');
-
     // @todo securise by try catch and allow simple lists of Strings
     if (something is String) {
       // is it in fact a number ?
       something = adjustParam(something);
-      print('PLA3 : $something ');
-      // is it json candidate ?
-      //var found = MapList.reg_mapList.firstMatch(something);
-      //if (found != null) something = json.decode(something);
-      // either decoded json, either pure String
-    }
-    ;
+    };
+    something = retype(something);
 
-    if (something is Map) {
-      if (!(something.runtimeType is Map<dynamic, dynamic>)) {
-        print(
-            'found bad Map in List ${something.runtimeType} $something');
-        Map<dynamic, dynamic> map = Map.fromEntries(something.entries);
-        something = map;
-      }
-
-    }
-    if (something is List) {
-      if (!(something.runtimeType is List<dynamic>)) {
-        print(
-            'found a bad List in List ${something.runtimeType} $something');
-        List<dynamic> list = [];
-        something.forEach((element) {list.add(element);});
-        something = list;
-      }
-    }
-
-    print('PLA2 ${wrapped_json.runtimeType} ${something.runtimeType} $something');
     wrapped_json.add(something);
   }
 }
