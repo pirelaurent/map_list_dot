@@ -24,6 +24,7 @@ void main() {
     assert(root.data[3]==14);
     root.script('data.add(15)');
     assert(root.data[4]==15);
+    print('ok');
   });
 
   test("add raw heterogeneous data in a List", () {
@@ -31,7 +32,7 @@ void main() {
     root = MapList();
     root.data = [11,12,13];
     assert(root.data[2]==13);
-
+    // by default a [11,12,13] is a List<int> can't add a string
     root.data.add("hello");
     assert(root.data[3]=="hello");
     root.script('data.add(15.5)');
@@ -70,11 +71,14 @@ void main() {
 
 
   test("creation of data at very beginning", () {
-    root.elapsed_time = 33;
-     assert(root.elapsed_time == 33);
+    root = MapList();
+    root.results = [];
+    root.results.add({"elapsed_time": 30, "temperature": 18   });
+    root.elapsed_time_total = 33;
+     assert(root.elapsed_time_total == 33);
      assert(root.length ==2);
-     root.script('elapsed_time = null');
-    assert(root.elapsed_time == null);
+     root.script('elapsed_time_total = null');
+    assert(root.elapsed_time_total == null);
   });
 
 

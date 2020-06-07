@@ -95,14 +95,10 @@ class MapList {
         return jsonVar;
       } catch (e) {
         print("** On invocation \"$lastInvocation\" : error json $e");
-        // return something to avoid crash if some .notation after
-        //if (param[0] == '[') return [];
-        //if (param[0] == '{') return {};
         return null;
       }
     }
     // nothing special
-
     return param;
   }
 

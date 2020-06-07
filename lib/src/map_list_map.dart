@@ -48,11 +48,19 @@ class MapListMap extends MapList with MapMixin {
       something.forEach((key, value) {
         this.wrapped_json[key]=value;
       });
+
       // to allow continuation
       return MapList(this);
-    }
-    //add a List to a List
-    if (something is List){
+    };
+
+    if (something is List) {
+      if (!(something.runtimeType is List<dynamic>)) {
+        print(
+            'found a bad List in List ${something.runtimeType} $something');
+        List<dynamic> list = [];
+        something.forEach((element) {list.add(element);});
+        something = list;
+      }
       return MapList(this);
     }
   }

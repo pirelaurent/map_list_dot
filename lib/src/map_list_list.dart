@@ -15,7 +15,6 @@ class MapListList extends MapList with ListMixin {
     wrapped_json.length = len;
   }
 
-
   /*
    Setter in a list position.
    Must be an integer, but common operator is more general.
@@ -32,7 +31,6 @@ class MapListList extends MapList with ListMixin {
 
   @override
   operator [](Object keyIndex) {
-
     try {
       var next = wrapped_json[keyIndex];
       // wrap result in a MapList to allow next dot notation
@@ -43,7 +41,7 @@ class MapListList extends MapList with ListMixin {
         return next;
     } catch (e) {
       //print("** On List: \"${MapList.lastInvocation} [$keyIndex]\" : $e");
-      return  null;
+      return null;
     }
   }
 
@@ -56,25 +54,40 @@ class MapListList extends MapList with ListMixin {
 
  */
   void add(dynamic something) {
-    print('in List : add $something');
-
-
+    print('in List : add $something  ${something.runtimeType}');
 
     // @todo securise by try catch and allow simple lists of Strings
     if (something is String) {
-      // is it json candidate
-      var found = MapList.reg_mapList.firstMatch(something);
-      if (found != null) something = json.decode(something);
+      // is it in fact a number ?
+      something = adjustParam(something);
+      print('PLA3 : $something ');
+      // is it json candidate ?
+      //var found = MapList.reg_mapList.firstMatch(something);
+      //if (found != null) something = json.decode(something);
       // either decoded json, either pure String
-    };
+    }
+    ;
 
     if (something is Map) {
-      if(!(something.runtimeType is Map<dynamic, dynamic>));
-      print('on a trouvé un bad Map dans List ${something.runtimeType} $something');
-      Map <dynamic, dynamic> map = Map.fromEntries(something.entries);
-      something = map;
+      if (!(something.runtimeType is Map<dynamic, dynamic>)) {
+        print(
+            'found bad Map in List ${something.runtimeType} $something');
+        Map<dynamic, dynamic> map = Map.fromEntries(something.entries);
+        something = map;
+      }
+
     }
-     print('PLA2 ${wrapped_json.runtimeType}');
-      wrapped_json.add(something);
+    if (something is List) {
+      if (!(something.runtimeType is List<dynamic>)) {
+        print(
+            'found a bad List in List ${something.runtimeType} $something');
+        List<dynamic> list = [];
+        something.forEach((element) {list.add(element);});
+        something = list;
+      }
     }
+
+    print('PLA2 ${wrapped_json.runtimeType} ${something.runtimeType} $something');
+    wrapped_json.add(something);
   }
+}
