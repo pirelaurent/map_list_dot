@@ -14,17 +14,40 @@ void main() {
   dynamic root;
 
 
-  test("add raw data in a List", () {
+  test("add raw data int in a List", () {
     // reset
     root = MapList();
     root.data = [11,12,13];
     assert(root.data[2]==13);
-    //print('${root.data.runtimeType}');//MapListList
     root.data.add(14);
     assert(root.data[3]==14);
     root.script('data.add(15)');
     assert(root.data[4]==15);
   });
+
+
+  test("add a map in a List of int ", () {
+    // reset
+    root = MapList();
+    root.data = [11,12,13];
+    assert(root.data[2]==13);
+    //print('${root.data.runtimeType}');//MapListList
+    root.data.add({"name":10});
+    assert(root.data[3] is Map);
+    root.script('data.add({"name":20})');
+    assert(root.data[4] is Map);
+
+    // can do that in code
+    Map m1 = {"pouet":10};
+    root.data.add(m1);
+    assert(root.data[5].pouet == 10);
+    // of course cannot do that in script as m1 is unknown
+    root.script('data.add(m1)');
+  });
+
+
+
+
 
   test("add raw heterogeneous data in a List", () {
     // reset
@@ -89,11 +112,55 @@ void main() {
     root.data = [11,12,13];
     assert(root.data[2]==13);
   // cannot write like this :
-    //root.script('root.data.add(31)');
-    //assert(root.data[3]==31);
-    print( '*** something todo on List on list ');
+    root.script('data.add(31)');
+    assert(root.data[3]==31);
+    print( '*** something todo on List on list data.add([another list])');
   });
 
+  // seems that add and addAll are the same
+  test("extends a map to a map in code  with add", () {
+    // reset
+    dynamic car = MapList();
+    car.name = "Ford";
+    car.color = "blue";
+    assert(car.color =="blue");
+    car.add({ "price": 5000, "fuel":"diesel","hybrid":false});
+    assert(car.length ==5);
+  });
+
+  // seems that add and addAll are the same
+  test("extends a map to a map in code with addALl  ", () {
+    // reset
+    dynamic car = MapList();
+    car.name = "Ford";
+    car.color = "blue";
+    assert(car.color =="blue");
+    car.addAll({ "price": 5000, "fuel":"diesel","hybrid":false});
+    assert(car.length ==5);
+  });
+
+  test("extends a map to a map in script  ", () {
+    // reset
+    dynamic car = MapList();
+    car.name = "Ford";
+    car.color = "blue";
+    assert(car.color =="blue");
+    car.script('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
+    assert(car.length ==5);
+
+  });
+
+
+  test("extends a map to a map in script with add ", () {
+    // reset
+    dynamic car = MapList();
+    car.name = "Ford";
+    car.color = "blue";
+    assert(car.color =="blue");
+    car.script('add({ "price": 5000, "fuel":"diesel","hybrid":false})');
+    assert(car.length ==5);
+
+  });
 
 
 

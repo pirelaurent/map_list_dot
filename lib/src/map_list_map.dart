@@ -39,7 +39,7 @@ class MapListMap extends MapList with MapMixin {
   }
 
   /*
-   tolerance . default : add doesn't exists for map
+   In fact it's addALL filtered in MapList level
    */
   MapList add(var something){
     // add new entries to the current map

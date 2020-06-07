@@ -46,21 +46,14 @@ class MapListList extends MapList with ListMixin {
   }
 
 /*
- if add comes from interpreter, decode the json
- if add comes from code, Dart has already done the job
- but if data are homeneous, json can create a map <String, int>
- like with {elapsed_time: 30, temperature: 18}// _InternalLinkedHashMap<String, int>
- this avoid to add dynamicaly other types, o we convert
+ When call directly from code :
+ in case of List or Map, the something can be a restricted type
+ (aka a Lis<int> or a Map<String, String>
+ So we enlarge it with retype.
 
  */
   void add(dynamic something) {
-    // @todo securise by try catch and allow simple lists of Strings
-    if (something is String) {
-      // is it in fact a number ?
-      something = adjustParam(something);
-    };
     something = retype(something);
-
     wrapped_json.add(something);
   }
 }

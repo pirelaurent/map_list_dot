@@ -40,6 +40,7 @@ void main() {
 
     // not available in code : assert(store.bookList[0]==null);
     assert(store.script("bookList[0]") == null);
+
     // assert (store.bookList[0] == null) : NoSuchMethodError: The method '[]' was called on null.
 
     /* with nullable :
