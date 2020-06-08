@@ -26,8 +26,11 @@ class MapList {
  */
 
   factory MapList([dynamic jsonInput]) {
+
     if (jsonInput is String) jsonInput = json.decode(jsonInput);
+
     if (jsonInput is List) return MapListList.json(jsonInput);
+
     if (jsonInput is Map) return MapListMap.json(jsonInput);
     // if empty, create a simple Map<dynamic, dynamic>
     return MapListMap.json({});
