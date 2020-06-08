@@ -39,7 +39,8 @@ void main() {
     assertShow(root.show.videos[1].questions[1].options[2].answer, "go");
   });
 
-  test("access to structure dot notation", () {
+
+  test("access to structure dot notation with script ", () {
     // --- now the same with a dot notation
     assertShow(root.script("show.name"), "quiz on video");
     assertShow(root.script("show.videos[1].name"), "japaneese fashion");
@@ -47,4 +48,5 @@ void main() {
     assertShow(
         root.script("show.videos[1].questions[1].options[2].answer"), "go");
   });
+
 }

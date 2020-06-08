@@ -2,17 +2,18 @@ import 'dart:collection';
 import 'package:json_xpath/map_list_lib.dart';
 
 /*
- Map wrapper
+ Map wrapper . no Mixin
  */
 
-class MapListMap extends MapList with MapMixin {
+class MapListMap extends MapList {//with MapMixin {
   MapListMap.json(dynamic json) : super.json(json);
 
+
+  get length => wrapped_json.length;
   get keys => wrapped_json.keys;
 
 
   operator []=(dynamic key, dynamic value) {
-
   wrapped_json[key] = value;
   }
 
@@ -40,22 +41,32 @@ class MapListMap extends MapList with MapMixin {
 
   /*
    In fact it's addALL filtered in MapList level
+   cannot override standard addALl
    */
   MapList add(var something){
-    // add new entries to the current map
+    // add new raw entries to the current map
     if (something is Map){
-      something.forEach((key, value) {
-        this.wrapped_json[key]=value;
-      });
+      wrapped_json.addAll(something);
       // to allow continuation
       return MapList(this);
     };
-
     /*
-     adding anything else to a map is forbiddent
+     adding anything else to a map is forbidden
      */
     print('** error : trying to add non amp to current map $something to \n$this');
       return MapList(this);
     }
+
+  @override
+  dynamic addAll(dynamic something) {
+      // add new entries to the current map
+      if (something is Map) {
+        this.wrapped_json.addAll(something);
+        // to allow continuation
+        return MapList(this);
+      };
+    }
+
+
   }
 

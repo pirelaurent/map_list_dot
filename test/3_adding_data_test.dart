@@ -16,11 +16,12 @@ void main() {
 
   test("add raw data int in a List", () {
     // reset
-    root = MapList();
+    dynamic root = MapList();
     root.data = [11,12,13];
     assert(root.data[2]==13);
     root.data.add(14);
     assert(root.data[3]==14);
+    // now in script
     root.script('data.add(15)');
     assert(root.data[4]==15);
   });
@@ -208,5 +209,7 @@ void main() {
     }
   });
   */
+
+
 
 }

@@ -1,4 +1,4 @@
-import 'package:json_xpath/src/map_list.dart';
+import 'package:json_xpath/map_list_lib.dart';
 import 'package:test/test.dart';
 import 'dart:convert';
 
@@ -13,7 +13,7 @@ void assertShow(var what, var expected) {
 void main() {
   test('constructor empty ', () {
     dynamic root = MapList();
-    assert(root is Map, true);
+    assert(root is MapListMap, true);
     assert(root.isEmpty, true);
     root.name = "toto";
     assert(root.name == "toto");
@@ -26,7 +26,7 @@ void main() {
 
   test('constructor empty but List ', () {
     dynamic root = MapList([]);
-    assert(root is List, true);
+    assert(root is MapListList, true);
     assert(root.isEmpty, true);
     // add is not a real map syntax but we tolerate this , as long this is a list of key:values
     var x = {"name": "toto", "age": 15, "weight": 65};
@@ -40,7 +40,7 @@ void main() {
   test('constructor with json String', () {
    String sJson= r""" {"name": "toto", "age": 15, "weight": 65} """;
    dynamic root = MapList(sJson);
-   assert(root is Map, true);
+   assert(root is MapListMap, true);
    assert(root.name == "toto");
   }
   );
@@ -48,7 +48,7 @@ void main() {
   test('constructor with a json map made of int ', () {
 
     dynamic root = MapList({"age": 15, "weight": 65});
-    assert(root is Map, true);
+    assert(root is MapListMap, true);
     assert(root.age == 15);
   }
   );
@@ -60,7 +60,7 @@ void main() {
     var jj = json.decode(sJson);
     dynamic root = MapList(jj);
 
-    assert(root is List, true);
+    assert(root is MapListList, true);
     assert(root[1].name == "zaza");
   }
   );

@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:json_xpath/map_list_lib.dart';
 
 /*
- Wrapper on a combined structure (maps and lists) to allow dot notation access.
- Useful to wrap a json as if it was already a set of classes
+ Wrapper on any combined structure (maps and lists) to allow dot notation access.
+ Useful to wrap a json as if it was already a set of classes.
  MapList is an ancestor of MapListList and MapListMap
    dedicated to respond respectively to "is List" or "is Map"
  */
@@ -12,17 +12,17 @@ import 'package:json_xpath/map_list_lib.dart';
 class MapList {
   /*
    internal collection of Lists, Maps and leaf Values of any types
-   public as we separate subClasses in several files and no protected option
+   (public as we separate subClasses in several files and no protected in Dart)
    */
   var wrapped_json;
 
-  // for more explicit error messages on [ ] calls retain the name used
+  // for more explicit error messages on [ ] calls, retain the name used
   static String lastInvocation;
 
 /*
  set the root node on right type
  (root of a valid json could also be a List)
- can give a String or an already decoded json
+ can use a String or an already decoded json
  */
 
   factory MapList([dynamic jsonInput]) {
@@ -37,24 +37,118 @@ class MapList {
   common constructor. Just set the initial internal collection
   if intial json is made of homeneous data, can be a specialized json
   so, we generalize to allow further other types
-
   */
   MapList.json(dynamic jsonInput) {
     wrapped_json = jsonInput;
+    // cannot retype(jsonInput) as this will change the pointer
   }
 
 /*
  as we can call either a Map or a List behind a MapList
- we define the operators here to be specialized later.
+ we define the operators and method here to be specialized later.
+ we are mandatory on the MapMixing and ListMixin interface
+ ------------- Shareable operators and methods -----------------
+ */
+/*
+ MAP:   operator []=(dynamic key, dynamic value)
+ LIST:   operator []=(Object key, dynamic value)  this one include previous
+ operator []=(Object key, dynamic value) {
+    print('must be overriden');
+  }
  */
 
-  operator [](Object key);
 
-  operator []=(Object key, dynamic value);
+  get isEmpty=> wrapped_json.isEmpty;
+  get isNotEmpty=> wrapped_json.isNotEmpty;
+  clear()=> wrapped_json.clear();
+  get hashCode => wrapped_json.hashCode;
 
-  remove(Object key);
+/*
+ -------------- specific method nice to have coulb be extended
+  get keys =>null;           // from Map , return null for List
+  add(dynamic value){} // from List. Can be uses on Map like an addAll
 
-  add(var something);
+
+ */
+
+/*
+ -------------- incompatible methods
+ MAP:  addAll(Map<dynamic,dynamic> other)
+ LIST: addAll(Iterable <dynamic> iterable
+
+
+ */
+
+  /*
+    dot notation try to find a property or a method on the MapList object
+    To trap all demands, we use the noSuchMethod allowed by dart:mirrors
+
+    When a composed name is called by in code, parts arrives one per one
+    (due to the .) and each part returns a new MapList to allow the pursuit.
+
+    When a composed name come from a script parameter,
+    the script split the demand in individual parts and call noSuchMethod
+
+    When there is .add(something) in code,
+    it goes directly on the corresponding method on a Map or a List
+
+   When in a script parameter
+
+   */
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    var member = invocation.memberName;
+
+    /*
+    get :   Symbol("name"): []
+    set:    Symbol("name="): [quizine]
+    set for list extension: .add(something)
+    set for Map fusion : .addAll(something)
+
+   */
+    //print('invocation: $member: ${invocation.positionalArguments} ');
+    String name;
+    if (member is Symbol) {
+      name = MirrorSystem.getName(member);
+      // to facilitate debug message, notice that place
+      MapList.lastInvocation = name;
+
+      // ------------------ setters with equals
+      if (name.endsWith('=')) {
+        name = name.replaceAll("=", "");
+        dynamic param = invocation.positionalArguments[0];
+
+        param = retype(param);
+        if (param is String) param = adjustParam(param);
+
+        this.wrapped_json[name] = param; // before []
+        return;
+      };
+
+
+        /*
+         getter (if unknown, return null)
+         the [ ] of this will create a MapList
+         */
+
+        /*
+        can be followed by a direct .add or .addAll
+         */
+
+        var next = wrapped_json[name];
+        if ((next is Map)||(next is List)) {
+          //print(next.hashCode);
+          MapList toReturn = MapList(next);
+          //print(toReturn.wrapped_json.hashCode);
+          return toReturn;
+        }
+          // simple data
+          return this.wrapped_json[name];
+        }
+      //end setters
+
+    }
+
 
   /*
    when coming by interpreter with = xxxx we must analyse the string :
@@ -99,87 +193,7 @@ class MapList {
     return param;
   }
 
-  /*
-    Here arrives the name of the data and the data when is with =
-    When a composed name is in code, parts arrives one per one (due to the .)
-    When a composed name is sent to script, script split it
-    and call noSuchMethod part per part.
 
-    When there is .add(something) in code,
-    it goes directly on the corresponding method
-    But when in script, this arrives here as a .add(something)
-
-   */
-  @override
-  dynamic noSuchMethod(Invocation invocation) {
-    var member = invocation.memberName;
-
-    /*
-    get :   Symbol("name"): []
-    set:    Symbol("name="): [quizine]
-    set for list extension: .add(something)
-    set for Map fusion : .addAll(something)
-
-   */
-    //print('invocation: $member: ${invocation.positionalArguments} ');
-    String name;
-    if (member is Symbol) {
-      name = MirrorSystem.getName(member);
-      // to facilitate debug message, notice that place
-      MapList.lastInvocation = name;
-
-      // ------------------ setters with equals
-      if (name.endsWith('=')) {
-        name = name.replaceAll("=", "");
-        dynamic param = invocation.positionalArguments[0];
-
-        param = retype(param);
-        if (param is String) param = adjustParam(param);
-
-        this[name] = param;
-        return;
-      }
-      ;
-      /*
-      *** remember only in script access ***
-       no =, but could be a setter with add(something) check it
-       the something arrives here onmy for script and in string
-       */
-
-      var foundAdd = reg_check_add.firstMatch(name);
-
-      // add is significant for List
-      if ((foundAdd != null) && ((this is List)||(this is Map)) ) {
-        // what is the something part
-        dynamic thingToAdd = foundAdd.group(0);
-        // remove "add(   )" parts
-        thingToAdd = thingToAdd.substring(4, thingToAdd.length - 1);
-        thingToAdd = adjustParam(thingToAdd);
-        this.add(thingToAdd);
-        return;
-      }
-
-      var foundAddAll = reg_check_addAll.firstMatch(name);
-      if ((foundAddAll != null) && (this is Map)) {
-        // what is the something part
-        dynamic thingToAdd = foundAddAll.group(0);
-        // remove "addAll(   )" parts
-        thingToAdd = thingToAdd.substring(7, thingToAdd.length - 1);
-        thingToAdd = adjustParam(thingToAdd);
-        this.add(thingToAdd);
-        return;
-      }
-
-        /*
-       was not .add, so it's a data
-         getter (if unknown, return null)
-         the [ ] of this will create a MapList
-         */
-      return this[name];
-      //end setters
-
-    }
-  }
 
 /*
 scalp the first part of path before a . toto.  rip[12].
@@ -223,8 +237,8 @@ scalp the first part of path before a . toto.  rip[12].
     if (where == null) return where;
     // found something correct : if a rank, apply it
     if (rank != null) {
-      if (this is List) where = where[rank];
-      if (this is Map) where = where[rank];
+      if (this is MapListList) where = where[rank];
+      if (this is MapListMap) where = where[rank];
     }
     return where;
   }
@@ -233,6 +247,7 @@ scalp the first part of path before a . toto.  rip[12].
    Allow some interpreter
    getter only
    */
+
 
   dynamic script(String script) {
     script = script.trim();
@@ -260,10 +275,12 @@ scalp the first part of path before a . toto.  rip[12].
       // let's check if the item exists
       var next = getItemWithOptionalRank(item);
       if ((next == null) && checkNull) return null;
-      // it's something correct (a MapList) go on on the script
+
 
       return next.script(script);
     }
+
+
     //--- recursive script has reached the end of the sentence
 
     /*
@@ -281,16 +298,65 @@ scalp the first part of path before a . toto.  rip[12].
       // in interpreter some method must not be sent to noSuchMethod
       // length could be a user entry
       if (script == "length") {
-        if (this is List) return (this.wrapped_json.length);
-        if (this is Map) {
-          if (this["length"] == null) return this.wrapped_json.length;
+        if (wrapped_json is Map ) {
+          if (wrapped_json["length"]!=null) return wrapped_json["length"];
         }
-        // otherwise leave it as standard search in case of [ ]
-      }
-      ;
+        return (this.wrapped_json.length);
+      };
+
+      /*
+       look on .add(something) method in script
+       */
+      var foundAdd = reg_check_add.firstMatch(script);
+      // add is significant for List when script
+      if ((foundAdd != null) && ((this is MapListList)||(this is MapListMap)) ) {
+        // what is the something part
+        dynamic thingToAdd = foundAdd.group(0);
+        // remove "add(   )" parts
+        thingToAdd = thingToAdd.substring(4, thingToAdd.length - 1);
+        thingToAdd = adjustParam(thingToAdd);
+
+        // use cast to call right method
+        if (this is MapListList){
+          MapListList m = this;
+          m.add(thingToAdd);
+        }
+        if (this is MapListMap ){
+          MapListMap m = this;
+          m.add(thingToAdd);
+        }
+
+        return;
+      } // add
+
+      /*
+       check for addAll
+       */
+      var foundAddAll = reg_check_addAll.firstMatch(script);
+      if ((foundAddAll != null) && ((this is MapListList)||(this is MapListMap))) {
+        // what is the something part
+        dynamic thingToAdd = foundAddAll.group(0);
+        // remove "addAll(   )" parts
+        thingToAdd = thingToAdd.substring(7, thingToAdd.length - 1);
+        thingToAdd = adjustParam(thingToAdd);
+        if (this is MapListList){
+          MapListList m = this;
+          m.addAll(thingToAdd);
+        }
+        if (this is MapListMap){
+          MapListMap m = this;
+          m.addAll(thingToAdd);
+        }
+
+        //this.addAll(thingToAdd);
+        return;
+      } // foundAll
+
+
 
       // try to get then entry named by last part
       dynamic value = getItemWithOptionalRank(script);
+
       // found a real entry value (or null)
       return value;
     } else
@@ -303,12 +369,16 @@ scalp the first part of path before a . toto.  rip[12].
       Invocation invocation = Invocation.setter(Symbol(script), paramString);
       noSuchMethod(invocation);
     } // item with end dot not found
+
+
   }
+
+
 
   /*
    retypes
    */
-  dynamic retype(dynamic something) {
+  static dynamic retype(dynamic something) {
     if (something is Map) {
       if (!(something.runtimeType is Map<dynamic, dynamic>)) {
         //print('found bad Map in List ${something.runtimeType} $something');
