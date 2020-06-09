@@ -131,8 +131,27 @@ class MapList {
         param = normaliseByJson(param);
         //param = retype(param);
         if (param is String) param = adjustParam(param);
-        wrapped_json[name] = param; // before []
-        MapList.traceHash1 = wrapped_json[name].hashCode;
+        /*
+         from script, can arrive here some name[2] =
+         when by code arrive name then dart call [2] operator
+         */
+
+        var found = reg_brackets.firstMatch(name);
+        if (found != null) {
+          //found sample :rawRank-> [1]
+          var rawRank = found.group(0);
+          // clean the item -> book
+          name = name.replaceAll(rawRank, '');
+          // remove brackets  : rawRank ->1
+          rawRank = rawRank.substring(1, rawRank.length - 1);
+          int rank = num.tryParse(rawRank);
+          if (!(rank == null)) {
+            wrapped_json[name][rank] = param;
+            return;
+          }
+        };
+
+        wrapped_json[name] = param;
         return;
       };
 
@@ -311,6 +330,7 @@ scalp the first part of path before a . toto.  rip[12].
       /*
        look on .add(something) method in script
        */
+
       var foundAdd = reg_check_add.firstMatch(script);
       // add is significant for List when script
       if ((foundAdd != null) && ((this is MapListList)||(this is MapListMap)) ) {
@@ -364,14 +384,16 @@ scalp the first part of path before a . toto.  rip[12].
       // found a real entry value (or null)
       return value;
     } else
-    // with parameters
+    // with = ie assignement
     {
+
       // restore = necessary for invocation in noSuchMethod
       script = script + "=";
       var paramString = parts[1].trim();
       // script relay on noSuchMethod
       Invocation invocation = Invocation.setter(Symbol(script), paramString);
       noSuchMethod(invocation);
+
     } // item with end dot not found
   }
 
