@@ -16,11 +16,13 @@ class MapListMap extends MapList {//with MapMixin {
   operator []=(dynamic key, dynamic value) {
   wrapped_json[key] = value;
   }
-
+/*
+ next is a json part
+ */
   operator [](Object key) {
     var next = wrapped_json[key];
     if (next is List || next is Map)
-      return MapList(next);
+      return MapList(next,false);
     else
       return next;
   }
@@ -65,6 +67,7 @@ class MapListMap extends MapList {//with MapMixin {
         // to allow continuation
         return MapList(this);
       };
+      print('** trying to addAll to a Map something else than another map');
     }
 
 

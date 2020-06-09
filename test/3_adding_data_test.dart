@@ -16,10 +16,25 @@ void main() {
 
   test("add raw data int in a List", () {
     // reset
+
     dynamic root = MapList();
+    var hash1 = root.wrapped_json.hashCode;
     root.data = [11,12,13];
     assert(root.data[2]==13);
+    var hash3 = root.data.wrapped_json.hashCode;
+    var hash33 = root.wrapped_json["data"].hashCode;
+    var hash2 = root.wrapped_json.hashCode;
+    assert(hash1==hash2, ' bad mutation on root.wrapped_json');
+
+
     root.data.add(14);
+    hash3 = root.data.wrapped_json.hashCode;
+    hash33 = root.wrapped_json["data"].hashCode;
+    assert(hash3 == hash33, '$hash3 $hash33');
+
+    var hash4 = root.data.wrapped_json.hashCode;
+    assert(hash3 == hash4);
+
     assert(root.data[3]==14);
     // now in script
     root.script('data.add(15)');
@@ -86,10 +101,17 @@ void main() {
 
     test("Adding new entries on an existing map ", () {
       // code
+      root = MapList();
+      root.results = [];
+      root.results.add({"elapsed_time": 30, "temperature": 18   });
+      root.results.add({"elapsed_time": 60, "temperature": 40 });
+
       root.results[1].time = "12:58:00";
+
+      assert(root.results[1].time is String, '${root.results[1].time}');
       // script
       root.script('results[1].duration = "01:00:00"');
-      assert(root.results[1].duration is String, true);
+      assert(root.results[1].duration is String, '${root.results[1].duration}');
 
     });
 

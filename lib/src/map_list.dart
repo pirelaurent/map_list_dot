@@ -14,7 +14,7 @@ class MapList {
    internal collection of Lists, Maps and leaf Values of any types
    (public as we separate subClasses in several files and no protected in Dart)
    */
-  var wrapped_json;
+  dynamic wrapped_json;
 
   // for more explicit error messages on [ ] calls, retain the name used
   static String lastInvocation;
@@ -23,17 +23,22 @@ class MapList {
  set the root node on right type
  (root of a valid json could also be a List)
  can use a String or an already decoded json
+
  */
 
-  factory MapList([dynamic jsonInput]) {
+  factory MapList([dynamic jsonInput, bool initial = true]){
+  // print('Factory ${jsonInput.runtimeType} ${jsonInput}');
 
     if (jsonInput is String) jsonInput = json.decode(jsonInput);
+    else {
+      if (initial) jsonInput = normaliseByJson(jsonInput) ;
+    }
 
     if (jsonInput is List) return MapListList.json(jsonInput);
 
     if (jsonInput is Map) return MapListMap.json(jsonInput);
     // if empty, create a simple Map<dynamic, dynamic>
-    return MapListMap.json({});
+    return MapListMap.json(normaliseByJson({}));
   }
 
   /*
@@ -43,7 +48,6 @@ class MapList {
   */
   MapList.json(dynamic jsonInput) {
     wrapped_json = jsonInput;
-    // cannot retype(jsonInput) as this will change the pointer
   }
 
 /*
@@ -120,11 +124,15 @@ class MapList {
       if (name.endsWith('=')) {
         name = name.replaceAll("=", "");
         dynamic param = invocation.positionalArguments[0];
-
-        param = retype(param);
+        /*
+         if coming with script, param is a string
+         if coming by code, param is already a constructed thing
+         */
+        param = normaliseByJson(param);
+        //param = retype(param);
         if (param is String) param = adjustParam(param);
-
-        this.wrapped_json[name] = param; // before []
+        wrapped_json[name] = param; // before []
+        MapList.traceHash1 = wrapped_json[name].hashCode;
         return;
       };
 
@@ -140,9 +148,7 @@ class MapList {
 
         var next = wrapped_json[name];
         if ((next is Map)||(next is List)) {
-          //print(next.hashCode);
-          MapList toReturn = MapList(next);
-          //print(toReturn.wrapped_json.hashCode);
+          MapList toReturn = MapList(next,false);
           return toReturn;
         }
           // simple data
@@ -176,11 +182,9 @@ class MapList {
     if (param == 'null') return null;
 
     var number = num.tryParse(param);
-
     if (number != null) return number;
-
 /*
- if between [ ] or between { } consider it's a json string
+ if between [ ] or between { } consider it's a json string to try
  */
     var found = reg_mapList.firstMatch(param);
     if (found != null) {
@@ -192,7 +196,7 @@ class MapList {
         return null;
       }
     }
-    // nothing special
+    // nothing special not yet returned
     return param;
   }
 
@@ -255,9 +259,8 @@ scalp the first part of path before a . toto.  rip[12].
   dynamic script(String script) {
     script = script.trim();
     var item;
-    // to follow nullable
-    bool checkNull = false;
-    // isolate a part up to a valid .
+    bool checkNull = false; // to follow nullable ?
+    // isolate a part up to a valid dot
     var found = reg_scalp.firstMatch(script);
     // not the end of sentence : go on the road
     if (found != null) {
@@ -278,8 +281,7 @@ scalp the first part of path before a . toto.  rip[12].
       // let's check if the item exists
       var next = getItemWithOptionalRank(item);
       if ((next == null) && checkNull) return null;
-
-
+      // found an existing part, recurse up to the end
       return next.script(script);
     }
 
@@ -287,16 +289,15 @@ scalp the first part of path before a . toto.  rip[12].
     //--- recursive script has reached the end of the sentence
 
     /*
-      no dot at the end
-       end leaf return expected data
-       special case : ends by .length
-       if "length" is not a key , returns the .length property
-       if ends with some = xxx apply a setter
+       end leaf reach expected data
+       if leaf name is length check if a valid key in a map,
+           otherwise returns the .length property
+       if the leaf is name = xxx apply a setter with the receveid parameter
        */
 
     var parts = script.split("=");
     script = parts[0].trim();
-    // no = sign
+    // no = sign, only one part
     if (parts.length == 1) {
       // in interpreter some method must not be sent to noSuchMethod
       // length could be a user entry
@@ -357,7 +358,7 @@ scalp the first part of path before a . toto.  rip[12].
 
 
 
-      // try to get then entry named by last part
+      // try to get the entry named by last part
       dynamic value = getItemWithOptionalRank(script);
 
       // found a real entry value (or null)
@@ -368,42 +369,14 @@ scalp the first part of path before a . toto.  rip[12].
       // restore = necessary for invocation in noSuchMethod
       script = script + "=";
       var paramString = parts[1].trim();
-
+      // script relay on noSuchMethod
       Invocation invocation = Invocation.setter(Symbol(script), paramString);
       noSuchMethod(invocation);
     } // item with end dot not found
-
-
   }
 
 
 
-  /*
-   retypes
-   */
-  static dynamic retype(dynamic something) {
-    if (something is Map) {
-      if (!(something.runtimeType is Map<dynamic, dynamic>)) {
-        //print('found bad Map in List ${something.runtimeType} $something');
-        Map<dynamic, dynamic> map = Map.fromEntries(something.entries);
-        something = map;
-      }
-    }
-
-    if (something is List) {
-      if (!(something.runtimeType is List<dynamic>)) {
-        //print('found a bad List in List ${something.runtimeType} $something');
-        List<dynamic> list = [];
-        something.forEach((element) {
-          list.add(element);
-        });
-        something = list;
-      }
-    }
-
-    // return as is
-    return something;
-  }
 
   /*
        to see something
@@ -413,4 +386,39 @@ scalp the first part of path before a . toto.  rip[12].
   String toString() {
     return wrapped_json.toString();
   }
+
+  /*
+   debug helpers
+   */
+  static void depiote(var someJson,[String key]){
+    key=key??"";
+    print(' ${someJson.runtimeType} (Map: ${someJson is Map} List: ${someJson is List}) ${someJson.hashCode} | $key: $someJson');
+    if (someJson is Map){
+      //print("Map : $key ${someJson.runtimeType}");
+      someJson.forEach((key, value) {
+        var suite = someJson[key];
+        if (suite is Map) depiote(suite,key);
+        if (suite is List) depiote(suite,key);
+        // others continue
+      });
+      return;
+    }
+    if (someJson is List){
+      //print('List : $key : ${someJson.runtimeType}');
+      someJson.forEach((suite) {
+        if (suite is Map) depiote(suite);
+        if (suite is List) depiote(suite);
+      });
+    }
+  }
+
+  static dynamic normaliseByJson(var something){
+    return json.decode(json.encode(something));
+  }
+
+  static var traceHash1 = 0;
+
+
+
+
 }
