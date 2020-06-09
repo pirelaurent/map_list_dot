@@ -1,4 +1,4 @@
-import 'package:json_xpath/src/map_list.dart';
+import 'package:json_xpath/map_list_lib.dart';
 import 'package:test/test.dart';
 import 'dart:convert';
 
@@ -16,33 +16,50 @@ void main() {
 
   test("add raw data int in a List", () {
     // reset
-    root = MapList();
+
+    dynamic root = MapList();
+    var hash1 = root.wrapped_json.hashCode;
     root.data = [11,12,13];
     assert(root.data[2]==13);
+    var hash3 = root.data.wrapped_json.hashCode;
+    var hash33 = root.wrapped_json["data"].hashCode;
+    var hash2 = root.wrapped_json.hashCode;
+    assert(hash1==hash2, ' bad mutation on root.wrapped_json');
+
+
     root.data.add(14);
+    hash3 = root.data.wrapped_json.hashCode;
+    hash33 = root.wrapped_json["data"].hashCode;
+    assert(hash3 == hash33, '$hash3 $hash33');
+
+    var hash4 = root.data.wrapped_json.hashCode;
+    assert(hash3 == hash4);
+
     assert(root.data[3]==14);
+    // now in script
     root.script('data.add(15)');
     assert(root.data[4]==15);
   });
 
 
-  test("add a map in a List of int ", () {
+  test("add a map in a List created with int ", () {
     // reset
     root = MapList();
     root.data = [11,12,13];
     assert(root.data[2]==13);
     //print('${root.data.runtimeType}');//MapListList
     root.data.add({"name":10});
-    assert(root.data[3] is Map);
+    assert(root.data[3] is MapListMap);
     root.script('data.add({"name":20})');
-    assert(root.data[4] is Map);
+    assert(root.data[4] is MapListMap);
 
     // can do that in code
     Map m1 = {"pouet":10};
     root.data.add(m1);
     assert(root.data[5].pouet == 10);
     // of course cannot do that in script as m1 is unknown
-    root.script('data.add(m1)');
+    root.script('data.add(m1)'); //will add 'm1'
+
   });
 
 
@@ -84,10 +101,17 @@ void main() {
 
     test("Adding new entries on an existing map ", () {
       // code
+      root = MapList();
+      root.results = [];
+      root.results.add({"elapsed_time": 30, "temperature": 18   });
+      root.results.add({"elapsed_time": 60, "temperature": 40 });
+
       root.results[1].time = "12:58:00";
+
+      assert(root.results[1].time is String, '${root.results[1].time}');
       // script
       root.script('results[1].duration = "01:00:00"');
-      assert(root.results[1].duration is String, true);
+      assert(root.results[1].duration is String, '${root.results[1].duration}');
 
     });
 
@@ -114,7 +138,6 @@ void main() {
   // cannot write like this :
     root.script('data.add(31)');
     assert(root.data[3]==31);
-    print( '*** something todo on List on list data.add([another list])');
   });
 
   // seems that add and addAll are the same
@@ -208,5 +231,7 @@ void main() {
     }
   });
   */
+
+
 
 }

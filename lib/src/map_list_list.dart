@@ -3,17 +3,13 @@ import 'dart:convert';
 import 'package:json_xpath/map_list_lib.dart';
 
 /*
- a MapListList is a List as it realizes ListMixin
+ a MapListList is no more a List as it don't realizes ListMixin
 
  */
-class MapListList extends MapList with ListMixin {
+class MapListList extends MapList {
   MapListList.json(dynamic json) : super.json(json);
 
   get length => wrapped_json.length;
-
-  set length(int len) {
-    wrapped_json.length = len;
-  }
 
   /*
    Setter in a list position.
@@ -30,12 +26,22 @@ class MapListList extends MapList with ListMixin {
   }
 
   @override
+  void remove(var aValue) {
+    wrapped_json.remove(aValue);
+  }
+
+
+  /*
+   getter in a list . can be an itermediate, so cast in MapList
+   to allow further dot notation
+   */
+  @override
   operator [](Object keyIndex) {
     try {
       var next = wrapped_json[keyIndex];
       // wrap result in a MapList to allow next dot notation
       if (next is List || next is Map)
-        return MapList(next);
+        return MapList(next,false);
       // if a leaf, return a simple value
       else
         return next;
@@ -46,14 +52,18 @@ class MapListList extends MapList with ListMixin {
   }
 
 /*
- When call directly from code :
- in case of List or Map, the something can be a restricted type
- (aka a Lis<int> or a Map<String, String>
- So we enlarge it with retype.
-
+ called directly by compiled code as MapListList mixin with list
  */
+  @override
   void add(dynamic something) {
-    something = retype(something);
-    wrapped_json.add(something);
+    something = MapList.normaliseByJson(something);
+    this.wrapped_json.add(something);
+  }
+
+
+  @override
+  void addAll(dynamic something) {
+    //something = MapList.retype(something);
+    this.wrapped_json.addAll(something);
   }
 }
