@@ -56,7 +56,12 @@ void main() {
     assert( map.script("length") == 3);
     assert( map.script("A") == "aa");
 
-     map = MapList({"name": "toto"});
+    /*
+     don't work if initialized with data
+     type '_InternalLinkedHashMap<String, dynamic>' is not a subtype of type 'Map<String, String>' of 'other'
+     */
+
+    map = MapList({"name": "toto"});
     map.script('addAll({"A": "aa", "B": "bb"})');
     assert( map.script("length") == 3);
     assert( map.script("A") == "aa");
