@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 
 /*
-  if wrong test , show what was expected and what we got
+  if wrong test , show what was expected and what we got to facilitate debug
  */
 void assertShow(var what, var expected) {
   assert(what == expected, "\nexpected: $expected got: $what");

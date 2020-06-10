@@ -1,73 +1,118 @@
 # MapList
-## Access json, maps, lists and data with a dot notation
-## In code or in script
-### Sample in code
+## access Json or Json Like with a dot notation,  in code or in script
+### Constructors
+MapList uses a factory and allows several constructors:
+
+     MapList();           // create a first empty node as a Map (default) 
+     MapList({});         // same as previous. More explicit.
+     MapList([])          // create a first empty node as a List 
+     MapList(jsonString); // create a full structure with a valid json string
+     MapList(someStructure);  // uses an already 'maps & list' structure or a Dart json object
+
+### Accessing data
+#### Sample in code ( where root is some MapList )
     root.show.name
     root.show.videos[1].name
     root.show.videos[1].questions[1].options[2].answer
-### Same sample in script
+#### Same sample in script ( where root is some MapList )
     root.script("show.name")
     root.script("show.videos[1].name")
     root.script("show.videos[1].questions[1].name")
     root.script("show.videos[1].questions[1].options[2].answer")
-#### Classical code with maps and lists
-    root["show"]["name"]
-    root["show"]["videos"][1]["name"]
-    root["show"]["videos"][1]["questions"][1]["name"]
-    root["show"]["videos"][1]["questions"][1]["options"][2]["answer"]
-## Taking care of null
-### Check null while accessing
-If some part on the path returns null, Dart can't continue as it will
-try to call methods on null :
 
-        assert(store.wrongName == null);  // ok 
-        assert(store.wrongName.someData == null)  // NoSuchMethodError: The getter 'someData' was called on null
-#### Use non-nullable notation
-To avoid this, Dart allows the use of non nullable **?**  
-The following work in code and in script :
+### Creating data
 
-        assert(store.wrongName?.someData==null);
-        assert(store.script("wrongName?.someData")==null);
+#### Summary of allowed direct assignements
 
-##### Null on existing List but wrong index
- If a list exists (here book is a List) and a wrong index is used, the
- result is null on the list.
+| Type                | samples                                                         |
+|:--------------------|:----------------------------------------------------------------|
+| string              | "hello", 'hello'                                                |
+| bool                | true, false                                                     |
+| int                 | 15 , -1 , 0                                                     |
+| double              | 2.899, -0.125     (more generally what react ok to num.tryParse |
+| map                 | { }                                                             |
+| list                | [ ]                                                             |
+| any valid structure | {"name":"toto", "score": \[11,15,8]}                            |
 
-    // in code  
+#### creating new entries in a map by code
+Any new name on a map level will create the data ( or replace it if
+exists)
+
+        dynamic squad = MapList();
+        squad.name = "Super hero squad";    // String
+        squad.homeTown = 'Metro City';      // String
+        squad.formed = 2016;                // int
+        squad.active = true;                // bool
+        squad.score = 38.5;                 // double
+
+#### creating same entries in a map by script
+
+        dynamic squad = MapList();
+        squad.script('name = "Super hero squad"'); // String with '" "'
+        squad.script("homeTown = 'Metro City'");   // String with "' '"
+        squad.script('formed = 2016');             // int
+        squad.script('active = true');             // bool
+        squad.script('score = 38.5');              // double
+
+### Creating mixed structures
+#### empty structures by code
+        dynamic squad = MapList();
+        squad.name = "Super hero squad"; // String entry
+        squad.members = [];              // Empty list names members
+        squad.members.add({});           // members[0] is another map  
+#### empty structures by script
+        dynamic squad = MapList();
+        squad.script('name = "Super hero squad"'); // String entry
+        squad.script ('members = []');              // Empty list names members
+        squad.script ('members.add({})');           // members[0] is another map
+#### Any structured data of json or maps and lists
+##### sample in code. Assign a full structure in a list in one shot
+        squad.members = [];
+            squad.members.add({
+                "name": "Molecule Man",
+                "age": 29,
+                "secretIdentity": "Dan Jukes",
+                "powers": ["Radiation resistance", "Turning tiny", "Radiation blast"]
+            });
+##### same sample in script (except Dart formatting for long string)
+        squad.script('members = []');
+        squad.script(
+            'members.add({ "name": "Molecule Man","age": 29,"secretIdentity": "Dan Jukes",'
+            '"powers": ["Radiation resistance", "Turning tiny", "Radiation blast"]})');
+        assert(squad.members[0].powers[1] == "Turning tiny");
+
+
+## Nullable capacities
+#### Check null while accessing
+To avoid the error "NoSuchMethodError: The getter 'someData' was called
+on null" while accessing, MapList allows the nullable notation.  The
+following code or script will return null or the data, in any case
+without crash if wrongName doesn't exist
+
+        store.wrongName?.someData
+        store.script('wrongName?.someData')
+
+##### List with wrong index and continuation
+ We made the choice to avoid error and MapList returns null if an
+ existing list is accessed with a wrong index :
+
         assert(store.book[4] == null); 
-    // in script    
         assert(store.script("book[4]") ==  null);
-  But if something goes ahead after a null , same care must be taken:
 
-    //in code, you must use nullable notation  
-        assert(store.book[4].author == null); // NoSuchMethodError: The getter 'author' was called on null.   
-        assert(store.book[4]?.author == null);   
-    // in script
-        assert(store.script("book[4]?.author") == null);
-#### Non existing List with an index
-**if the List doesn't exists** (here bookList):  
-As expected, code will failed with an error.  
-Script have some tolerance as it can detect that the list is null before
-applying index :
+#### Nullable available on unexisting index in a list
+To avoid a further call on null, the nullable is available after the
+index :
 
-    //code 
-        assert(store.bookList == null);  
-        assert(store.bookList[0]==null); // NoSuchMethodError: The method '[]' was called on null.
-    // script     
-        assert(store.script("bookList") == null);  
-        assert(store.script("bookList[0]") == null); // it's an implementation choice: null rather than an error 
+       assert(store.book[4]?.author == null);   
+       assert(store.script("book[4]?.author") == null);
+#### Non existing List
+ if the List doesn't exists at all, the nullable must be checked before
+ the index to avoid *"NoSuchMethodError: The method '[]' was called on
+ null."* The folowing run without errors :
 
-
-#### Using nullable to check list existence
-The common code must be to test nullable before the [].  
-If the script do it right now, the code must be updated to a high level
-of language :
-
-    // code
-        assert(store.bookList?[0]==null); // won't compile before Dart 2.9 
-    //script
-        assertShow(store.script("bookList?[0]"), null);    
-        assertShow(store.script("bookList?[0].date"), null);
+     assert(store.bookList?[0]==null); // won't compile before Dart 2.9 
+     assert(store.script("bookList?[0]") == null);    
+     assert(store.script("bookList?[0].date") == null);
 
 Dart allows this syntax **only with Dart 2.9** (which is in beta when
 writing ), so it's not yet available in these examples  
@@ -75,98 +120,29 @@ writing ), so it's not yet available in these examples
 enabled.Try to set the minimum SDK constraint to 2.9 or higher*
 
 ----------------------------------------------------------
-# Constructors
 
-To simplify the construction, MapList allows a (coded inside)
-polymorphic constructor :
 
-    dynamic root = MapList();           // create a first empty node as a Map (default) 
-    dynamic root = MapList({});         // same as previous. More explicit.
-    dynamic root = MapList([])          // create a first empty node as a List 
-    dynamic root = MapList(jsonString); // create a full structure with a valid json string
-    dynamic root = MapList(someStructure);  // uses an already 'maps & list' structure as a Dart json object
+### Adding and changing elementary data
 
-*( this polymorphism of constructor is hand made : the type of parameter
-is checked in the MapList class)*
+| Create new entries | usage                                       | samples                                       |
+|:-------------------|:--------------------------------------------|:----------------------------------------------|
+| =                  | on a map entry                              | car.price = 25000 (will replace if exists)    |
+| =                  | on an existing list entry                   | car.options\[0] = 'luxus';                    |
+| add                | add and initialize a new entry in a list    | car.options.add("comfort +");                 |
+| addAll             | add all entries of a map to an existing map | car.addAll({"fuel":"diesel", "hybrid":false}) |
+|                    |                                             |                                               |
 
-## get data
-Once loaded with a set of data, the getter are available in code and in
-script:
 
-    // code  
-        if (root.store.bikes[1].color == "grey") ...
-    // script
-        if (root.script("store.bikes[1].color") == "grey") ...
-## set data
-### on an existing entry
-    // code
-            root.store.bikes[1].color = "blue";
-    // script 
-            roort.script('store.bikes[1].color = "blue");
-### create new data in a Map
-    // in code 
-        dynamic squad = MapList();
-        squad.name = "Super hero squad";    // String
-        squad.homeTown = 'Metro City';      // String
-        squad.formed = 2016;                // int
-        squad.active = true;                // bool
-        squad.score = 38.5;                 // double
-    // in script 
-        dynamic squad = MapList();
-        squad.script('name = "Super hero squad"'); // String with '" "'
-        squad.script("homeTown = 'Metro City'");   // String with "' '"
-        squad.script('formed = 2016');             // int 
-        squad.script('active = true');             // bool
-        squad.script('score = 38.5');              // double 
+| Assignment with complex data | usage                    | sample                            |
+|:-----------------------------|:-------------------------|:----------------------------------|
+| any entry = complex          | on a map entry           | heroes.scores =\[20,50,20];       |
+|                              | on a member of a list    | car.options\[1] = {"hi-fi": true} |
+|                              | with any structured data | books.book = someJson;            |
 
-### Sample : create a List in a Map and fill an entry with another map
-    // in code 
-        //create a list in the previous map 
-            squad.members = [];
-        // assign a full structure in one shot
-            squad.members.add({
-                "name": "Molecule Man",
-                "age": 29,
-                "secretIdentity": "Dan Jukes",
-                "powers": ["Radiation resistance", "Turning tiny", "Radiation blast"]
-            });
-        // control 
-            assert(squad.members[0].powers[1] == "Turning tiny");            
-
-Same in script (except Dart formatting for long string)
-
-    // in script 
-        squad.script('members = []');
-        squad.script(
-            'members.add({ "name": "Molecule Man","age": 29,"secretIdentity": "Dan Jukes",'
-            '"powers": ["Radiation resistance", "Turning tiny", "Radiation blast"]})');
-        assert(squad.members[0].powers[1] == "Turning tiny");
-
-## Summary of assignements
-
-| Type                | samples                              |
-|:--------------------|:-------------------------------------|
-| string              | "hello", 'hello'                     |
-| bool                | true, false                          |
-| int                 | 15 , -1 , 0                          |
-| double              | 2.899, -0.125                        |
-| map                 | { }                                  |
-| list                | [ ]                                  |
-| any valid structure | {"name":"toto", "score": \[11,15,8]} |
-
-| Assignment on existing entry | usage                 | sample                    |
-|:-----------------------------|:----------------------|:--------------------------|
-| =  (equals)                  | on a map entry        | car.color= "blue"         |
-| =                            | on a member of a list | car.options\[1] = "hi-fi" |
-
-| Create new entries | usage     | samples                                                                      |
-|:-------------------|:----------|:-----------------------------------------------------------------------------|
-| = (equals)         | on a map  | car.price = 25000 (will replace if exists)                                   |
-| add                | on a list | car.options.add("comfort +");                                                |
-| addAll             | on a map  | add several entries to a map:  car.addAll({"fuel":"diesel", "hybrid":false}) |
-
-### About   .length
-MapList takes care of the .length as follow in code and script :
+#### caution about name '.length'
+MapList takes care of the .length item as it could be a valid entry in a
+map or a question about the length of the map or the list.  
+Behavior of .length :
 - on a List :
   - returns the length of the list
 - on a Map
@@ -174,13 +150,10 @@ MapList takes care of the .length as follow in code and script :
   - otherwise returns the length of the map
 
 
-
-
-
-
-
 ---
-## Loading a MapList from a file
+## Loading Json from a file
+MapList can be constructed initially with any json or any valid json
+string. Below are examples to load such data from a file.
 ### Sample with json
     var file = File(someFileName);
     var jsonString = file.readAsStringSync();
@@ -193,19 +166,79 @@ MapList takes care of the .length as follow in code and script :
 
 ---
 ### Sample with Yaml
- You can use MapList on a Yaml loaded with the dart yaml package.  
- **Warning ** : The default Yaml Maps and Lists are **read only**:  
- If uyou use Dart Yaml as is in MapList, you can get data but not set
- data .
+ You can use MapList on a Yaml loaded with the dart yaml package (not
+ directly a yaml string)
 
- Waiting for a more standard yaml package, for the day you can always
- reparse a yaml in standard json by :
+ As the default Yaml Maps and Yaml Lists are **read only**, MapList
+ converts the structure to a default json types at first load. ( with an
+ rather ugly json.decode(json.encode(yamlStructure))
     
     var file = File(someFileName);
     var yamlString = file.readAsStringSync();
     var yamlStructure = loadYaml(yamlString);
-    dynamic root = MapList(json.decode(json.encode(yamlStructure)));;
+    dynamic root = MapList(yamlStructure);
 
+---
+  # A look inside
+  ## classes
+   **MapList** is a wrapper class around a dynamic* wrapped_json*.  
+   **MapListList** and **MapListMap** are two derived classes to take care of specific access.
+#### about *is*
+A first attempt was made with *ListMixin* and *MapMixin* respectively on MapListList and MapListMap. But as they both inherit from a common MapList, this created unresolved conflicts.
+As a consequence, a MapList cannot be testes with *'is Map'* or *'is List'*, but must check **'is MapLisList'** or **'is MapListMap'**
+*( one can allways check MapList.wrapped_json is Map (or is List), but it's not the best idea)*
+
+    root = MapList({"members": [ { "name": "Bourne", "age": 33 }]});
+    assertShow(root is MapList, true);
+    assertShow(root is MapListMap, true);
+    assertShow(root.members is MapListList, true);
+    assertShow(root.members[0] is MapListMap, true);
+    assertShow(root.members[0].name is String, true);
+
+## data types
+A choice was made to avoid runtime conflicts on data types in maps or lists.  
+MapList standardise on the Dart Json model :
+- maps
+  - Map \<String, dynamic>    *(precisely the _InternalLinkedHashMap<String, int>)*
+- lists:
+  - List  \<dynamic >
+### converting data types
+A conversion is made by MapList when a new entry comes in :
+- At the initial construction
+- When adding a value responding positive to a regex that detect some Json_like structure
+
+For example, adding *scores=\[10,11,12]* will not stay a a *List\<int>* but will be converted to a *List\<dynamic>*
+By this way, all constructions are allowed ( like to add a map to the previous list )
+
+## use of noSuchMethod on a MapList to access data
+MapList is dynamic and use **dart:mirrors**  to use and override the  **noSuchMethod**
+### access in dart code
+When a dot notation is compiled by Dart, Dart will call individuals parts and use the result to the next call :
+
+    root.a.b.c[2].d = 33 
+Dart calls *noSuchMethod ('a')* to the MapList root.  
+MapList **returns a new MapList **( a MapListMap ) with a shift wrapped_json inside ( not a copy, the pointer)  
+Dart calls* noSuchMethod ('b')* on the returned MapList, which returns a new MapList (a MapListMap) shifted on b as first entry.
+
+Dart calls* noSuchMethod ('c')* on the returned MapList, which returns a new MapList (a MapListList) shifted on c as first entry.  
+Dart calls *operator \[1]* on the received MapList that chains to the \[1\] operator on the internal List, which returns again a shifted MapList
+Dart calls  *noSucheMethod (' d=', 33)* to the MapList that apply the assignement and return nothing.
+
+### access with script
+Scripts need an additional step :
+
+     root.script("a.b.c[2].d = 33"); 
+The received String is split around the. :  
+MapList search for 'a' using the noSuchMethod ('a') on the class  
+then called recursively
+- return script("b.c\[2].d = 33")
+- return script("c\[2].d = 33 ")
+- return script("d = 33")
+- return nothing if last node is x = something ,
+- or return data if last node without =
+
+Script analyse the data after **=** in order to convert it from string to the right type first  
+Unlike the code, the \[2\] is not called on the operator, but interpreted as an index and applied in script.
 
 
 

@@ -14,6 +14,21 @@ void main() {
   dynamic root;
 
 
+  dynamic squad = MapList();
+  squad.name = "Super hero squad"; // String entry
+  squad.members = [];              // Empty list names members
+  squad.members.add({});           // members[0] is another map
+
+   squad = MapList();
+  squad.script('name = "Super hero squad"'); // String entry
+  squad.script ('members = []');              // Empty list names members
+  squad.script ('members.add({})');           // members[0] is another map
+
+
+
+
+
+
   test("add raw data int in a List", () {
     // reset
 

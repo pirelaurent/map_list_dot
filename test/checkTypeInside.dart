@@ -1,6 +1,12 @@
 import 'dart:collection';
 import 'dart:convert';
 
+/*
+ internal tests made on the way to understand Type conflicts
+
+ */
+
+
 void depiote(var someJson,[String key]){
   key=key??"";
   if (someJson is Map){

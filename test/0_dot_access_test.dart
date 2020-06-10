@@ -18,9 +18,8 @@ void main() {
   var file = File(testFile);
   var yamlString = file.readAsStringSync();
   var xYaml = loadYaml(yamlString);
-  dynamic root = MapList(json.decode(json.encode(xYaml)));
-
-  test("direct access with standard notation", () {
+  dynamic root = MapList(xYaml);
+    test("direct access with standard notation", () {
     // --- verify still working with standard notation
 
     assertShow(root["show"]["name"], "quiz on video");

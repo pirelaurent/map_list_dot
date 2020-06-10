@@ -19,6 +19,8 @@ void main() {
 
   test("check map or list in code ",()
   {
+    //root = MapList({"members": [ { "name": "Bourne", "age": 33 }]});
+    assertShow(root is MapList, true);
     assertShow(root is MapListMap, true);
     assertShow(root.members is MapListList, true);
     assertShow(root.members[0] is MapListMap, true);

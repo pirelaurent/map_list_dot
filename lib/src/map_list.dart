@@ -26,12 +26,13 @@ class MapList {
 
  */
 
-  factory MapList([dynamic jsonInput, bool initial = true]){
-  // print('Factory ${jsonInput.runtimeType} ${jsonInput}');
+  factory MapList([dynamic jsonInput, bool initial = true]) {
+    // print('Factory ${jsonInput.runtimeType} ${jsonInput}');
 
-    if (jsonInput is String) jsonInput = json.decode(jsonInput);
+    if (jsonInput is String)
+      jsonInput = json.decode(jsonInput);
     else {
-      if (initial) jsonInput = normaliseByJson(jsonInput) ;
+      if (initial) jsonInput = normaliseByJson(jsonInput);
     }
 
     if (jsonInput is List) return MapListList.json(jsonInput);
@@ -64,10 +65,12 @@ class MapList {
   }
  */
 
+  get isEmpty => wrapped_json.isEmpty;
 
-  get isEmpty=> wrapped_json.isEmpty;
-  get isNotEmpty=> wrapped_json.isNotEmpty;
-  clear()=> wrapped_json.clear();
+  get isNotEmpty => wrapped_json.isNotEmpty;
+
+  clear() => wrapped_json.clear();
+
   get hashCode => wrapped_json.hashCode;
 
 /*
@@ -149,34 +152,32 @@ class MapList {
             wrapped_json[name][rank] = param;
             return;
           }
-        };
+        }
 
         wrapped_json[name] = param;
         return;
-      };
+      }
+      ;
 
-
-        /*
+      /*
          getter (if unknown, return null)
          the [ ] of this will create a MapList
          */
 
-        /*
+      /*
         can be followed by a direct .add or .addAll
          */
 
-        var next = wrapped_json[name];
-        if ((next is Map)||(next is List)) {
-          MapList toReturn = MapList(next,false);
-          return toReturn;
-        }
-          // simple data
-          return this.wrapped_json[name];
-        }
-      //end setters
-
+      var next = wrapped_json[name];
+      if ((next is Map) || (next is List)) {
+        MapList toReturn = MapList(next, false);
+        return toReturn;
+      }
+      // simple data
+      return this.wrapped_json[name];
     }
-
+    //end setters
+  }
 
   /*
    when coming by interpreter with = xxxx we must analyse the string :
@@ -218,8 +219,6 @@ class MapList {
     // nothing special not yet returned
     return param;
   }
-
-
 
 /*
 scalp the first part of path before a . toto.  rip[12].
@@ -274,7 +273,6 @@ scalp the first part of path before a . toto.  rip[12].
    getter only
    */
 
-
   dynamic script(String script) {
     script = script.trim();
     var item;
@@ -304,7 +302,6 @@ scalp the first part of path before a . toto.  rip[12].
       return next.script(script);
     }
 
-
     //--- recursive script has reached the end of the sentence
 
     /*
@@ -321,11 +318,12 @@ scalp the first part of path before a . toto.  rip[12].
       // in interpreter some method must not be sent to noSuchMethod
       // length could be a user entry
       if (script == "length") {
-        if (wrapped_json is Map ) {
-          if (wrapped_json["length"]!=null) return wrapped_json["length"];
+        if (wrapped_json is Map) {
+          if (wrapped_json["length"] != null) return wrapped_json["length"];
         }
         return (this.wrapped_json.length);
-      };
+      }
+      ;
 
       /*
        look on .add(something) method in script
@@ -333,7 +331,8 @@ scalp the first part of path before a . toto.  rip[12].
 
       var foundAdd = reg_check_add.firstMatch(script);
       // add is significant for List when script
-      if ((foundAdd != null) && ((this is MapListList)||(this is MapListMap)) ) {
+      if ((foundAdd != null) &&
+          ((this is MapListList) || (this is MapListMap))) {
         // what is the something part
         dynamic thingToAdd = foundAdd.group(0);
         // remove "add(   )" parts
@@ -341,11 +340,11 @@ scalp the first part of path before a . toto.  rip[12].
         thingToAdd = adjustParam(thingToAdd);
 
         // use cast to call right method
-        if (this is MapListList){
+        if (this is MapListList) {
           MapListList m = this;
           m.add(thingToAdd);
         }
-        if (this is MapListMap ){
+        if (this is MapListMap) {
           MapListMap m = this;
           m.add(thingToAdd);
         }
@@ -357,17 +356,18 @@ scalp the first part of path before a . toto.  rip[12].
        check for addAll
        */
       var foundAddAll = reg_check_addAll.firstMatch(script);
-      if ((foundAddAll != null) && ((this is MapListList)||(this is MapListMap))) {
+      if ((foundAddAll != null) &&
+          ((this is MapListList) || (this is MapListMap))) {
         // what is the something part
         dynamic thingToAdd = foundAddAll.group(0);
         // remove "addAll(   )" parts
         thingToAdd = thingToAdd.substring(7, thingToAdd.length - 1);
         thingToAdd = adjustParam(thingToAdd);
-        if (this is MapListList){
+        if (this is MapListList) {
           MapListList m = this;
           m.addAll(thingToAdd);
         }
-        if (this is MapListMap){
+        if (this is MapListMap) {
           MapListMap m = this;
           m.addAll(thingToAdd);
         }
@@ -375,8 +375,6 @@ scalp the first part of path before a . toto.  rip[12].
         //this.addAll(thingToAdd);
         return;
       } // foundAll
-
-
 
       // try to get the entry named by last part
       dynamic value = getItemWithOptionalRank(script);
@@ -386,19 +384,14 @@ scalp the first part of path before a . toto.  rip[12].
     } else
     // with = ie assignement
     {
-
       // restore = necessary for invocation in noSuchMethod
       script = script + "=";
       var paramString = parts[1].trim();
       // script relay on noSuchMethod
       Invocation invocation = Invocation.setter(Symbol(script), paramString);
       noSuchMethod(invocation);
-
     } // item with end dot not found
   }
-
-
-
 
   /*
        to see something
@@ -412,20 +405,23 @@ scalp the first part of path before a . toto.  rip[12].
   /*
    debug helpers
    */
-  static void depiote(var someJson,[String key]){
-    key=key??"";
-    print(' ${someJson.runtimeType} (Map: ${someJson is Map} List: ${someJson is List}) ${someJson.hashCode} | $key: $someJson');
-    if (someJson is Map){
+  static void depiote(var someJson, [String key]) {
+    if (someJson is MapList) someJson = someJson.wrapped_json;
+    key = key ?? "";
+    print(
+        ' ${someJson.runtimeType} (Map: ${someJson is Map} List: ${someJson is List}) ${someJson.hashCode} | $key: someJson');
+
+    if (someJson is Map) {
       //print("Map : $key ${someJson.runtimeType}");
       someJson.forEach((key, value) {
         var suite = someJson[key];
-        if (suite is Map) depiote(suite,key);
-        if (suite is List) depiote(suite,key);
+        if (suite is Map) depiote(suite, key);
+        if (suite is List) depiote(suite, key);
         // others continue
       });
       return;
     }
-    if (someJson is List){
+    if (someJson is List) {
       //print('List : $key : ${someJson.runtimeType}');
       someJson.forEach((suite) {
         if (suite is Map) depiote(suite);
@@ -434,13 +430,7 @@ scalp the first part of path before a . toto.  rip[12].
     }
   }
 
-  static dynamic normaliseByJson(var something){
+  static dynamic normaliseByJson(var something) {
     return json.decode(json.encode(something));
   }
-
-  static var traceHash1 = 0;
-
-
-
-
 }
