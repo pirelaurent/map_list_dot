@@ -1,5 +1,5 @@
 
-import 'package:json_xpath/src/map_list.dart';
+import 'package:map_list_dot/map_list_dot_lib.dart';
 import 'package:test/test.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
@@ -84,8 +84,6 @@ void main() {
     book.script('"name"="zorro"');
     assert((book.name == "zorro")==false);
 
-
- print(book);
   });
 
 

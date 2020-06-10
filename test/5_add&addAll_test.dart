@@ -1,4 +1,4 @@
-import 'package:json_xpath/map_list_lib.dart';
+import 'package:map_list_dot/map_list_dot_lib.dart';
 import 'package:test/test.dart';
 
 void main() {

@@ -1,6 +1,6 @@
 import 'dart:collection';
 import 'dart:convert';
-import 'package:json_xpath/map_list_lib.dart';
+import 'package:map_list_dot/map_list_dot_lib.dart';
 
 /*
  a MapListList is no more a List as it don't realizes ListMixin

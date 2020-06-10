@@ -1,5 +1,5 @@
-name: json_xpath
-description: some xpath interpreter on json
+name: map_list_dot
+description: accessing json & other with a dot notation in code or in script
 version: 0.0.1
 author: pierre Laurent
 
