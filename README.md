@@ -240,5 +240,34 @@ then called recursively
 Script analyse the data after **=** in order to convert it from string to the right type first  
 Unlike the code, the \[2\] is not called on the operator, but interpreted as an index and applied in script.
 
+### odds & ends
+ **More common utility methods**  
+  The following are available directly on MapList and  propagate to internal data
 
+        get isEmpty => wrapped_json.isEmpty;
+        get isNotEmpty => wrapped_json.isNotEmpty;
+        clear() => wrapped_json.clear();
+        get hashCode => wrapped_json.hashCode;
+
+
+ **Caution about dot path name**  
+The name part of a path is allways the same in code or script without quotes :
+
+    book.name = "zaza"
+    book.script('name = "zaza"');
+In case of an over quoted string in interpreter :
+
+    book.script('"name"="zorro"');     
+MapList will apply the demand and create another instead of changing name entry :  
+*{name: zaza, , "name": zorro, friends: \[{name: lulu}]}*
+
+ **can use MapList relay**  
+As a dotted question returns a MapList at every level with a correct shifted json,  
+and as the json entries are never copied but stay as pointers,  
+one can use intermediate dynamic for commdity:
+
+    dynamic root = MapList(jsonString);
+    dynamic store = root.store;
+    dynamic bookCollection = store.book;
+    dynamic myPrefered = bookCollection[2];   
 

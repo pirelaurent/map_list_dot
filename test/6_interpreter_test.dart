@@ -75,5 +75,18 @@ void main() {
     assertShow(store.bikes[1].color, "maroon");
   });
 
+  test (' try item in string by error in interpreter ',(){
+    dynamic book = MapList('{"name":"zaza", "friends": [{"name": "lulu" }]}');
+    assert(book.friends[0].name == "lulu");
+    assert(book.script('friends[0].name') == "lulu");
+
+    assert(book.name == "zaza");
+    book.script('"name"="zorro"');
+    assert((book.name == "zorro")==false);
+
+
+ print(book);
+  });
+
 
 }
