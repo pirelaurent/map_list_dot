@@ -1,28 +1,29 @@
-import 'dart:collection';
+
+import 'dart:io';
+
 import 'package:map_list_dot/map_list_dot_lib.dart';
 
-/*
- Map wrapper . no Mixin
- */
+/// extends MapList to offer Map methods
 
-class MapListMap extends MapList {//with MapMixin {
+class MapListMap extends MapList {
+  //with MapMixin {
   MapListMap.json(dynamic json) : super.json(json);
 
-
   get length => wrapped_json.length;
+
   get keys => wrapped_json.keys;
 
-
   operator []=(dynamic key, dynamic value) {
-  wrapped_json[key] = value;
+    wrapped_json[key] = value;
   }
+
 /*
  next is a json part
  */
   operator [](Object key) {
     var next = wrapped_json[key];
     if (next is List || next is Map)
-      return MapList(next,false);
+      return MapList(next, false);
     else
       return next;
   }
@@ -45,31 +46,29 @@ class MapListMap extends MapList {//with MapMixin {
    In fact it's addALL filtered in MapList level
    cannot override standard addALl
    */
-  MapList add(var something){
+  MapList add(var something) {
     // add new raw entries to the current map
-    if (something is Map){
+    if (something is Map) {
       wrapped_json.addAll(something);
       // to allow continuation
       return MapList(this);
-    };
+    }
+    ;
     /*
      adding anything else to a map is forbidden
      */
-    print('** error : trying to add non amp to current map $something to \n$this');
-      return MapList(this);
-    }
-
-  @override
-  dynamic addAll(dynamic something) {
-      // add new entries to the current map
-      if (something is Map) {
-        this.wrapped_json.addAll(something);
-        // to allow continuation
-        return MapList(this);
-      };
-      print('** trying to addAll to a Map something else than another map');
-    }
-
-
+    print(
+        '** error : trying to add non amp to current map $something to \n$this');
+    return MapList(this);
   }
 
+  dynamic addAll(dynamic something) {
+    // add new entries to the current map
+    if (something is Map) {
+      this.wrapped_json.addAll(something);
+      // to allow continuation
+      return MapList(this);
+    };
+    stderr.write('** trying to addAll to a Map something else than another map \n $something');
+  }
+}

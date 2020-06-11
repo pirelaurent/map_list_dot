@@ -28,13 +28,23 @@ void main() {
     assert(root.data[3] == 14);
   });
 
-  test("extends a map to a map in script  ", () {
+  test("extends a map to a map by addAll in script  ", () {
     // reset
     dynamic car = MapList();
     car.name = "Ford";
     car.color = "blue";
     assert(car.color == "blue");
     car.script('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
+    assert(car.length == 5);
+  });
+
+  test("extends a map to a map by add . tolerance", () {
+    // .add doesn't exist for map, ony List. If called, tolerate as an AddAll
+    dynamic car = MapList();
+    car.name = "Ford";
+    car.color = "blue";
+    assert(car.color == "blue");
+    car.script('add({ "price": 5000, "fuel":"diesel","hybrid":false})');
     assert(car.length == 5);
   });
 
@@ -55,15 +65,5 @@ void main() {
     map.script('addAll({"A": "aa", "B": "bb"})');
     assert(map.script("length") == 3);
     assert(map.script("A") == "aa");
-
-    /*
-    dynamic list = MapList([]);
-    list.add(15);
-    list.script('addAll([1, 2, 3])');
-    print(list);
-    assert(list.script("length") == 4);
-    assert(list.script('[2]') == 2);
-
-     */
   });
 }

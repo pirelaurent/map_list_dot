@@ -1,12 +1,12 @@
-import 'dart:collection';
+
 import 'dart:convert';
 
-/*
- internal tests made on the way to understand Type conflicts
-
- */
+///
+/// internal tests made on the way to understand Type conflicts
 
 
+
+/// recursive analysis
 void depiote(var someJson,[String key]){
   key=key??"";
   if (someJson is Map){
@@ -28,6 +28,8 @@ void depiote(var someJson,[String key]){
   }
 }
 
+///
+/// to be ataunomous from MapList
 dynamic normaliseByJson(var something){
   return json.decode(json.encode(something));
 }
