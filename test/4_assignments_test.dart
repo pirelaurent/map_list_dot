@@ -8,8 +8,7 @@ import 'package:path/path.dart' as path;
  */
 void assertShow(var what, var expected) {
   assert(what == expected,
-  "\nexpected: $expected  ${expected.runtimeType} got: $what ${what
-      .runtimeType}");
+      "\nexpected: $expected  ${expected.runtimeType} got: $what ${what.runtimeType}");
 }
 
 void main() {
@@ -24,8 +23,10 @@ void main() {
     root.dico.FR = "salut";
     assert(root.dico.FR == 'salut');
     assert(root.dico.length == 3);
+
     // change type of an entry
     root.dico.FR = ["bonjour", "salut", "helloxx"];
+
     assert(root.dico.length == 3);
     assert(root.dico.FR[1] == "salut");
     root.dico.FR[2] = "hello";
@@ -34,10 +35,8 @@ void main() {
     assert(root.dico.FR[2] == "hello");
 
     root.script('dico.FR[2] = "comment va"');
-    ;
     assert(root.dico.FR[2] == "comment va");
   });
-
 
   test("assignment on first level with code", () {
     squad = MapList();
@@ -86,7 +85,7 @@ void main() {
     squad.script('members = []');
     squad.script(
         'members.add({ "name": "Molecule Man","age": 29,"secretIdentity": "Dan Jukes",'
-            '"powers": ["Radiation resistance", "Turning tiny", "Radiation blast"]})');
+        '"powers": ["Radiation resistance", "Turning tiny", "Radiation blast"]})');
 
     assert(squad.members[0].powers[1] == "Turning tiny");
   });
@@ -106,5 +105,5 @@ void main() {
     squad.script('members[0].powers[1] = "Turning weird"');
     assert(squad.members[0].powers[1] == "Turning weird");
     assert(squad.script('members[0].powers[1]') == "Turning weird");
-    });
+  });
 }

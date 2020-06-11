@@ -19,7 +19,7 @@ void main() {
   var yamlString = file.readAsStringSync();
   var xYaml = loadYaml(yamlString);
   dynamic root = MapList(xYaml);
-    test("direct access with standard notation", () {
+  test("direct access with standard notation", () {
     // --- verify still working with standard notation
 
     assertShow(root["show"]["name"], "quiz on video");
@@ -38,8 +38,8 @@ void main() {
     assertShow(root.show.videos[1].questions[1].options[2].answer, "go");
   });
 
-
   test("access to structure dot notation with script ", () {
+    dynamic root = MapList(xYaml);
     // --- now the same with a dot notation
     assertShow(root.script("show.name"), "quiz on video");
     assertShow(root.script("show.videos[1].name"), "japaneese fashion");
@@ -47,5 +47,4 @@ void main() {
     assertShow(
         root.script("show.videos[1].questions[1].options[2].answer"), "go");
   });
-
 }

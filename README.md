@@ -108,7 +108,7 @@ assert(store.script("book[4]?.author") == null);
 #### Non existing List
  if the List doesn't exists at all, the nullable must be checked before
  the index to avoid *"NoSuchMethodError: The method '[]' was called on
- null."* The folowing run without errors :
+ null."* The following run without errors :
 
 ```assert(store.bookList?[0]==null); // won't compile before Dart 2.9
 assert(store.script("bookList?[0]") == null);    
@@ -176,6 +176,34 @@ print(store.book[2].title;
 var yamlString = file.readAsStringSync();
 var yamlStructure = loadYaml(yamlString);
 dynamic root = MapList(yamlStructure);
+```
+---
+## trapped errors
+Some errors are trapped by MapList in order to avoid runtime crash  
+It's a choice to continue returning null value on wrong call.  
+These errors are detected but sent to **stdErr** for trace.  
+*( To restore a higher level of trap, just add a throwException(); in these parts )*
+
+#### dart syntax errors at compile time
+```var list =[];
+// assuming toto is not an int : syntax errors : 
+list[toto] 
+list['toto']
+// assuming name is not a List : syntax errors :
+root.name[0]
+```
+#### trapped errors in script
+With wrong index: in getter returns null, in setter data stays unchanged  
+the  **\*\*message**  are sent to stderr.
+```
+root.script('name["toto"]="riri"');
+// ** bad index : name["toto"] . data unchanged. return null
+
+root.script('name[toto]="riri"');
+//** bad index : name[toto] . data unchanged. return null
+
+root.script('name[0]="lulu"');
+//** wrong index [0] in name[0] : not a List: data unchanged. return null
 ```
 
 ---

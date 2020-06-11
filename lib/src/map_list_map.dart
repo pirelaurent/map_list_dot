@@ -1,4 +1,3 @@
-
 import 'dart:io';
 
 import 'package:map_list_dot/map_list_dot_lib.dart';
@@ -68,7 +67,9 @@ class MapListMap extends MapList {
       this.wrapped_json.addAll(something);
       // to allow continuation
       return MapList(this);
-    };
-    stderr.write('** trying to addAll to a Map something else than another map \n $something');
+    }
+    ;
+    stderr.write(
+        '** trying to addAll to a Map something else than another map \n $something');
   }
 }
