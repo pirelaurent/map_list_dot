@@ -72,7 +72,7 @@ class MapList {
   /// bb is then called on this new MapList, etc.
   ///
   /// [ ] operators are called directly by dart on the MapListMap or MapListList
-  /// same thing for the .add and .addAll methods
+  /// same thing for the .add and .addAll methods as they exist
   ///
   /// if the received Invocation has no assignment = something
   ///   the last step returns a data (ie getter)
@@ -87,11 +87,25 @@ class MapList {
     String name;
     if (member is Symbol) {
       name = MirrorSystem.getName(member);
-
       // ------------------ setters if equals
       if (name.endsWith('=') == false) {
+        // special case if pseudo index in quotes at root: root.script(" '[255]' = 20");
+        if (name == "''") {
+          stderr.write(
+              "** wrong name : index between quote. '[ ]'.  null returned \n");
+          return null;
+        }
+
         /// getter returns another MapList to continue or a data at the end
+        /// but if it is a list, error
+        if (this is MapListList) {
+          stderr.write(
+              '** List error: trying to get a key "$name" from a List. Null returned ');
+          return null;
+        }
+        lastInvocation = name;
         var next = wrapped_json[name];
+
         if ((next is Map) || (next is List)) {
           return MapList(next, false);
         } else
@@ -124,7 +138,7 @@ class MapList {
             if ((rank >= 0) && (rank < wrapped_json[name].length)) {
               wrapped_json[name][rank] = param;
             } else {
-              stderr.write ('** index out of range on $name : $rank');
+              stderr.write('** index out of range on $name : $rank');
             }
             return;
           }
@@ -343,11 +357,12 @@ class MapList {
     var originalItem = item;
     int rank;
     bool withBrackets = false;
+    var rawRank;
     var found = reg_brackets_relax.firstMatch(item);
     if (found != null) {
       withBrackets = true;
       //found sample :rawRank-> [1]
-      var rawRank = found.group(0);
+      rawRank = found.group(0);
 
       // clean the item -> book
       item = item.replaceAll(rawRank, '');
@@ -363,9 +378,10 @@ class MapList {
     if (item == "") {
       where = this;
     } else {
-      // first get an access to the item
+      // first try to get an access to the item
       Invocation invocation = Invocation.getter(Symbol(item));
       where = noSuchMethod(invocation);
+
     }
 
     if (where == null) return where;
@@ -376,11 +392,12 @@ class MapList {
         //if (this is MapListMap)  return where[rank];
         if (where is MapListList) return where[rank];
         stderr.write(
-            '** wrong index [$rank] in $originalItem : not a List: data unchanged. return null \n');
+            '** wrong index [$rank]. $originalItem is not a List. get: null returned ; set: no change\n');
         return null; // previously where
       } else {
+         print('PLA: $rawRank');
         stderr.write(
-            "** bad index : $originalItem . data unchanged. return null \n");
+            "** bad index : $originalItem . get: null returned. set: no change \n");
         // wrong demand into [ ]
         return null;
       }
@@ -398,7 +415,7 @@ class MapList {
     try {
       return json.decode(something);
     } catch (e) {
-      stderr.write('** MapList will return null :  $e ');
+      stderr.write('** wrong data. MapList will return null :  $e ');
       return null;
     }
   }

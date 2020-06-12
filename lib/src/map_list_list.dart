@@ -14,7 +14,7 @@ class MapListList extends MapList {
     try {
       wrapped_json[key] = value;
     } catch (e) {
-      print("** on List : \"${MapList.lastInvocation} [$key] = \" : $e");
+      print("** on List : \"${MapList.lastInvocation} [$key] = \" : $e \n");
       return null;
     }
   }
@@ -39,7 +39,8 @@ class MapListList extends MapList {
       else
         return next;
     } catch (e) {
-       stderr.write("** On List: \"${MapList.lastInvocation} [$keyIndex]\" : $e");
+      var from = MapList.lastInvocation??"at root: ";
+       stderr.write("** List error: \"$from [$keyIndex]\" : $e \n");
       return null;
     }
   }

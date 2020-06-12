@@ -178,24 +178,33 @@ var yamlStructure = loadYaml(yamlString);
 dynamic root = MapList(yamlStructure);
 ```
 ---
-## trapped errors
-Some errors are trapped by MapList in order to avoid runtime crash  
-It's a choice to continue returning null value on wrong call.  
-These errors are detected but sent to **stdErr** for trace.  
-*( To restore a higher level of trap, just add a throwException(); in these parts )*
+## Trapped errors
+Some errors are trapped by MapList in order to avoid runtime crash, especially in interpreter.  
+Mainly, the trapped errors send a message on **stdErr** and return null on a getter and leave unchanged on a setter.
+*( To restore a higher level of trap, just add a throwException(); where stdErr is used )*
+### Trapped errors
+#### wrong json in constructor or in setters
 
-#### dart syntax errors at compile time
-```var list =[];
-// assuming toto is not an int : syntax errors : 
-list[toto] 
-list['toto']
-// assuming name is not a List : syntax errors :
-root.name[0]
+The first error can happen only with interpreter as Dart will signal *```root.name = [10,11,12,]```* as a syntax error
 ```
-#### trapped errors in script
-With wrong index: in getter returns null, in setter data stays unchanged  
-the  **\*\*message**  are sent to stderr.
+root.script('name = [10,11,12,]');
+-> ** wrong data. MapList will return null :  FormatException: Unexpected character (at character 11)
+[10,11,12,]
+         ^
 ```
+
+The following happens when using a wrong json string. Same thing with code : if using a direct structure (without external quotes),  
+Dart will signal a syntax error : *```dynamic root = MapList({"this": is not a[12] valid entry });```*
+```
+dynamic root = MapList('{"this": is not a[12] valid entry }');
+-> ** wrong data. MapList will be null :  FormatException: Unexpected character (at character 10)
+{"this": is not a [12] valid entry }
+        ^  
+```
+#### wrong use of index  or index out of range
+
+
+
 root.script('name["toto"]="riri"');
 // ** bad index : name["toto"] . data unchanged. return null
 
@@ -204,6 +213,17 @@ root.script('name[toto]="riri"');
 
 root.script('name[0]="lulu"');
 //** wrong index [0] in name[0] : not a List: data unchanged. return null
+
+
+
+#### dart syntax errors at compile time
+```
+var list =[];
+// assuming toto is not an int : syntax errors : 
+list[toto] 
+list['toto']
+// assuming name is not a List : syntax errors :
+root.name[0]
 ```
 
 ---
