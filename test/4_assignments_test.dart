@@ -18,7 +18,7 @@ void main() {
   test("assignment to add & replace data in Map & List", () {
     root = MapList();
     root.dico = {"US": "hello", "FR": "bonjour"};
-    root.dico.add({"JP": "こんにちは"});
+    root.dico.addAll({"JP": "こんにちは"});
     assert(root.dico.FR == 'bonjour');
     root.dico.FR = "salut";
     assert(root.dico.FR == 'salut');

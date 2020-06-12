@@ -5,6 +5,8 @@ void show(var reg, var aString){
 //  print(foundAll.elementAt(0).group(0));
   for (var ff in foundAll ){
     print(ff.group(0));
+
+
   }
   print(foundAll.isNotEmpty);
   if (foundAll.isEmpty){
@@ -14,7 +16,20 @@ void show(var reg, var aString){
 
 
 void main() {
-  var reg_scalp_relax = RegExp(r"""[a-zA-Z0-9_ \? \[\]"]*[\.=]""");
+  var reg_scalp_relax = RegExp(r"""([a-zA-Z0-9_ \?\s\[\]\(\)"]*)[\.=]""");
+
+  show(reg_scalp_relax, 'data.add(31).');
+
+print('-----------------------------');
+
+
+  var reg_check_add = RegExp(r"""^add\((.*)\)""");
+  show(reg_check_add,'add(15)');
+  print(reg_check_add.firstMatch('name = "polo" '));
+
+
+  show(reg_check_add,'add({"name":10, "scores" :[11,12,15]})');
+  show(reg_check_add,'add({ "name":(10), "scores" : [11,12,15]}');
 
   var reg_brackets_relax = RegExp(r"""\["?[A-Za-z0-9]*"?]\??""");
   show(reg_scalp_relax,'bikes[1].color.');

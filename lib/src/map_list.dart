@@ -155,11 +155,10 @@ class MapList {
   /// Some regex to help
   /// \ is useful for some regex (doubled avoid to be trapped by dart)
   /// scalp : extract a front part of a script
-  static final reg_scalp =
-      RegExp("^[a-zA-Z0-9_]*(\\[[0-9]*(\\.\\.)?[0-9]*\\])?\\??\\.");
 
   // to allow trap of [toto]
-  static final reg_scalp_relax = RegExp(r"""[a-zA-Z0-9_ \? \[\]"]*[\.=]""");
+  static final reg_scalp_relax = RegExp(
+      r"""(add\s?\(.*\)|addAll\s?\(.*\)|[\w\d_ \?\s\[\]{}:,"']*)[\.=]""");
 
   /// detect num index [123]
   static final reg_brackets = RegExp("\\[[0-9]*\\]");
@@ -177,16 +176,16 @@ class MapList {
   static final reg_rhs = RegExp(r"""=.*""");
 
   /// isolate var name person[12] or name.  -> person
-  static final reg_dry_name = RegExp(r"""^[A-Za-z_][A-Za-z_]*""");
+  static final reg_dry_name = RegExp(r"""(^[A-Za-z_][A-Za-z_]*)""");
 
   /// identify json script candidates : begin and end by [ ] or { }
   static final reg_mapList = RegExp("^[\\[\\{].*[\\}\\]]");
 
   /// trap .add method in a script
-  static final reg_check_add = RegExp("^add\\(.*\\)");
+  static final reg_check_add = RegExp(r"""^add\((.*)\)""");
 
   /// trap .addAll method in a script
-  static final reg_check_addAll = RegExp("^addAll\\(.*\\)");
+  static final reg_check_addAll = RegExp(r"""^addAll\((.*)\)""");
 
   /// script demands arrives here in one big string
   /// A front part is isolated and executed to find next position
@@ -197,9 +196,12 @@ class MapList {
   /// solo index '[1]' will return the [1] of current (if list)
   ///
   dynamic script([String aScript = ""]) {
+    print(
+        'PLA90:_______________________ at script $aScript on ${this.wrapped_json}');
     bool setter = false;
     aScript = aScript.trim();
-    print('PLA0: $aScript');
+    var originalScript = aScript;
+    print('PLA91: $aScript');
 
     /*
      split into parts ending by . or =
@@ -213,30 +215,69 @@ class MapList {
       String rawDataName = rhs_s.elementAt(0).group(0);
       var aDataName = rawDataName.substring(1).trim();
       dataToSet = adjustParam(aDataName);
-      print("PLA : setter found: $dataToSet ${dataToSet.runtimeType}");
+      print("PLA92 : setter found: $dataToSet ${dataToSet.runtimeType}");
       setter = true;
       // retract this part from script
-      aScript = aScript.replaceAll(rawDataName, "");
+      aScript = aScript.replaceAll(rawDataName, "").trim();
     }
+
     // add an ending point to facilitate split
     aScript += '.';
-    print('PLA plus dot $aScript');
     // now the named variable one per one
     Iterable lhs_s = reg_scalp_relax.allMatches(aScript);
+    print('PLA..................................$aScript');
+    for (var aLhs in lhs_s) {
+      print(aLhs.group(1));
+    }
+    print('PLA..................................');
     /*
     the variable part can have enclosed index
 
      */
     dynamic where = this.wrapped_json;
+    dynamic previous = where;
+    var aVarName;
+
+    print('PLA93: on part de $where');
     for (var aLhs in lhs_s) {
-      var aPathStep = aLhs.group(0);
-      print('PLA LHS  : $aPathStep ${lhs_s.length}');
-      aPathStep = aPathStep.substring(0, aPathStep.length - 1);
+      var aPathStep = aLhs.group(1);
+      //remove the dot
+      bool nullable = aPathStep.endsWith('?');
       // get name only (can be null if [ ] direct )
-      var aVarName = reg_dry_name.firstMatch(aPathStep)?.group(0);
+      print('PLA 94 aPathStep=========== $aPathStep');
+
       // could be a reserved word
-      if (aVarName == 'add') return null; // @todo
-      if (aVarName == 'addAll') return null; // @todo
+      var foundAdd = reg_check_add.firstMatch(aPathStep);
+      if (!(foundAdd == null)) {
+        dataToSet = foundAdd.group(1);
+        dataToSet = adjustParam(dataToSet);
+        print('PLA96 Add $dataToSet $where');
+        if (where is List)
+          where.add(dataToSet);
+        else {
+          stderr.write(
+              '** method add is not valid outside a List . data dataToSet not set\n');
+        }
+        ;
+        return null;
+      }
+
+      // could be a reserved word addAll
+      var foundAddAll = reg_check_addAll.firstMatch(aPathStep);
+      if (!(foundAddAll == null)) {
+        dataToSet = foundAddAll.group(1);
+        dataToSet = adjustParam(dataToSet);
+        print('PLA96 Add $dataToSet');
+        where.addAll(dataToSet);
+        return null;
+      }
+
+/*
+    not add or addAll, isolate dry name against any index [ ]
+ */
+      aVarName = reg_dry_name.firstMatch(aPathStep)?.group(1);
+      print('PLA95: aVarName: $aVarName');
+
       /*
       try to find this var name. could be :
       simple : dico
@@ -246,8 +287,9 @@ class MapList {
       with several brackets : name["what"].scores[10]
       starting at the very front : [12] ["pouet"]
       */
-      print("PLA dry variable name : $aVarName in  $aPathStep");
-      bool nullable = aVarName.endsWith('?');
+
+      print(
+          "PLA97 dry variable name : $aVarName in  $aPathStep nullable: $nullable");
       if (nullable) aVarName = aVarName.substring(0, aVarName.length - 1);
       /*
        before attempting to apply some index, find the dry part
@@ -258,11 +300,26 @@ class MapList {
           stderr.write("* searching $aVarName in a ${this.runtimeType}\n");
           return null;
         }
+        print('PLA98: on a ${where.runtimeType} $where');
         // could be unknown but a creation
+        previous = where;
         var next = where[aVarName];
-        print('PLA Next : $next)');
+        print('PLA99 Next : $next $nullable)');
         if (nullable && (next == null)) return null; // that's all
-        // ?? create new entry in the map in case of a future assignment =
+        if (next == null) {
+          print('PLA99_1 $next $previous');
+          // if setter create en entry . will be overwrite by the equals
+          if (setter) {
+            previous[aVarName] = null;
+            next = where[aVarName];
+          } else {
+            stderr.write(
+                '** try to use a non existing key : $aVarName in $originalScript \n');
+            return null;
+          }
+        }
+        print('PLA99_2 $previous $where ');
+        previous = where;
         where = next;
       }
       print('PLA100: we are on $where to use brackets ');
@@ -270,6 +327,8 @@ class MapList {
        we now progress on index
        */
       var bracketsList = reg_brackets_relax.allMatches(aPathStep);
+      // to remember position once leaf reached
+      var lastRank, lastNameOfIndex;
       for (var aBl in bracketsList) {
         var anIndex = aBl.group(0);
         bool nullable = anIndex.endsWith('?');
@@ -279,6 +338,8 @@ class MapList {
          */
 
         var numIndex = reg_indexNum.firstMatch(anIndex);
+        lastRank= null;
+
         if (numIndex != null) {
           var rawRank = numIndex.group(1);
           if (!(where is List)) {
@@ -295,11 +356,14 @@ class MapList {
             return null;
           }
           // advance
+          previous = where;
           where = where[rank];
-          print('PLAX1 $where');
+          lastRank = rank;
+          print('PLAX1 $where $lastRank');
           continue;
         } // num index
 
+          lastNameOfIndex = null;
         var stringIndex = reg_indexString.firstMatch(anIndex);
         if (stringIndex != null) {
           var nameOfIndex = numIndex.group(1);
@@ -313,10 +377,12 @@ class MapList {
             if (setter) {
               where[nameOfIndex] = Map<String, dynamic>();
               where = where[nameOfIndex];
+              lastNameOfIndex = nameOfIndex;
             } else {
               // not found and not a setter
               return null;
             }
+            previous = where;
             where = next;
             continue;
           }
@@ -332,12 +398,18 @@ class MapList {
     } // for lhs
 
     if (setter) {
-      where = dataToSet;
+      print('PLA ***** on est ici avec lastNameOfIndex lastRank previous et where pour faire qqchose ');
+      if ((where is List) || (where is Map))
+        where = dataToSet;
+      else
+        {
+print('PLA999 : $aVarName $previous $where')  ;
+          previous = dataToSet;}
     } else {
       return where;
     }
 
-    return 'poet are the best';
+    return 'poets are always the best';
   }
 
   ///

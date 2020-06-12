@@ -12,6 +12,9 @@ void assertShow(var what, var expected) {
 void main() {
   dynamic root;
 
+  test('create new data ',(){
+
+
   dynamic squad = MapList();
   squad.name = "Super hero squad"; // String entry
   squad.members = []; // Empty list names members
@@ -19,8 +22,15 @@ void main() {
 
   squad = MapList();
   squad.script('name = "Super hero squad"'); // String entry
+  assert(squad.name == "Super hero squad");
+
   squad.script('members = []'); // Empty list names members
+  assert(squad.members.isEmpty, '${squad.members}');
+
   squad.script('members.add({})'); // members[0] is another map
+  print(squad);
+
+  });
 
   test("add raw data int in a List", () {
     // reset
@@ -165,13 +175,13 @@ void main() {
     assert(car.length == 5);
   });
 
-  test("extends a map to a map in script with add ", () {
+  test("extends a map to a map in script with addAll ", () {
     // reset
     dynamic car = MapList();
     car.name = "Ford";
     car.color = "blue";
     assert(car.color == "blue");
-    car.script('add({ "price": 5000, "fuel":"diesel","hybrid":false})');
+    car.script('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
     assert(car.length == 5);
   });
 
