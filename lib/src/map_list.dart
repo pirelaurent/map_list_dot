@@ -25,7 +25,7 @@ class MapList {
 
   factory MapList([dynamic jsonInput, bool initial = true]) {
     // if empty, create a simple Map<dynamic, dynamic>
-    if (jsonInput is Null) jsonInput = {};
+    if (jsonInput == null) jsonInput = {};
     // try to decode a string and normalise structure
     if (jsonInput is String)
       jsonInput = trappedJsonDecode(jsonInput);
@@ -124,9 +124,10 @@ class MapList {
         /*
          from script, can arrive here some name[2] =
          when by code arrive name only then dart call [2] operator
-         */
+
         var found = reg_brackets.firstMatch(name);
         if (found != null) {
+
           //found sample :rawRank-> [1]
           var rawRank = found.group(0);
           // clean the item -> book
@@ -143,6 +144,7 @@ class MapList {
             return;
           }
         }
+        */
         // not a [ ] index
         wrapped_json[name] = param;
         return;
@@ -157,14 +159,25 @@ class MapList {
       RegExp("^[a-zA-Z0-9_]*(\\[[0-9]*(\\.\\.)?[0-9]*\\])?\\??\\.");
 
   // to allow trap of [toto]
-  static final reg_scalp_relax =
-      RegExp("^[a-zA-Z0-9_]*(\\[[a-zA-Z0-9_]*(\\.\\.)?[0-9]*\\])?\\??\\.");
+  static final reg_scalp_relax = RegExp(r"""[a-zA-Z0-9_ \? \[\]"]*[\.=]""");
 
   /// detect num index [123]
   static final reg_brackets = RegExp("\\[[0-9]*\\]");
 
   /// detect (several) index [123] ["abc"]
-  var reg_brackets_relax= RegExp(r"""\["?[A-Za-z0-9]*"?]""");
+  static final reg_brackets_relax = RegExp(r"""\["?[A-Za-z0-9]*"?]\??""");
+
+  // extract from ["abcAZA"] or ['abcAZA'] or [  "abcAZA" ] etc.
+  static final reg_indexString = RegExp(r"""\[\s*['"]([a-zA-Z0-9\s]*)['"]\]""");
+
+  // extract form [123] or [  123  ]
+  static final reg_indexNum = RegExp(r"""\[\s*([(0-9\s]*)\]""");
+
+  // get part after = if exists
+  static final reg_rhs = RegExp(r"""=.*""");
+
+  /// isolate var name person[12] or name.  -> person
+  static final reg_dry_name = RegExp(r"""^[A-Za-z_][A-Za-z_]*""");
 
   /// identify json script candidates : begin and end by [ ] or { }
   static final reg_mapList = RegExp("^[\\[\\{].*[\\}\\]]");
@@ -184,134 +197,147 @@ class MapList {
   /// solo index '[1]' will return the [1] of current (if list)
   ///
   dynamic script([String aScript = ""]) {
+    bool setter = false;
     aScript = aScript.trim();
-
-    var item;
-    bool checkNull = false; // to follow nullable ?
-    // isolate a part up to a valid dot
-    var found = reg_scalp_relax.firstMatch(aScript);
-    // not the end of sentence : go on the road
-    if (found != null) {
-      // get this part of the sentence book[1].isbn -> book[1].
-      item = found.group(0);
-
-      // clean up this beginning in script -> isbn
-      aScript = aScript.replaceFirst(item, '');
-      // remove the dot -> book[1]
-      item = item.substring(0, item.length - 1);
-      // check if a checknull option ? at the end
-      var lastChar = item[item.length - 1];
-      if (lastChar == '?') {
-        checkNull = true;
-        // remove the ?
-        item = item.substring(0, item.length - 1);
-      }
-      // let's check if the item exists
-
-      var next = getItemWithOptionalRank(item);
-
-      if ((next == null) && checkNull) return null;
-      // even if no ? in case of wrong index:error was produced but continue
-      if (next == null) return null;
-      // found an existing part, recurse up to the end
-
-      return next.script(aScript);
-    }
+    print('PLA0: $aScript');
 
     /*
-       recursive script is now on  the end of the sentence
-       end leaf reach expected data
-       if leaf name is length check if a valid key in a map,
-           otherwise returns the .length property
-       if the leaf is name = xxx apply a setter with the receveid parameter
-       */
+     split into parts ending by . or =
+     if no = can leave a last name like boof.price
+     soo we add it a dot : boof.price. to facilitate split
+     */
+    Iterable rhs_s = reg_rhs.allMatches(aScript);
+    var dataToSet;
+    if (rhs_s.isNotEmpty) {
+      // found an = evaluate rhs . it begins with '='
+      String rawDataName = rhs_s.elementAt(0).group(0);
+      var aDataName = rawDataName.substring(1).trim();
+      dataToSet = adjustParam(aDataName);
+      print("PLA : setter found: $dataToSet ${dataToSet.runtimeType}");
+      setter = true;
+      // retract this part from script
+      aScript = aScript.replaceAll(rawDataName, "");
+    }
+    // add an ending point to facilitate split
+    aScript += '.';
+    print('PLA plus dot $aScript');
+    // now the named variable one per one
+    Iterable lhs_s = reg_scalp_relax.allMatches(aScript);
+    /*
+    the variable part can have enclosed index
 
-    var parts = aScript.split("=");
-    aScript = parts[0].trim();
-    // no = sign : only one part
-    if (parts.length == 1) {
-      // length could be a user entry
-      if (aScript == "length") {
-        if (wrapped_json is Map) {
-          if (wrapped_json["length"] != null) return wrapped_json["length"];
+     */
+    dynamic where = this.wrapped_json;
+    for (var aLhs in lhs_s) {
+      var aPathStep = aLhs.group(0);
+      print('PLA LHS  : $aPathStep ${lhs_s.length}');
+      aPathStep = aPathStep.substring(0, aPathStep.length - 1);
+      // get name only (can be null if [ ] direct )
+      var aVarName = reg_dry_name.firstMatch(aPathStep)?.group(0);
+      // could be a reserved word
+      if (aVarName == 'add') return null; // @todo
+      if (aVarName == 'addAll') return null; // @todo
+      /*
+      try to find this var name. could be :
+      simple : dico
+      simple with nullable : dico?
+      with brackets : scores[10]
+      with nullable at several places : scores?[10]?
+      with several brackets : name["what"].scores[10]
+      starting at the very front : [12] ["pouet"]
+      */
+      print("PLA dry variable name : $aVarName in  $aPathStep");
+      bool nullable = aVarName.endsWith('?');
+      if (nullable) aVarName = aVarName.substring(0, aVarName.length - 1);
+      /*
+       before attempting to apply some index, find the dry part
+       */
+      if (aVarName != null) {
+        // we have a name : must exists an entry . Implies a map
+        if (!(this.wrapped_json is Map)) {
+          stderr.write("* searching $aVarName in a ${this.runtimeType}\n");
+          return null;
         }
-        return (this.wrapped_json.length);
+        // could be unknown but a creation
+        var next = where[aVarName];
+        print('PLA Next : $next)');
+        if (nullable && (next == null)) return null; // that's all
+        // ?? create new entry in the map in case of a future assignment =
+        where = next;
       }
+      print('PLA100: we are on $where to use brackets ');
       /*
-       .add or .addAll method in script are called directly
+       we now progress on index
        */
-      var foundAdd = reg_check_add.firstMatch(aScript);
-      // add is significant for List when script
-      if ((foundAdd != null) &&
-          ((this is MapListList) || (this is MapListMap))) {
-        // what is the something part
-        dynamic thingToAdd = foundAdd.group(0);
-        // remove "add(   )" parts
-        thingToAdd = thingToAdd.substring(4, thingToAdd.length - 1);
-        thingToAdd = adjustParam(thingToAdd);
-        if (this is MapListList) {
-          MapListList m = this;
-          m.add(thingToAdd);
-        }
-        if (this is MapListMap) {
-          MapListMap m = this;
-          m.add(thingToAdd);
-        }
-        return;
-      } // add
+      var bracketsList = reg_brackets_relax.allMatches(aPathStep);
+      for (var aBl in bracketsList) {
+        var anIndex = aBl.group(0);
+        bool nullable = anIndex.endsWith('?');
 
-      /*
-       same for .addAll
-       */
-      var foundAddAll = reg_check_addAll.firstMatch(aScript);
-      if ((foundAddAll != null) &&
-          ((this is MapListList) || (this is MapListMap))) {
-        // what is the something part
-        dynamic thingToAdd = foundAddAll.group(0);
-        // remove "addAll(   )" parts
-        thingToAdd = thingToAdd.substring(7, thingToAdd.length - 1);
-        thingToAdd = adjustParam(thingToAdd);
-        if (this is MapListList) {
-          MapListList m = this;
-          m.addAll(thingToAdd);
-        }
-        if (this is MapListMap) {
-          MapListMap m = this;
-          m.addAll(thingToAdd);
-        }
-        return;
-      } // foundAll
+        /*
+         accept ["abc"] ['abc'] on a map and [123] on a list
+         */
 
-      /*
-       the end was not .length .add or .addAll, find the entry in json
-       */
-      dynamic value = getItemWithOptionalRank(aScript);
-      return value;
+        var numIndex = reg_indexNum.firstMatch(anIndex);
+        if (numIndex != null) {
+          var rawRank = numIndex.group(1);
+          if (!(where is List)) {
+            stderr
+                .write('** $anIndex must be applied to a List. null returned ');
+            return null;
+          }
+          print('PLAXX: $rawRank ');
+          var rank = num.tryParse(rawRank);
+          if ((rank < 0) || (rank >= where.length)) {
+            if (!nullable) // no error if anticipated
+              stderr.write(
+                  '** wrong index $anIndex. null returned '); //@todo mmore explicit
+            return null;
+          }
+          // advance
+          where = where[rank];
+          print('PLAX1 $where');
+          continue;
+        } // num index
+
+        var stringIndex = reg_indexString.firstMatch(anIndex);
+        if (stringIndex != null) {
+          var nameOfIndex = numIndex.group(1);
+          if (!(where is Map)) {
+            stderr
+                .write('** $anIndex must be an entry in a map. null returned ');
+            return null;
+          }
+          var next = where[nameOfIndex];
+          if (next == null) {
+            if (setter) {
+              where[nameOfIndex] = Map<String, dynamic>();
+              where = where[nameOfIndex];
+            } else {
+              // not found and not a setter
+              return null;
+            }
+            where = next;
+            continue;
+          }
+          ;
+        }
+      } //for brackets
+      print('PLA on sort du loop de brackets');
+/*
+ when we arrive here, all index have been applied to the dry variable
+ but if it is not the last part, let's loop
+ check if a set or get
+ */
+    } // for lhs
+
+    if (setter) {
+      where = dataToSet;
     } else {
-      /* we are on a setter  with an = , will call noSuchMethod
-        restore = sign  for invocation then invoke
-       */
-      aScript = aScript + "=";
-      var paramString = parts[1].trim();
+      return where;
+    }
 
-      /*
-       If there is an index [ ], before calling assignment, verify validity
-       but for new entry in a map, create even if not exists
-       */
-
-      var what = parts[0].trim();
-
-      if (reg_brackets_relax.firstMatch(what) != null) {
-        var atLeaf = getItemWithOptionalRank(what);
-        // this index doesn't exist
-        if (atLeaf == null) return;
-      }
-      if (aScript != null) {
-        Invocation invocation = Invocation.setter(Symbol(aScript), paramString);
-        noSuchMethod(invocation);
-      }
-      return;
-    } // item with end dot not found
+    return 'poet are the best';
   }
 
   ///
@@ -348,22 +374,78 @@ class MapList {
     return param;
   }
 
+  /*
+       .add or .addAll method directly on json data
+       */
+  bool foundAdd(var aScript) {
+    var foundTermAdd = reg_check_add.firstMatch(aScript);
+    if (foundTermAdd == null) return false;
+    // add is significant for List when script
+    dynamic thingToAdd;
+    if ((this is MapListList) || (this is MapListMap)) {
+      // what is the something part
+      thingToAdd = foundTermAdd.group(0);
+      // remove "add(   )" parts
+      thingToAdd = thingToAdd.substring(4, thingToAdd.length - 1);
+      thingToAdd = adjustParam(thingToAdd);
+      if (this is MapListList) {
+        MapListList m = this;
+        m.add(thingToAdd);
+      }
+      if (this is MapListMap) {
+        MapListMap m = this;
+        m.add(thingToAdd);
+      }
+    } else {
+      stderr.write("** trying to use add $thingToAdd out of Map or List ");
+    }
+    return true;
+  }
+
+  /*
+       if (.addAll(same for .addAll
+  */
+  bool foundAddAll(aScript) {
+    var foundTermAddAll = reg_check_addAll.firstMatch(aScript);
+    if (foundTermAddAll == null) return false;
+    dynamic thingToAdd;
+    if ((this is MapListList) || (this is MapListMap)) {
+      // what is the something part
+      thingToAdd = foundTermAddAll.group(0);
+      // remove "addAll(   )" parts
+      thingToAdd = thingToAdd.substring(7, thingToAdd.length - 1);
+      thingToAdd = adjustParam(thingToAdd);
+      if (this is MapListList) {
+        MapListList m = this;
+        m.addAll(thingToAdd);
+      }
+      if (this is MapListMap) {
+        MapListMap m = this;
+        m.addAll(thingToAdd);
+      }
+    } else {
+      stderr.write("** trying to use addAll $thingToAdd out of Map or List ");
+    }
+    return true;
+  }
+
   /// find an item by its string name 'name' or name[rank]
   /// uses the common code by invokink noSuchMethod on the MapList
   /// can generate an error if rank is not valid and no nullable option
 
   dynamic getItemWithOptionalRank(String item) {
+    print('PLA6: $item in getItem...');
     dynamic where;
     var originalItem = item;
     int rank;
     bool withBrackets = false;
     var rawRank;
 
-    Iterable foundAll = reg_brackets_relax.allMatches(item);//
-    for (var ff in foundAll ){
-      rawRank= ff.group(0); // at this step, get the last one only
-    }// à déplacer
-
+    Iterable foundAll = reg_brackets_relax.allMatches(item); //
+    for (var ff in foundAll) {
+      rawRank = ff.group(0); // at this step, get the last one only
+      print('PLA7: $rawRank');
+    } // à déplacer
 
     // calculate a rank if numerical
     if (foundAll.isNotEmpty) {
@@ -374,6 +456,7 @@ class MapList {
       // remove brackets  : rawRank ->1
       rawRank = rawRank.substring(1, rawRank.length - 1);
       rank = num.tryParse(rawRank);
+      print('PLA8: $rank');
     }
     /*
      in rare case where the root is a List,
@@ -383,24 +466,25 @@ class MapList {
     if (item == "") {
       where = this;
     } else {
+      print('PLA9:$item');
       // first try to get an access to the item
       Invocation invocation = Invocation.getter(Symbol(item));
       where = noSuchMethod(invocation);
-
     }
-
+    print('PLA10:$where ${where.runtimeType}');
     if (where == null) return where;
     // found something correct : if a valid rank, apply it
     if (withBrackets) {
       if (rank != null) {
-        //if (this is MapListList) return where[rank];
-        //if (this is MapListMap)  return where[rank];
-        if (where is MapListList) return where[rank];
+        if (where is MapListList) {
+          print('PLA11: ${where[rank]}');
+          return where[rank];
+        }
         stderr.write(
             '** wrong index [$rank]. $originalItem is not a List. get: null returned ; set: no change\n');
         return null; // previously where
       } else {
-         print('PLA: $rawRank');
+        print('PLA: $rawRank');
         stderr.write(
             "** bad index : $originalItem . get: null returned. set: no change \n");
         // wrong demand into [ ]
@@ -409,9 +493,6 @@ class MapList {
     } else // no brackets
       return where;
   }
-
-
-
 
   /// the most simple and sure method to align the types
   /// Not so efficient? but used only one time on setter

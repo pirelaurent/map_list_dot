@@ -26,6 +26,7 @@ void main() {
   });
 
   test('basic verification on interpreted access ', () {
+    assertShow(store.script("book[1].isbn"), null);
     assertShow(store.script("bikes[1].color"), "grey");
     assertShow(store.script("book[0].isbn"), "978-1-78899-879-6");
     assertShow(store.script("book[1].isbn"), null);
