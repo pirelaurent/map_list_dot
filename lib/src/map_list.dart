@@ -163,8 +163,8 @@ class MapList {
   /// detect num index [123]
   static final reg_brackets = RegExp("\\[[0-9]*\\]");
 
-  /// detect index [ any ]
-  static final reg_brackets_relax = RegExp("\\[.*\\]");
+  /// detect (several) index [123] ["abc"]
+  var reg_brackets_relax= RegExp(r"""\["?[A-Za-z0-9]*"?]""");
 
   /// identify json script candidates : begin and end by [ ] or { }
   static final reg_mapList = RegExp("^[\\[\\{].*[\\}\\]]");
@@ -358,12 +358,17 @@ class MapList {
     int rank;
     bool withBrackets = false;
     var rawRank;
-    var found = reg_brackets_relax.firstMatch(item);
-    if (found != null) {
+
+    Iterable foundAll = reg_brackets_relax.allMatches(item);//
+    for (var ff in foundAll ){
+      rawRank= ff.group(0); // at this step, get the last one only
+    }// à déplacer
+
+
+    // calculate a rank if numerical
+    if (foundAll.isNotEmpty) {
       withBrackets = true;
       //found sample :rawRank-> [1]
-      rawRank = found.group(0);
-
       // clean the item -> book
       item = item.replaceAll(rawRank, '');
       // remove brackets  : rawRank ->1
@@ -405,7 +410,12 @@ class MapList {
       return where;
   }
 
-  /// the most simple,  efficient and sure method to align the types
+
+
+
+  /// the most simple and sure method to align the types
+  /// Not so efficient? but used only one time on setter
+  ///
   static dynamic normaliseByJson(var something) {
     return trappedJsonDecode(json.encode(something));
   }

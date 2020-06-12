@@ -16,7 +16,6 @@ void main() {
     assert(root.person[0].name == "zaza");
     print(root.person[0]["name"]);
     print(root.script('person[0]["name"]'));
-
   });
 
 
