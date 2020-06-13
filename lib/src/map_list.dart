@@ -297,8 +297,11 @@ class MapList {
        before attempting to apply some index, find the dry part
        */
       if (aVarName != null) {
-        // we have a name : must exists an entry . Implies a map
-        if (!(this.wrapped_json is Map)) {
+
+        // we have a name : must exists an entry . Implies a map, except for lengrth
+        if (where is List && aVarName == "length") return where.length;
+
+        if (!(where is Map)) {
           stderr.write("* searching $aVarName in a ${this.runtimeType}\n");
           return null;
         }
@@ -307,6 +310,7 @@ class MapList {
         previous = where;
         var next = where[aVarName];
         lastNameOfIndex = aVarName;
+        lastRank = null;
         print('PLA99 Next : $next $nullable)');
         if (nullable && (next == null)) return null; // that's all
         if (next == null) {
@@ -337,6 +341,7 @@ class MapList {
 
       for (var aBl in bracketsList) {
         var anIndex = aBl.group(0);
+        print('PLA344 :anIndex $anIndex');
         bool nullable = anIndex.endsWith('?');
 
         /*
@@ -365,6 +370,7 @@ class MapList {
           previous = where;
           where = where[rank];
           lastRank = rank;
+          lastNameOfIndex = null;
           print('PLAX1 $where $lastRank');
           continue;
         } // num index
@@ -372,7 +378,7 @@ class MapList {
         lastNameOfIndex = null;
         var stringIndex = reg_indexString.firstMatch(anIndex);
         if (stringIndex != null) {
-          var nameOfIndex = numIndex.group(1);
+          var nameOfIndex = stringIndex.group(1);
           if (!(where is Map)) {
             stderr
                 .write('** $anIndex must be an entry in a map. null returned ');
@@ -385,14 +391,15 @@ class MapList {
               where = where[nameOfIndex];
               lastNameOfIndex = nameOfIndex;
             } else {
-              // not found and not a setter
+              stderr
+                  .write('** warning $nameOfIndex in $anIndex not found . null returned\n ');
               return null;
-            }
+            }}
             previous = where;
             where = next;
             continue;
-          }
-          ;
+
+
         }
       } //for brackets
       print('PLA on sort du loop de brackets');
@@ -426,7 +433,8 @@ class MapList {
       print('PLA999 : $aVarName $previous $where');
       previous = dataToSet;
     } else // getter
-       {
+      {
+       print('PLA1000: $where ${where.runtimeType}');
 
       if(where is List) return MapListList.json(where);
       if(where is Map) return MapListMap.json(where);

@@ -96,8 +96,17 @@ void main() {
     dynamic book = MapList(
         '{"name":"zaza", "friends": [{"name": "lulu" , "scores":[10,20,30]}]}');
     var interest = book.script('friends[0].scores');
+    // by script or by code, we reach the same json
     assert(interest.script('[1]') == 20);
-    assert((interest.script()) == interest);
-    assert((book.script()) == book);
+    interest.script('[1]=33');
+    assert(interest[1] == 33);
+    // but we cannot compare as they are two different Maplist (but with same pointers to json
+    assert((interest.script().runtimeType == interest.runtimeType));
+    assert(interest.script().wrapped_json == interest.wrapped_json);
+    // verify change
+    interest.script('[1]=33');
+    assert(interest[1] == 33);
+
+    assert((book.script().wrapped_json) == book.wrapped_json);
   });
 }
