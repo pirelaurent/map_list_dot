@@ -20,7 +20,6 @@ void main() {
   var xYaml = loadYaml(yamlString);
   dynamic root = MapList(xYaml);
 
-
   test("direct access with standard notation", () {
     // --- verify still working with standard notation
     assertShow(root["show"]["name"], "quiz on video");
@@ -53,14 +52,17 @@ void main() {
     dynamic root = MapList(xYaml);
     // --- now the same with a dot notation
     assertShow(root.script('["show"]["name"]'), "quiz on video");
-    assertShow(root.script('["show"]["videos"][1]["name"]'), "japaneese fashion");
-    assertShow(root.script('["show"]["videos"][1]["questions"][1]["name"]'), "games");
     assertShow(
-        root.script('["show"]["videos"][1]["questions"][1]["options"][2]["answer"]'), "go");
+        root.script('["show"]["videos"][1]["name"]'), "japaneese fashion");
+    assertShow(
+        root.script('["show"]["videos"][1]["questions"][1]["name"]'), "games");
+    assertShow(
+        root.script(
+            '["show"]["videos"][1]["questions"][1]["options"][2]["answer"]'),
+        "go");
   });
 
-  test("access to structure with a dumb mix of notation with script ", ()
-  {
+  test("access to structure with a dumb mix of notation with script ", () {
     dynamic root = MapList(xYaml);
     // --- now the same with a dot notation
     assertShow(root.script('show["name"]'), "quiz on video");
@@ -70,5 +72,4 @@ void main() {
         root.script('["show"]["videos"][1].questions[1].options[2]["answer"]'),
         "go");
   });
-
 }

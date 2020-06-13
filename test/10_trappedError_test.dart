@@ -11,18 +11,13 @@ void main() {
     assert(root == null);
   });
 
-  test(' common misuse of MapListDot ',(){
-    dynamic root = MapList({"person":[{"name": "zaza"},{"name":"lulu"}]});
-    assert(root.person[0].name == "zaza");
-    print(root.person[0]["name"]);
-    print(root.script('person[0]["name"]'));
-  });
-
-
-
   test('wrong json in assignment  ', () {
     dynamic root = MapList({"name": "zaza"});
-    root.name = [10,11,12,];
+    root.name = [
+      10,
+      11,
+      12,
+    ];
     root.script('name = [10,11,12,]');
     assert(root.name == null);
   });
@@ -32,44 +27,40 @@ void main() {
     //root.name[toto]="riri"; // syntax error
     //root.name[0] = "lulu";  // syntax error
     root.script('name["toto"]="riri"');
-    // ** bad index : name["toto"] . data unchanged. return null
+    //** name["toto"]="riri": index ["toto"] must be applied to a map. null returned
+    // and name uncheanged:
     assert(root.name == "zaza");
-
+    //** name[toto]="riri": index [toto] must be applied to a map. null returned
     root.script('name[toto]="riri"');
-    //** bad index : name[toto] . data unchanged. return null
-
     assert(root.name == "zaza");
-    root.script('name[0]="lulu"');
-    //** wrong index [0] in name[0] : not a List: data unchanged. return null
-    assert(root.name == "zaza");
-    print('---------------------------');
-    root.script('name[toto].value =666') ;
-    print(root);
-    // same with trying to change a value
     // root.name[0] = "lulu"; cannot be done in code
+    root.script('name[0]="lulu"');
+    //** name[0]="lulu": [0] must be applied to a List. null returned
     assert(root.name == "zaza");
-  });
 
+  });
 
   test('applying spurious index on a map bis ', () {
     dynamic root = MapList({"name": "zaza", "age": 12});
     assert(root.name == "zaza");
-    print('---------------------------');
-    root.script(" [255] = 20");// well trapped : ** wrong index [255] in [255] : not a List: data unchanged. return null
-// ci-dessous, ne sort pas d'erreur
+    //** [255] = 20: [255] must be applied to a List. null returned
+    root.script(" [255] = 20"); //
+//** '[255]' = 20: [255] must be applied to a List. null returned
     root.script(" '[255]' = 20");
-    root.script('name[toto].value =666') ;
+    root.script('value =666');
+    assert(root.script('valeur') == null);
     // same with trying to change a value
     // root.name[0] = "lulu"; cannot be done in code
     assert(root.name == "zaza");
-    root =MapList([1,2,3,4]);
+    // now with a MapList
+    root = MapList([1, 2, 3, 4]);
+    // [255] = 20: wrong index [255]. null returned
     root.script(" [255] = 20");
+    //'[255]' = 20: wrong index [255]. null returned
     root.script(" '[255]' = 20");
-
-
   });
   test('trapp out of range in script ', () {
-    dynamic root =MapList([0,1,2,3,4]);
+    dynamic root = MapList([0, 1, 2, 3, 4]);
     // calling a key on a list
     assert(root.script('price[200]') == null);
 
@@ -79,8 +70,10 @@ void main() {
     assert(root[200] == null);
     assert(root.script('[200]') == null);
 
-    dynamic book =MapList({ "name": "test", "price": [0,1,2,3,4]});
+    dynamic book = MapList({
+      "name": "test",
+      "price": [0, 1, 2, 3, 4]
+    });
     assert(book.script('price[200]') == null);
-
   });
 }

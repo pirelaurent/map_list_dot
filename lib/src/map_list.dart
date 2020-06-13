@@ -121,31 +121,7 @@ class MapList {
         param = normaliseByJson(param);
 
         if (param is String) param = adjustParam(param);
-        /*
-         from script, can arrive here some name[2] =
-         when by code arrive name only then dart call [2] operator
 
-        var found = reg_brackets.firstMatch(name);
-        if (found != null) {
-
-          //found sample :rawRank-> [1]
-          var rawRank = found.group(0);
-          // clean the item -> book
-          name = name.replaceAll(rawRank, '');
-          // remove brackets  : rawRank ->1
-          rawRank = rawRank.substring(1, rawRank.length - 1);
-          int rank = num.tryParse(rawRank);
-          if (!(rank == null)) {
-            if ((rank >= 0) && (rank < wrapped_json[name].length)) {
-              wrapped_json[name][rank] = param;
-            } else {
-              stderr.write('** index out of range on $name : $rank');
-            }
-            return;
-          }
-        }
-        */
-        // not a [ ] index
         wrapped_json[name] = param;
         return;
       }
@@ -167,7 +143,7 @@ class MapList {
   static final reg_brackets_relax = RegExp(r"""\["?[A-Za-z0-9]*"?]\??""");
 
   // extract from ["abcAZA"] or ['abcAZA'] or [  "abcAZA" ] etc.
-  static final reg_indexString = RegExp(r"""\[\s*['"]([a-zA-Z0-9\s]*)['"]\]""");
+  static final reg_indexString = RegExp(r"""\[\s*['"]?([a-zA-Z0-9\s]*)['"]?\]""");
 
   // extract form [123] or [  123  ]
   static final reg_indexNum = RegExp(r"""\[\s*([(0-9\s]*)\]""");
@@ -196,12 +172,9 @@ class MapList {
   /// solo index '[1]' will return the [1] of current (if list)
   ///
   dynamic script([String aScript = ""]) {
-    print(
-        'PLA90:_______________________ at script $aScript on ${this.wrapped_json}');
     bool setter = false;
     aScript = aScript.trim();
     var originalScript = aScript;
-    print('PLA91: $aScript');
 
     /*
      split into parts ending by . or =
@@ -215,7 +188,7 @@ class MapList {
       String rawDataName = rhs_s.elementAt(0).group(0);
       var aDataName = rawDataName.substring(1).trim();
       dataToSet = adjustParam(aDataName);
-      print("PLA92 : setter found: $dataToSet ${dataToSet.runtimeType}");
+
       setter = true;
       // retract this part from script
       aScript = aScript.replaceAll(rawDataName, "").trim();
@@ -225,11 +198,7 @@ class MapList {
     aScript += '.';
     // now the named variable one per one
     Iterable lhs_s = reg_scalp_relax.allMatches(aScript);
-    print('PLA..................................$aScript');
-    for (var aLhs in lhs_s) {
-      print(aLhs.group(1));
-    }
-    print('PLA..................................');
+
     /*
     the variable part can have enclosed index
 
@@ -240,27 +209,25 @@ class MapList {
     var lastRank, lastNameOfIndex;
     var aVarName;
 
-    print('PLA93: on part de $where');
     for (var aLhs in lhs_s) {
       var aPathStep = aLhs.group(1);
       //remove the dot
       bool nullable = aPathStep.endsWith('?');
       // get name only (can be null if [ ] direct )
-      print('PLA 94 aPathStep=========== $aPathStep');
 
       // could be a reserved word
       var foundAdd = reg_check_add.firstMatch(aPathStep);
       if (!(foundAdd == null)) {
         dataToSet = foundAdd.group(1);
         dataToSet = adjustParam(dataToSet);
-        print('PLA96 Add $dataToSet $where');
+
         if (where is List)
           where.add(dataToSet);
         else {
           stderr.write(
-              '** method add is not valid outside a List . data dataToSet not set\n');
+              '** $originalScript:  method add is not valid outside a List . data not added\n');
         }
-        ;
+
         return null;
       }
 
@@ -269,7 +236,6 @@ class MapList {
       if (!(foundAddAll == null)) {
         dataToSet = foundAddAll.group(1);
         dataToSet = adjustParam(dataToSet);
-        print('PLA96 Add $dataToSet');
         where.addAll(dataToSet);
         return null;
       }
@@ -278,7 +244,6 @@ class MapList {
     not add or addAll, isolate dry name against any index [ ]
  */
       aVarName = reg_dry_name.firstMatch(aPathStep)?.group(1);
-      print('PLA95: aVarName: $aVarName');
 
       /*
       try to find this var name. could be :
@@ -290,50 +255,47 @@ class MapList {
       starting at the very front : [12] ["pouet"]
       */
 
-      print(
-          "PLA97 dry variable name : $aVarName in  $aPathStep nullable: $nullable");
       if (nullable) aVarName = aVarName.substring(0, aVarName.length - 1);
       /*
        before attempting to apply some index, find the dry part
        */
       if (aVarName != null) {
-
         // we have a name : must exists an entry . Implies a map, except for lengrth
         if (where is List && aVarName == "length") return where.length;
 
         if (!(where is Map)) {
-          stderr.write("* searching $aVarName in a ${this.runtimeType}\n");
+          stderr.write(
+              "** $originalScript: searching \'$aVarName\' in a ${where.runtimeType} null returned \n");
           return null;
         }
-        print('PLA98: on a ${where.runtimeType} $where');
+
         // could be unknown but a creation
         previous = where;
         var next = where[aVarName];
         lastNameOfIndex = aVarName;
         lastRank = null;
-        print('PLA99 Next : $next $nullable)');
+
         if (nullable && (next == null)) return null; // that's all
         if (next == null) {
-          print('PLA99_1 $next $previous');
           // if setter create en entry . will be overwrite by the equals
           if (setter) {
             previous[aVarName] = null;
             next = where[aVarName];
-
           } else {
             // special case : length
             if (aVarName == "length") return where.length; //
-
-            stderr.write(
-                '** try to use a non existing key : $aVarName in $originalScript \n');
+            // for debug only as a regular map throws no error
+            /*stderr.write(
+                '** $originalScript: non existing key : $aVarName \n');
+             */
             return null;
           }
         }
-        print('PLA99_2 previous:$previous where:$where next: $next lastNameOfIndex: $lastNameOfIndex');
+
         previous = where;
         where = next;
       }
-      print('PLA100: we are on $where to use brackets ');
+
       /*
        we now progress on index
        */
@@ -341,7 +303,7 @@ class MapList {
 
       for (var aBl in bracketsList) {
         var anIndex = aBl.group(0);
-        print('PLA344 :anIndex $anIndex');
+
         bool nullable = anIndex.endsWith('?');
 
         /*
@@ -354,16 +316,16 @@ class MapList {
         if (numIndex != null) {
           var rawRank = numIndex.group(1);
           if (!(where is List)) {
-            stderr
-                .write('** $anIndex must be applied to a List. null returned ');
+            stderr.write(
+                '** $originalScript: $anIndex must be applied to a List. null returned\n ');
             return null;
           }
-          print('PLAXX: $rawRank ');
+
           var rank = num.tryParse(rawRank);
           if ((rank < 0) || (rank >= where.length)) {
             if (!nullable) // no error if anticipated
               stderr.write(
-                  '** wrong index $anIndex. null returned '); //@todo mmore explicit
+                  '** $originalScript: wrong index $anIndex. null returned\n '); //@todo mmore explicit
             return null;
           }
           // advance
@@ -371,7 +333,7 @@ class MapList {
           where = where[rank];
           lastRank = rank;
           lastNameOfIndex = null;
-          print('PLAX1 $where $lastRank');
+
           continue;
         } // num index
 
@@ -380,8 +342,8 @@ class MapList {
         if (stringIndex != null) {
           var nameOfIndex = stringIndex.group(1);
           if (!(where is Map)) {
-            stderr
-                .write('** $anIndex must be an entry in a map. null returned ');
+            stderr.write(
+                '** $originalScript: index $anIndex must be applied to a map. null returned\n ');
             return null;
           }
           var next = where[nameOfIndex];
@@ -391,18 +353,17 @@ class MapList {
               where = where[nameOfIndex];
               lastNameOfIndex = nameOfIndex;
             } else {
-              stderr
-                  .write('** warning $nameOfIndex in $anIndex not found . null returned\n ');
+              stderr.write(
+                  '** $originalScript: warning $nameOfIndex in $anIndex not found . null returned\n ');
               return null;
-            }}
-            previous = where;
-            where = next;
-            continue;
-
-
+            }
+          }
+          previous = where;
+          where = next;
+          continue;
         }
       } //for brackets
-      print('PLA on sort du loop de brackets');
+
 /*
  when we arrive here, all index have been applied to the dry variable
  but if it is not the last part, let's loop
@@ -411,15 +372,14 @@ class MapList {
     } // for lhs
 
     if (setter) {
-      print(
-          'PLA_Setter *****  lastNameOfIndex $lastNameOfIndex lastRank $lastRank previous $previous, where $where toset: $dataToSet ');
       if (previous is List) {
         if (lastRank != null)
           previous[lastRank] = dataToSet;
         else
           previous = dataToSet;
         return;
-      } ;
+      }
+      ;
       if (previous is Map) {
         if (lastNameOfIndex != null)
           previous[lastNameOfIndex] = dataToSet;
@@ -430,18 +390,12 @@ class MapList {
       // we have reached a leaf
       where = dataToSet;
       return;
-      print('PLA999 : $aVarName $previous $where');
-      previous = dataToSet;
     } else // getter
-      {
-       print('PLA1000: $where ${where.runtimeType}');
-
-      if(where is List) return MapListList.json(where);
-      if(where is Map) return MapListMap.json(where);
+    {
+      if (where is List) return MapListList.json(where);
+      if (where is Map) return MapListMap.json(where);
       return where;
     }
-
-    return 'poets are always the best';
   }
 
   ///
@@ -501,7 +455,8 @@ class MapList {
         m.add(thingToAdd);
       }
     } else {
-      stderr.write("** trying to use add $thingToAdd out of Map or List ");
+      stderr.write(
+          "** trying to use add $thingToAdd out of Map or List ");
     }
     return true;
   }
@@ -538,7 +493,6 @@ class MapList {
   /// can generate an error if rank is not valid and no nullable option
 
   dynamic getItemWithOptionalRank(String item) {
-    print('PLA6: $item in getItem...');
     dynamic where;
     var originalItem = item;
     int rank;
@@ -548,7 +502,7 @@ class MapList {
     Iterable foundAll = reg_brackets_relax.allMatches(item); //
     for (var ff in foundAll) {
       rawRank = ff.group(0); // at this step, get the last one only
-      print('PLA7: $rawRank');
+
     } // à déplacer
 
     // calculate a rank if numerical
@@ -560,7 +514,6 @@ class MapList {
       // remove brackets  : rawRank ->1
       rawRank = rawRank.substring(1, rawRank.length - 1);
       rank = num.tryParse(rawRank);
-      print('PLA8: $rank');
     }
     /*
      in rare case where the root is a List,
@@ -570,25 +523,22 @@ class MapList {
     if (item == "") {
       where = this;
     } else {
-      print('PLA9:$item');
       // first try to get an access to the item
       Invocation invocation = Invocation.getter(Symbol(item));
       where = noSuchMethod(invocation);
     }
-    print('PLA10:$where ${where.runtimeType}');
+
     if (where == null) return where;
     // found something correct : if a valid rank, apply it
     if (withBrackets) {
       if (rank != null) {
         if (where is MapListList) {
-          print('PLA11: ${where[rank]}');
           return where[rank];
         }
         stderr.write(
             '** wrong index [$rank]. $originalItem is not a List. get: null returned ; set: no change\n');
         return null; // previously where
       } else {
-        print('PLA: $rawRank');
         stderr.write(
             "** bad index : $originalItem . get: null returned. set: no change \n");
         // wrong demand into [ ]

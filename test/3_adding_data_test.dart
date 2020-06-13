@@ -28,7 +28,7 @@ void main() {
   assert(squad.members.isEmpty, '${squad.members}');
 
   squad.script('members.add({})'); // members[0] is another map
-  print(squad);
+  //print(squad);
 
   });
 
@@ -118,7 +118,7 @@ void main() {
     assert(root.results[1].time is String, '${root.results[1].time}');
     // script
     root.script('results[1].duration = "01:00:00"');
-    print(root);
+    //print(root);
     assert(root.results[1].duration is String, '${root.results[1].duration}');
   });
 
