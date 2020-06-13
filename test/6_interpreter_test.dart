@@ -92,7 +92,7 @@ void main() {
     assert(list.script('[2]') == 2);
   });
 
-  test(' access to current wit empty or index only script  ', () {
+  test(' access to current with empty or index only script  ', () {
     dynamic book = MapList(
         '{"name":"zaza", "friends": [{"name": "lulu" , "scores":[10,20,30]}]}');
     var interest = book.script('friends[0].scores');

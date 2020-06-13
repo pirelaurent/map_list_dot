@@ -130,7 +130,7 @@ void main() {
     assert(root.elapsed_time_total == 33);
     assert(root.length == 2);
     root.script('elapsed_time_total = null');
-    assert(root.elapsed_time_total == null);
+    assert(root.elapsed_time_total == null,'${root.elapsed_time_total}');
   });
 
   test("add a List to a List", () {

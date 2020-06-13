@@ -236,6 +236,8 @@ class MapList {
      */
     dynamic where = this.wrapped_json;
     dynamic previous = where;
+    // to remember position once leaf reached
+    var lastRank, lastNameOfIndex;
     var aVarName;
 
     print('PLA93: on part de $where');
@@ -304,6 +306,7 @@ class MapList {
         // could be unknown but a creation
         previous = where;
         var next = where[aVarName];
+        lastNameOfIndex = aVarName;
         print('PLA99 Next : $next $nullable)');
         if (nullable && (next == null)) return null; // that's all
         if (next == null) {
@@ -312,13 +315,17 @@ class MapList {
           if (setter) {
             previous[aVarName] = null;
             next = where[aVarName];
+
           } else {
+            // special case : length
+            if (aVarName == "length") return where.length; //
+
             stderr.write(
                 '** try to use a non existing key : $aVarName in $originalScript \n');
             return null;
           }
         }
-        print('PLA99_2 $previous $where ');
+        print('PLA99_2 previous:$previous where:$where next: $next lastNameOfIndex: $lastNameOfIndex');
         previous = where;
         where = next;
       }
@@ -327,8 +334,7 @@ class MapList {
        we now progress on index
        */
       var bracketsList = reg_brackets_relax.allMatches(aPathStep);
-      // to remember position once leaf reached
-      var lastRank, lastNameOfIndex;
+
       for (var aBl in bracketsList) {
         var anIndex = aBl.group(0);
         bool nullable = anIndex.endsWith('?');
@@ -338,7 +344,7 @@ class MapList {
          */
 
         var numIndex = reg_indexNum.firstMatch(anIndex);
-        lastRank= null;
+        lastRank = null;
 
         if (numIndex != null) {
           var rawRank = numIndex.group(1);
@@ -363,7 +369,7 @@ class MapList {
           continue;
         } // num index
 
-          lastNameOfIndex = null;
+        lastNameOfIndex = null;
         var stringIndex = reg_indexString.firstMatch(anIndex);
         if (stringIndex != null) {
           var nameOfIndex = numIndex.group(1);
@@ -398,14 +404,32 @@ class MapList {
     } // for lhs
 
     if (setter) {
-      print('PLA ***** on est ici avec lastNameOfIndex lastRank previous et where pour faire qqchose ');
-      if ((where is List) || (where is Map))
-        where = dataToSet;
-      else
-        {
-print('PLA999 : $aVarName $previous $where')  ;
-          previous = dataToSet;}
-    } else {
+      print(
+          'PLA_Setter *****  lastNameOfIndex $lastNameOfIndex lastRank $lastRank previous $previous, where $where toset: $dataToSet ');
+      if (previous is List) {
+        if (lastRank != null)
+          previous[lastRank] = dataToSet;
+        else
+          previous = dataToSet;
+        return;
+      } ;
+      if (previous is Map) {
+        if (lastNameOfIndex != null)
+          previous[lastNameOfIndex] = dataToSet;
+        else
+          previous = dataToSet;
+        return;
+      }
+      // we have reached a leaf
+      where = dataToSet;
+      return;
+      print('PLA999 : $aVarName $previous $where');
+      previous = dataToSet;
+    } else // getter
+       {
+
+      if(where is List) return MapListList.json(where);
+      if(where is Map) return MapListMap.json(where);
       return where;
     }
 
