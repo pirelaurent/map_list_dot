@@ -1,44 +1,42 @@
-{ "store": {
-  "book": [
-    { "category": "computer",
-      "author": "Gilad Braca",
-      "title": "The Dart programming language",
-      "price": 64.15,
-      "isbn": "978-1-78899-879-6"
-    },
-    { "category": "computer",
-      "author": " Dmitrijs Cudihins",
-      "title": "Hands-On Computer Vision with Julia",
-      "price": 34.80
-    },
-    { "category": "computer",
-      "author": "Achim Nierbeck",
-      "title": "Apache Karaf cookbook",
-      "isbn": "978-1-78398-508-1",
-      "price": 27.59
-    },
-    { "category": "fiction",
-      "author": "J. R. R. Tolkien",
-      "title": "The Lord of the Rings",
-      "isbn": "0-395-19395-8",
-      "price": 23.42
-    }
-  ],
-
-  "bikes":[
-    {"category": "road",
-      "model": "TCR advanced",
-      "color": "black",
-      "price": 1800
-    },
-
-    {"category": "road",
-      "model": "Propel advanced Disc ",
-      "color": "grey",
-      "price": 2900,
-      "length": 2.20
-    }
-
-  ]
-}
+{
+  "store": {
+    "book": [
+      {
+        "category": "computer",
+        "author": "Gilad Braca",
+        "title": "The Dart programming language",
+        "price": 64.15,
+        "isbn": "978-1-78899-879-6"
+      },
+      {
+        "category": "computer",
+        "author": " Dmitrijs Cudihins",
+        "title": "Hands-On Computer Vision with Julia",
+        "price": 34.80
+      },
+      {
+        "category": "computer",
+        "author": "Achim Nierbeck",
+        "title": "Apache Karaf cookbook",
+        "isbn": "978-1-78398-508-1",
+        "price": 27.59
+      },
+      {
+        "category": "fiction",
+        "author": "J. R. R. Tolkien",
+        "title": "The Lord of the Rings",
+        "isbn": "0-395-19395-8",
+        "price": 23.42
+      }
+    ],
+    "bikes": [
+      {
+        "category": "road",
+        "model": "TCR advanced",
+        "color": "black",
+        "price": 1800
+      },
+      {"category": "road", "model": "Propel advanced Disc ", "color": "grey",  "price": 2900, "length": 2.20 }
+    ]
+  }
 }

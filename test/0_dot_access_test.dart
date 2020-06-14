@@ -1,6 +1,6 @@
-import 'package:json_xpath/src/map_list.dart';
+//import 'package:map_lib_dot/src/map_list.dart';
+import 'package:map_list_dot/map_list_dot_lib.dart';
 import 'package:test/test.dart';
-import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
@@ -18,11 +18,10 @@ void main() {
   var file = File(testFile);
   var yamlString = file.readAsStringSync();
   var xYaml = loadYaml(yamlString);
-  dynamic root = MapList(json.decode(json.encode(xYaml)));
+  dynamic root = MapList(xYaml);
 
   test("direct access with standard notation", () {
     // --- verify still working with standard notation
-
     assertShow(root["show"]["name"], "quiz on video");
     assertShow(root["show"]["videos"][1]["name"], "japaneese fashion");
     assertShow(root["show"]["videos"][1]["questions"][1]["name"], "games");
@@ -39,8 +38,8 @@ void main() {
     assertShow(root.show.videos[1].questions[1].options[2].answer, "go");
   });
 
-
   test("access to structure dot notation with script ", () {
+    dynamic root = MapList(xYaml);
     // --- now the same with a dot notation
     assertShow(root.script("show.name"), "quiz on video");
     assertShow(root.script("show.videos[1].name"), "japaneese fashion");
@@ -49,4 +48,28 @@ void main() {
         root.script("show.videos[1].questions[1].options[2].answer"), "go");
   });
 
+  test("access to structure classic notation with script ", () {
+    dynamic root = MapList(xYaml);
+    // --- now the same with a dot notation
+    assertShow(root.script('["show"]["name"]'), "quiz on video");
+    assertShow(
+        root.script('["show"]["videos"][1]["name"]'), "japaneese fashion");
+    assertShow(
+        root.script('["show"]["videos"][1]["questions"][1]["name"]'), "games");
+    assertShow(
+        root.script(
+            '["show"]["videos"][1]["questions"][1]["options"][2]["answer"]'),
+        "go");
+  });
+
+  test("access to structure with a dumb mix of notation with script ", () {
+    dynamic root = MapList(xYaml);
+    // --- now the same with a dot notation
+    assertShow(root.script('show["name"]'), "quiz on video");
+    assertShow(root.script('["show"].videos[1]["name"]'), "japaneese fashion");
+    assertShow(root.script('show["videos"][1].questions[1].name'), "games");
+    assertShow(
+        root.script('["show"]["videos"][1].questions[1].options[2]["answer"]'),
+        "go");
+  });
 }

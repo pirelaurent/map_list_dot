@@ -1,4 +1,4 @@
-import 'package:json_xpath/src/map_list.dart';
+import 'package:map_list_dot/map_list_dot_lib.dart';
 import 'package:test/test.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
@@ -28,8 +28,6 @@ void main() {
     assert(store.script("wrongName?.someData") == null);
   });
 
-
-
   test("dataAccess with null test with code", () {
     assert(store.book[4] == null);
     //NoSuchMethodError: The getter 'author' was called on null.
@@ -50,7 +48,6 @@ Try updating your pubspec.yaml to set the minimum SDK constraint to 2.9 or highe
   });
 
   test("dataAccess with null test with script", () {
-
     assert(store.script("book[4]") == null);
     // assert(store.script("book[4].author") == null); //nok
     assert(store.script("book[4]?.author") == null);
@@ -61,6 +58,4 @@ Try updating your pubspec.yaml to set the minimum SDK constraint to 2.9 or highe
     assertShow(store.script("bookList?[0]"), null);
     assertShow(store.script("bookList?[0].date"), null);
   });
-
-
 }

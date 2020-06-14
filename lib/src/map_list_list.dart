@@ -1,69 +1,60 @@
-import 'dart:collection';
-import 'dart:convert';
-import 'package:json_xpath/map_list_lib.dart';
+import 'package:map_list_dot/map_list_dot_lib.dart';
+import 'dart:io';
 
-/*
- a MapListList is no more a List as it don't realizes ListMixin
-
- */
+/// extends MapList to wrap List methods
+///
 class MapListList extends MapList {
   MapListList.json(dynamic json) : super.json(json);
 
-  get length => wrapped_json.length;
+  get length => json.length;
 
-  /*
-   Setter in a list position.
-   Must be an integer, but common operator is more general.
-   */
-  @override
+  ///
+  /// setter on a MapListList , set the wrapped data
   operator []=(Object key, dynamic value) {
     try {
-      wrapped_json[key] = value;
+      json[key] = value;
     } catch (e) {
-      //print("** On List : \"${MapList.lastInvocation} [$key] = \" : $e");
+      print("** on List : \"${MapList.lastInvocation} [$key] = \" : $e \n");
       return null;
     }
   }
 
+  ///
+  /// remove an entry by value in a list
   @override
   void remove(var aValue) {
-    wrapped_json.remove(aValue);
+    json.remove(aValue);
   }
 
-
-  /*
-   getter in a list . can be an itermediate, so cast in MapList
-   to allow further dot notation
-   */
-  @override
+  ///
+  /// getter on a List.
+  /// to allow dot notation on the list, returns a MapList
   operator [](Object keyIndex) {
     try {
-      var next = wrapped_json[keyIndex];
+      var next = json[keyIndex];
       // wrap result in a MapList to allow next dot notation
       if (next is List || next is Map)
-        return MapList(next,false);
+        return MapList(next, false);
       // if a leaf, return a simple value
       else
         return next;
     } catch (e) {
-      //print("** On List: \"${MapList.lastInvocation} [$keyIndex]\" : $e");
+      var from = MapList.lastInvocation??"at root: ";
+       stderr.write("** List error: \"$from [$keyIndex]\" : $e \n");
       return null;
     }
   }
 
-/*
- called directly by compiled code as MapListList mixin with list
- */
-  @override
+  ///
+  ///  Add a new element in a List
   void add(dynamic something) {
     something = MapList.normaliseByJson(something);
-    this.wrapped_json.add(something);
+    this.json.add(something);
   }
 
-
-  @override
+  ///
+  /// add another List to this one
   void addAll(dynamic something) {
-    //something = MapList.retype(something);
-    this.wrapped_json.addAll(something);
+    this.json.addAll(something);
   }
 }
