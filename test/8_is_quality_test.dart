@@ -43,13 +43,13 @@ void main() {
   test("check coherence of wrapping ", () {
     //root = MapList({"members": [ { "name": "Bourne", "age": 33 }]});
 
-    assert((root is MapListMap) && (root.wrapped_json is Map));
+    assert((root is MapListMap) && (root.json is Map));
     assert(
-        (root.members is MapListList) && (root.members.wrapped_json is List));
+        (root.members is MapListList) && (root.members.json is List));
     assert((root.members[0] is MapListMap) &&
-        (root.members[0].wrapped_json is Map));
+        (root.members[0].json is Map));
     // check using pointers, not copies
     dynamic firstMember = root.members[0];
-    assert(firstMember.wrapped_json == root.script("members[0]").wrapped_json);
+    assert(firstMember.json == root.script("members[0]").json);
   });
 }

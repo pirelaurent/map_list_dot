@@ -8,19 +8,19 @@ class MapListMap extends MapList {
   //with MapMixin {
   MapListMap.json(dynamic json) : super.json(json);
 
-  get length => wrapped_json.length;
+  get length => json.length;
 
-  get keys => wrapped_json.keys;
+  get keys => json.keys;
 
   operator []=(dynamic key, dynamic value) {
-    wrapped_json[key] = value;
+    json[key] = value;
   }
 
 /*
  next is a json part
  */
   operator [](Object key) {
-    var next = wrapped_json[key];
+    var next = json[key];
     if (next is List || next is Map)
       return MapList(next, false);
     else
@@ -28,12 +28,12 @@ class MapListMap extends MapList {
   }
 
   void clear() {
-    wrapped_json.clear();
+    json.clear();
   }
 
   @override
   void remove(var key) {
-    wrapped_json.remove(key);
+    json.remove(key);
   }
 
   @override
@@ -48,7 +48,7 @@ class MapListMap extends MapList {
   MapList add(var something) {
     // add new raw entries to the current map
     if (something is Map) {
-      wrapped_json.addAll(something);
+      json.addAll(something);
       // to allow continuation
       return MapList(this);
     }
@@ -64,7 +64,7 @@ class MapListMap extends MapList {
   dynamic addAll(dynamic something) {
     // add new entries to the current map
     if (something is Map) {
-      this.wrapped_json.addAll(something);
+      this.json.addAll(something);
       // to allow continuation
       return MapList(this);
     }

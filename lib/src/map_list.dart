@@ -1,5 +1,5 @@
 import 'dart:mirrors';
-import 'dart:convert';
+import 'dart:convert' as convert;
 import 'dart:io';
 
 import 'package:map_list_dot/map_list_dot_lib.dart';
@@ -9,8 +9,11 @@ import 'package:map_list_dot/map_list_dot_lib.dart';
 /// MapList allows access by a dot notation in code and with script
 
 class MapList {
-  /// internal data structure
+  /// internal data structure . not private as no protected option
   dynamic wrapped_json;
+  /// better to use this getter
+  get json => wrapped_json;
+  set json(dynamic someJson){ wrapped_json = someJson;}
 
   /// for debug purpose
   static String lastInvocation;
@@ -43,21 +46,21 @@ class MapList {
 
   /// real common constructor behind the factory
   MapList.json(dynamic jsonInput) {
-    wrapped_json = jsonInput;
+    json = jsonInput;
   }
 
   /// common methods for map ad list in front of the json data
-  get isEmpty => wrapped_json.isEmpty;
+  get isEmpty => json.isEmpty;
 
-  get isNotEmpty => wrapped_json.isNotEmpty;
+  get isNotEmpty => json.isNotEmpty;
 
-  clear() => wrapped_json.clear();
+  clear() => json.clear();
 
   remove(var someEntry);
 
   @override
   String toString() {
-    return wrapped_json.toString();
+    return json.toString();
   }
 
 /*
@@ -104,12 +107,12 @@ class MapList {
           return null;
         }
         lastInvocation = name;
-        var next = wrapped_json[name];
+        var next = json[name];
 
         if ((next is Map) || (next is List)) {
           return MapList(next, false);
         } else
-          return this.wrapped_json[name];
+          return this.json[name];
       } else
       /* else this is a setter */ {
         name = name.replaceAll("=", "");
@@ -122,7 +125,7 @@ class MapList {
 
         if (param is String) param = adjustParam(param);
 
-        wrapped_json[name] = param;
+        json[name] = param;
         return;
       }
     }
@@ -140,7 +143,7 @@ class MapList {
   static final reg_brackets = RegExp("\\[[0-9]*\\]");
 
   /// detect (several) index [123] ["abc"]
-  static final reg_brackets_relax = RegExp(r"""\["?[A-Za-z0-9]*"?]\??""");
+  static final reg_brackets_relax = RegExp(r"""\[["']?[A-Za-z0-9]*["']?]\??""");
 
   // extract from ["abcAZA"] or ['abcAZA'] or [  "abcAZA" ] etc.
   static final reg_indexString = RegExp(r"""\[\s*['"]?([a-zA-Z0-9\s]*)['"]?\]""");
@@ -152,7 +155,7 @@ class MapList {
   static final reg_rhs = RegExp(r"""=.*""");
 
   /// isolate var name person[12] or name.  -> person
-  static final reg_dry_name = RegExp(r"""(^[A-Za-z_][A-Za-z_]*)""");
+  static final reg_dry_name = RegExp(r"""(^[A-Za-z_][A-Za-z_0-9]*)""");
 
   /// identify json script candidates : begin and end by [ ] or { }
   static final reg_mapList = RegExp("^[\\[\\{].*[\\}\\]]");
@@ -203,7 +206,7 @@ class MapList {
     the variable part can have enclosed index
 
      */
-    dynamic where = this.wrapped_json;
+    dynamic where = this.json;
     dynamic previous = where;
     // to remember position once leaf reached
     var lastRank, lastNameOfIndex;
@@ -260,15 +263,20 @@ class MapList {
        before attempting to apply some index, find the dry part
        */
       if (aVarName != null) {
-        // we have a name : must exists an entry . Implies a map, except for lengrth
-        if (where is List && aVarName == "length") return where.length;
-
+        // we have a name : must exists an entry . Implies a map, except for length
+        if (aVarName == "length") {
+          if (where is List) return where.length;
+          if (where is Map){
+            if (aPathStep == "length") return where.length;
+            // otherwise will be some ["length"] asking for a key leave it
+          }
+        }
+      // any key is valid only on a map
         if (!(where is Map)) {
           stderr.write(
               "** $originalScript: searching \'$aVarName\' in a ${where.runtimeType} null returned \n");
           return null;
         }
-
         // could be unknown but a creation
         previous = where;
         var next = where[aVarName];
@@ -282,12 +290,6 @@ class MapList {
             previous[aVarName] = null;
             next = where[aVarName];
           } else {
-            // special case : length
-            if (aVarName == "length") return where.length; //
-            // for debug only as a regular map throws no error
-            /*stderr.write(
-                '** $originalScript: non existing key : $aVarName \n');
-             */
             return null;
           }
         }
@@ -303,13 +305,10 @@ class MapList {
 
       for (var aBl in bracketsList) {
         var anIndex = aBl.group(0);
-
         bool nullable = anIndex.endsWith('?');
-
         /*
          accept ["abc"] ['abc'] on a map and [123] on a list
          */
-
         var numIndex = reg_indexNum.firstMatch(anIndex);
         lastRank = null;
 
@@ -333,7 +332,6 @@ class MapList {
           where = where[rank];
           lastRank = rank;
           lastNameOfIndex = null;
-
           continue;
         } // num index
 
@@ -552,13 +550,13 @@ class MapList {
   /// Not so efficient? but used only one time on setter
   ///
   static dynamic normaliseByJson(var something) {
-    return trappedJsonDecode(json.encode(something));
+    return trappedJsonDecode(convert.json.encode(something));
   }
 
   /// choose to return null rather to crash
   static trappedJsonDecode(String something) {
     try {
-      return json.decode(something);
+      return convert.json.decode(something);
     } catch (e) {
       stderr.write('** wrong data. MapList will return null :  $e ');
       return null;

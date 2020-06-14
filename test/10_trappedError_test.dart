@@ -54,7 +54,6 @@ void main() {
     assert(root.name == "zaza");
     // now with a MapList
     root = MapList([1, 2, 3, 4]);
-    // [255] = 20: wrong index [255]. null returned
     root.script(" [255] = 20");
     //'[255]' = 20: wrong index [255]. null returned
     root.script(" '[255]' = 20");

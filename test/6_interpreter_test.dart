@@ -1,6 +1,7 @@
 import 'package:map_list_dot/map_list_dot_lib.dart';
 import 'package:test/test.dart';
 import 'dart:io';
+import 'dart:convert';
 import 'package:path/path.dart' as path;
 
 /*
@@ -37,7 +38,10 @@ void main() {
     // check interpreted property length
     assertShow(store.script("book.length"), 4);
     assertShow(store.script("bikes.length"), 2);
-    assertShow(store.script("bikes[1].length"), 2.2);
+    assertShow(store.script("bikes[1].price"), 2900);
+    assert(store.script('bikes[1].length')== 5);
+    assert(store.script('bikes[1]["length"]')== 2.2);
+    assertShow(store.script("bikes[1]['length']"), 2.2);
   });
 
   test('try assignments ', () {
@@ -102,11 +106,11 @@ void main() {
     assert(interest[1] == 33);
     // but we cannot compare as they are two different Maplist (but with same pointers to json
     assert((interest.script().runtimeType == interest.runtimeType));
-    assert(interest.script().wrapped_json == interest.wrapped_json);
+    assert(interest.script().json == interest.json);
     // verify change
     interest.script('[1]=33');
     assert(interest[1] == 33);
 
-    assert((book.script().wrapped_json) == book.wrapped_json);
+    assert((book.script().json) == book.json);
   });
 }

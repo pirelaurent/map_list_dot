@@ -6,13 +6,13 @@ import 'dart:io';
 class MapListList extends MapList {
   MapListList.json(dynamic json) : super.json(json);
 
-  get length => wrapped_json.length;
+  get length => json.length;
 
   ///
   /// setter on a MapListList , set the wrapped data
   operator []=(Object key, dynamic value) {
     try {
-      wrapped_json[key] = value;
+      json[key] = value;
     } catch (e) {
       print("** on List : \"${MapList.lastInvocation} [$key] = \" : $e \n");
       return null;
@@ -23,7 +23,7 @@ class MapListList extends MapList {
   /// remove an entry by value in a list
   @override
   void remove(var aValue) {
-    wrapped_json.remove(aValue);
+    json.remove(aValue);
   }
 
   ///
@@ -31,7 +31,7 @@ class MapListList extends MapList {
   /// to allow dot notation on the list, returns a MapList
   operator [](Object keyIndex) {
     try {
-      var next = wrapped_json[keyIndex];
+      var next = json[keyIndex];
       // wrap result in a MapList to allow next dot notation
       if (next is List || next is Map)
         return MapList(next, false);
@@ -49,12 +49,12 @@ class MapListList extends MapList {
   ///  Add a new element in a List
   void add(dynamic something) {
     something = MapList.normaliseByJson(something);
-    this.wrapped_json.add(something);
+    this.json.add(something);
   }
 
   ///
   /// add another List to this one
   void addAll(dynamic something) {
-    this.wrapped_json.addAll(something);
+    this.json.addAll(something);
   }
 }

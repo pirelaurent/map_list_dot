@@ -38,6 +38,19 @@ void main() {
     assert(car.length == 5);
   });
 
+  test("extends a map to a map by addAll   ", () {
+    // reset
+    dynamic car = MapList();
+    car.name = "Ford";
+    car.color = "blue";
+    assert(car.color == "blue");
+    car.addAll({ "price": 5000, "fuel":"diesel","hybrid":false});
+    assert(car.length == 5);
+  });
+
+
+
+
 
   test('addAll in script', () {
     // caution must be dynamic, var won't work as addAll is not defined in MapList

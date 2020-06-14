@@ -36,20 +36,20 @@ void main() {
     // reset
 
     dynamic root = MapList();
-    var hash1 = root.wrapped_json.hashCode;
+    var hash1 = root.json.hashCode;
     root.data = [11, 12, 13];
     assert(root.data[2] == 13);
-    var hash3 = root.data.wrapped_json.hashCode;
-    var hash33 = root.wrapped_json["data"].hashCode;
-    var hash2 = root.wrapped_json.hashCode;
-    assert(hash1 == hash2, ' bad mutation on root.wrapped_json');
+    var hash3 = root.data.json.hashCode;
+    var hash33 = root.json["data"].hashCode;
+    var hash2 = root.json.hashCode;
+    assert(hash1 == hash2, ' bad mutation on root.json');
 
     root.data.add(14);
-    hash3 = root.data.wrapped_json.hashCode;
-    hash33 = root.wrapped_json["data"].hashCode;
+    hash3 = root.data.json.hashCode;
+    hash33 = root.json["data"].hashCode;
     assert(hash3 == hash33, '$hash3 $hash33');
 
-    var hash4 = root.data.wrapped_json.hashCode;
+    var hash4 = root.data.json.hashCode;
     assert(hash3 == hash4);
 
     assert(root.data[3] == 14);
