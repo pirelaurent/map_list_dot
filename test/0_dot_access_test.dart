@@ -11,7 +11,11 @@ import 'package:yaml/yaml.dart';
 void assertShow(var what, var expected) {
   assert(what == expected, "expected: $expected got: $what");
 }
-
+/*
+ basic tests on get .
+ Notice that you can call directly exec
+ but it doesn't verify if set or get,it just apply the script
+ */
 void main() {
   var testFile =
       path.join(Directory.current.path, 'test', 'models', 'yaml', 'quiz.yaml');
@@ -41,23 +45,23 @@ void main() {
   test("access to structure dot notation with script ", () {
     dynamic root = MapList(xYaml);
     // --- now the same with a dot notation
-    assertShow(root.script("show.name"), "quiz on video");
-    assertShow(root.script("show.videos[1].name"), "japaneese fashion");
-    assertShow(root.script("show.videos[1].questions[1].name"), "games");
+    assertShow(root.get("show.name"), "quiz on video");
+    assertShow(root.get("show.videos[1].name"), "japaneese fashion");
+    assertShow(root.get("show.videos[1].questions[1].name"), "games");
     assertShow(
-        root.script("show.videos[1].questions[1].options[2].answer"), "go");
+        root.get("show.videos[1].questions[1].options[2].answer"), "go");
   });
 
   test("access to structure classic notation with script ", () {
     dynamic root = MapList(xYaml);
     // --- now the same with a dot notation
-    assertShow(root.script('["show"]["name"]'), "quiz on video");
+    assertShow(root.get('["show"]["name"]'), "quiz on video");
     assertShow(
-        root.script('["show"]["videos"][1]["name"]'), "japaneese fashion");
+        root.get('["show"]["videos"][1]["name"]'), "japaneese fashion");
     assertShow(
-        root.script('["show"]["videos"][1]["questions"][1]["name"]'), "games");
+        root.get('["show"]["videos"][1]["questions"][1]["name"]'), "games");
     assertShow(
-        root.script(
+        root.get(
             '["show"]["videos"][1]["questions"][1]["options"][2]["answer"]'),
         "go");
   });
@@ -65,11 +69,11 @@ void main() {
   test("access to structure with a dumb mix of notation with script ", () {
     dynamic root = MapList(xYaml);
     // --- now the same with a dot notation
-    assertShow(root.script('show["name"]'), "quiz on video");
-    assertShow(root.script('["show"].videos[1]["name"]'), "japaneese fashion");
-    assertShow(root.script('show["videos"][1].questions[1].name'), "games");
+    assertShow(root.get('show["name"]'), "quiz on video");
+    assertShow(root.get('["show"].videos[1]["name"]'), "japaneese fashion");
+    assertShow(root.get('show["videos"][1].questions[1].name'), "games");
     assertShow(
-        root.script('["show"]["videos"][1].questions[1].options[2]["answer"]'),
+        root.get('["show"]["videos"][1].questions[1].options[2]["answer"]'),
         "go");
   });
 }

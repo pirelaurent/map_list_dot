@@ -31,13 +31,13 @@ void main() {
   });
 
   test("check map or MapListList in interpreter ", () {
-    assertShow(root.script("members") is MapListList, true);
-    assertShow(root.script("members[0]") is MapListMap, true);
-    assertShow(root.script("members[0].name") is String, true);
-    assertShow(root.script("members[0].age") is int, true);
-    assertShow(root.script("members[0].powers") is MapListList, true);
-    assertShow(root.script("members[1].powers[1]") is String, true);
-    assertShow(root.script("members[1].powers[1]"), "Damage resistance");
+    assertShow(root.get("members") is MapListList, true);
+    assertShow(root.get("members[0]") is MapListMap, true);
+    assertShow(root.get("members[0].name") is String, true);
+    assertShow(root.get("members[0].age") is int, true);
+    assertShow(root.get("members[0].powers") is MapListList, true);
+    assertShow(root.get("members[1].powers[1]") is String, true);
+    assertShow(root.get("members[1].powers[1]"), "Damage resistance");
   });
 
   test("check coherence of wrapping ", () {
@@ -50,6 +50,6 @@ void main() {
         (root.members[0].json is Map));
     // check using pointers, not copies
     dynamic firstMember = root.members[0];
-    assert(firstMember.json == root.script("members[0]").json);
+    assert(firstMember.json == root.get("members[0]").json);
   });
 }

@@ -51,12 +51,13 @@ class MapList {
 
   /// common methods for map ad list in front of the json data
   get isEmpty => json.isEmpty;
-
   get isNotEmpty => json.isNotEmpty;
-
   clear() => json.clear();
-
   remove(var someEntry);
+  // overriden by MapListMap only
+  bool containsKey(String aKey){
+    return false;
+  }
 
   @override
   String toString() {
@@ -160,11 +161,66 @@ class MapList {
   /// identify json script candidates : begin and end by [ ] or { }
   static final reg_mapList = RegExp("^[\\[\\{].*[\\}\\]]");
 
-  /// trap .add method in a script
+  /// trap .add method in a part
   static final reg_check_add = RegExp(r"""^add\((.*)\)""");
+
+  /// trap .add or .addAll in a raw script
+  ///
+  static final reg_check_add_addAll = RegExp(r"""(["'][\w\s=]*["'])|((add|addAll)\((.*)\))""");
 
   /// trap .addAll method in a script
   static final reg_check_addAll = RegExp(r"""^addAll\((.*)\)""");
+
+  /// trap equal sign = out of quotes
+  static final reg_equals_outside_quotes = RegExp(r"""(["'][\w\s=]*["'])|(=)""");
+
+  /*
+ with this regex,
+ A match:
+ group(1) : anything in quote
+ group(2) : equal sign, out of quotes
+
+ */
+  static bool foundEqualsSign(String aScript){
+    var itEquals = MapList.reg_equals_outside_quotes.allMatches(aScript);
+    if (itEquals == null) return false;
+    for(var x in itEquals){
+      if (x.group(2)=='='){
+        return true;
+      }
+    }
+    // allow set word for add and addAll
+    
+  if  (reg_check_add_addAll.firstMatch(aScript)?.group(2) != null) return true;
+    return false;
+  }
+
+  /// interpreted script must be something like set('lhs = rhs')
+  /// due to habits, tolerate a set('lhs',rhs)
+  /// which is transformed for interpreter in the right script
+  ///
+  /// to indicate a setter in exec a script. Check for an equals
+  dynamic set([String aScript, dynamic optionalRhs]){
+    if (optionalRhs != null){
+      aScript='$aScript = ${optionalRhs.toString()}';
+    }
+    if (foundEqualsSign(aScript)){
+      return (exec(aScript));
+    }else{
+      stderr.write('** warning : calling set with no equal sign. Probably want a get : $aScript\n');
+      return null;
+    }
+  }
+
+  /// to indicate a getter in exec a script. Check no equals
+  dynamic get([String aScript]){
+    if (aScript == null) return exec();
+   if (!foundEqualsSign(aScript)){
+     return(exec(aScript));
+   }else{
+     stderr.write('** warning : calling get with an equal sign. be sure it\'s not a set . null returned: $aScript\n');}
+     return null;
+  }
 
   /// script demands arrives here in one big string
   /// A front part is isolated and executed to find next position
@@ -174,7 +230,7 @@ class MapList {
   /// Empty script will return current position
   /// solo index '[1]' will return the [1] of current (if list)
   ///
-  dynamic script([String aScript = ""]) {
+  dynamic exec([String aScript = ""]) {
     bool setter = false;
     aScript = aScript.trim();
     var originalScript = aScript;
@@ -562,4 +618,6 @@ class MapList {
       return null;
     }
   }
+
+
 }

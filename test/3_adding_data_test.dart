@@ -9,25 +9,27 @@ void assertShow(var what, var expected) {
       "\nexpected: $expected  ${expected.runtimeType} got: $what ${what.runtimeType}");
 }
 
+
+
 void main() {
   dynamic root;
-
   test('create new data ',(){
-
-
   dynamic squad = MapList();
   squad.name = "Super hero squad"; // String entry
   squad.members = []; // Empty list names members
   squad.members.add({}); // members[0] is another map
 
   squad = MapList();
-  squad.script('name = "Super hero squad"'); // String entry
+  squad.set('name = "Super hero squad"'); // String entry
   assert(squad.name == "Super hero squad");
 
-  squad.script('members = []'); // Empty list names members
+  squad.set('name',"Super super hero squad"); // second form of set with code
+  assert(squad.name == "Super super hero squad");
+
+  squad.set('members = []'); // Empty list names members
   assert(squad.members.isEmpty, '${squad.members}');
 
-  squad.script('members.add({})'); // members[0] is another map
+  squad.set('members.add({})'); // members[0] is another map
   //print(squad);
 
   });
@@ -54,7 +56,7 @@ void main() {
 
     assert(root.data[3] == 14);
     // now in script
-    root.script('data.add(15)');
+    root.set('data.add(15)');
     assert(root.data[4] == 15);
   });
 
@@ -66,7 +68,7 @@ void main() {
     //print('${root.data.runtimeType}');//MapListList
     root.data.add({"name": 10});
     assert(root.data[3] is MapListMap);
-    root.script('data.add({"name":20})');
+    root.set('data.add({"name":20})');
     assert(root.data[4] is MapListMap);
 
     // can do that in code
@@ -74,7 +76,7 @@ void main() {
     root.data.add(m1);
     assert(root.data[5].pouet == 10);
     // of course cannot do that in script as m1 is unknown
-    root.script('data.add(m1)'); //will add 'm1'
+    root.set('data.add(m1)'); //will add 'm1'
   });
 
   test("add raw heterogeneous data in a List", () {
@@ -85,7 +87,7 @@ void main() {
     // by default a [11,12,13] is a List<int> can't add a string
     root.data.add("hello");
     assert(root.data[3] == "hello");
-    root.script('data.add(15.5)');
+    root.set('data.add(15.5)');
     assert(root.data[4] == 15.5);
     //-------------assert(root.data[3]==14);
   });
@@ -102,7 +104,7 @@ void main() {
     root.results.add({"elapsed_time": 60, "temperature": 40});
     assert(root.results[1].temperature == 40);
     // script
-    root.script('results.add({"elapsed_time": 120, "temperature": 58  })');
+    root.set('results.add({"elapsed_time": 120, "temperature": 58  })');
     assert(root.results[2].temperature == 58);
   });
 
@@ -117,7 +119,7 @@ void main() {
 
     assert(root.results[1].time is String, '${root.results[1].time}');
     // script
-    root.script('results[1].duration = "01:00:00"');
+    root.set('results[1].duration = "01:00:00"');
     //print(root);
     assert(root.results[1].duration is String, '${root.results[1].duration}');
   });
@@ -129,7 +131,7 @@ void main() {
     root.elapsed_time_total = 33;
     assert(root.elapsed_time_total == 33);
     assert(root.length == 2);
-    root.script('elapsed_time_total = null');
+    root.set('elapsed_time_total = null');
     assert(root.elapsed_time_total == null,'${root.elapsed_time_total}');
   });
 
@@ -139,7 +141,7 @@ void main() {
     root.data = [11, 12, 13];
     assert(root.data[2] == 13);
     // cannot write like this :
-    root.script('data.add(31)');
+    root.set('data.add(31)');
     assert(root.data[3] == 31);
   });
 
@@ -171,7 +173,7 @@ void main() {
     car.name = "Ford";
     car.color = "blue";
     assert(car.color == "blue");
-    car.script('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
+    car.set('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
     assert(car.length == 5);
   });
 
@@ -181,51 +183,9 @@ void main() {
     car.name = "Ford";
     car.color = "blue";
     assert(car.color == "blue");
-    car.script('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
+    car.set('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
     assert(car.length == 5);
   });
 
-/*
-  test(" exceptions not trapped on list index ", () {
-    // wrong index but tested before
-    if (root.results[11] != null)
-      assertShow(root.results[11].temperature, null);
-    // not tested, must do a try catch and test error
-    Error expectedError;
-    try {
-      assertShow((root.results[11].temperature > 20), true);
-    } catch (e) {
-      expectedError = e;
-      /*
-      print("trapped exception by test code : $e");
 
-      trapped exception by test code : NoSuchMethodError: The getter 'temperature' was called on null.
-      Receiver: null
-      Tried calling: temperature
-
-       */
-    }
-    assertShow(expectedError.runtimeType, NoSuchMethodError);
-  });
-
-  test("use index on a non list entry ", () {
-    root.map1.leaf2 = "hello";
-    // range on a map return null
-    assertShow(root.map1[0], null);
-    // can use index on  string :e :second letter of hello
-    assertShow(root.script("map1.leaf2[1]"), "e");
-    assertShow(root.map1.leaf2[1], "e");
-
-    /*
-     but cannot be tested in direct  : as map2 is a String
-     it's too late to catch the [] error on a String
-     */
-    try {
-      var result = root.map1.leaf2[1].value;
-      assertShow(result == null, true);
-    } catch (e) {
-      assertShow(e.runtimeType, NoSuchMethodError);
-    }
-  });
-  */
 }

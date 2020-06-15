@@ -41,6 +41,12 @@ class MapListMap extends MapList {
     return (keys.length == 0);
   }
 
+  @override
+  bool containsKey(String aKey)
+  {
+    return wrapped_json.containsKey(aKey);
+  }
+
   /*
    In fact it's addALL filtered in MapList level
    cannot override standard addALl

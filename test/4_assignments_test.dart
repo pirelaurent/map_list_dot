@@ -34,7 +34,7 @@ void main() {
     assert(root.dico.FR[0] == "bonjour");
     assert(root.dico.FR[2] == "hello");
 
-    root.script('dico.FR[2] = "comment va"');
+    root.exec('dico.FR[2] = "comment va"');
     assert(root.dico.FR[2] == "comment va");
   });
 
@@ -67,11 +67,11 @@ void main() {
 
   test("assignement on first level with script", () {
     squad = MapList();
-    squad.script('name = "Super hero squad"');
-    squad.script("homeTown = 'Metro City'");
-    squad.script('formed = 2016');
-    squad.script('active = true');
-    squad.script('score = 38.5');
+    squad.set('name = "Super hero squad"');
+    squad.set("homeTown = 'Metro City'");
+    squad.set('formed = 2016');
+    squad.set('active = true');
+    squad.set('score = 38.5');
 
     assert(squad.homeTown == "Metro City");
     assert(squad.formed == 2016);
@@ -82,8 +82,8 @@ void main() {
   test("create a List in a Map with script  ", () {
     // warning : continuing with previous data can't run alone
     assert(squad.formed == 2016);
-    squad.script('members = []');
-    squad.script(
+    squad.set('members = []');
+    squad.set(
         'members.add({ "name": "Molecule Man","age": 29,"secretIdentity": "Dan Jukes",'
         '"powers": ["Radiation resistance", "Turning tiny", "Radiation blast"]})');
 
@@ -99,11 +99,11 @@ void main() {
     assert(squad.members[0].powers[1] == "Turning tiny");
     // change by code, test by code & script
     squad.members[0].powers[1] = "Turning heavy";
-    squad.script('members[0].powers[1] = "Turning heavy"');
+    squad.set('members[0].powers[1] = "Turning heavy"');
     assert(squad.members[0].powers[1] == "Turning heavy");
     // change by script, test by script and code
-    squad.script('members[0].powers[1] = "Turning weird"');
+    squad.set('members[0].powers[1] = "Turning weird"');
     assert(squad.members[0].powers[1] == "Turning weird");
-    assert(squad.script('members[0].powers[1]') == "Turning weird");
+    assert(squad.get('members[0].powers[1]') == "Turning weird");
   });
 }

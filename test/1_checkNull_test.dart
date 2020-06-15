@@ -23,9 +23,9 @@ void main() {
   });
 
   test("null test on path with script ", () {
-    assert(store.script("wrongName") == null);
+    assert(store.get("wrongName") == null);
     // if tagada is null, avoid following
-    assert(store.script("wrongName?.someData") == null);
+    assert(store.get("wrongName?.someData") == null);
   });
 
   test("dataAccess with null test with code", () {
@@ -35,7 +35,7 @@ void main() {
     //
     assert(store.book[4]?.author == null);
     assert(store.bookList == null);
-    assert(store.script("bookList") == null);
+    assert(store.get("bookList") == null);
 
     // NoSuchMethodError: The method '[]' was called on null.
     // assert(store.bookList[0]==null);
@@ -48,14 +48,14 @@ Try updating your pubspec.yaml to set the minimum SDK constraint to 2.9 or highe
   });
 
   test("dataAccess with null test with script", () {
-    assert(store.script("book[4]") == null);
+    assert(store.get("book[4]") == null);
     // assert(store.script("book[4].author") == null); //nok
-    assert(store.script("book[4]?.author") == null);
+    assert(store.get("book[4]?.author") == null);
     assert(store.bookList == null);
-    assert(store.script("bookList") == null);
-    assert(store.script("bookList[0]") == null);
+    assert(store.get("bookList") == null);
+    assert(store.get("bookList[0]") == null);
     // available in script right now
-    assertShow(store.script("bookList?[0]"), null);
-    assertShow(store.script("bookList?[0].date"), null);
+    assertShow(store.get("bookList?[0]"), null);
+    assertShow(store.get("bookList?[0].date"), null);
   });
 }

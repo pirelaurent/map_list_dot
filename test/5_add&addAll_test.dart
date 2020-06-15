@@ -34,7 +34,7 @@ void main() {
     car.name = "Ford";
     car.color = "blue";
     assert(car.color == "blue");
-    car.script('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
+    car.set('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
     assert(car.length == 5);
   });
 
@@ -55,10 +55,10 @@ void main() {
   test('addAll in script', () {
     // caution must be dynamic, var won't work as addAll is not defined in MapList
     dynamic map = MapList();
-    map.script('name = "toto"');
-    map.script('addAll({"A": "aa", "B": "bb"})');
-    assert(map.script("length") == 3);
-    assert(map.script("A") == "aa");
+    map.exec('name = "toto"');
+    map.exec('addAll({"A": "aa", "B": "bb"})');
+    assert(map.get("length") == 3);
+    assert(map.get("A") == "aa");
 
     /*
      don't work if initialized with data
@@ -66,8 +66,8 @@ void main() {
      */
 
     map = MapList({"name": "toto"});
-    map.script('addAll({"A": "aa", "B": "bb"})');
-    assert(map.script("length") == 3);
-    assert(map.script("A") == "aa");
+    map.set('addAll({"A": "aa", "B": "bb"})');
+    assert(map.get("length") == 3);
+    assert(map.get("A") == "aa");
   });
 }

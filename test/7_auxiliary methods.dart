@@ -10,6 +10,7 @@ import 'package:test/test.dart';
 void main() {
   test('tests about deleting in code ', () {
     dynamic root = MapList('{ "name":"zaza", "age": 7, "scores": [10,20,30]}');
+    assert(root.containsKey("age"));
     assert(root.scores[1] == 20);
     assert(root.scores.isNotEmpty);
     root.scores.remove(20);

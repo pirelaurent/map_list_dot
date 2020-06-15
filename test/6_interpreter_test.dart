@@ -27,90 +27,90 @@ void main() {
   });
 
   test('basic verification on interpreted access ', () {
-    assertShow(store.script("book[1].isbn"), null);
-    assertShow(store.script("bikes[1].color"), "grey");
-    assertShow(store.script("book[0].isbn"), "978-1-78899-879-6");
-    assertShow(store.script("book[1].isbn"), null);
+    assertShow(store.get("book[1].isbn"), null);
+    assertShow(store.get("bikes[1].color"), "grey");
+    assertShow(store.get("book[0].isbn"), "978-1-78899-879-6");
+    assertShow(store.get("book[1].isbn"), null);
   });
 
   test('check length property', () {
-    assertShow(store.script("book").length, 4);
+    assertShow(store.get("book").length, 4);
     // check interpreted property length
-    assertShow(store.script("book.length"), 4);
-    assertShow(store.script("bikes.length"), 2);
-    assertShow(store.script("bikes[1].price"), 2900);
-    assert(store.script('bikes[1].length')== 5);
-    assert(store.script('bikes[1]["length"]')== 2.2);
-    assertShow(store.script("bikes[1]['length']"), 2.2);
+    assertShow(store.get("book.length"), 4);
+    assertShow(store.get("bikes.length"), 2);
+    assertShow(store.get("bikes[1].price"), 2900);
+    assert(store.get('bikes[1].length')== 5);
+    assert(store.get('bikes[1]["length"]')== 2.2);
+    assertShow(store.get("bikes[1]['length']"), 2.2);
   });
 
   test('try assignments ', () {
-    assertShow(store.script("bikes[0].color"), "black");
+    assertShow(store.get("bikes[0].color"), "black");
 
     store.bikes[0].color = "green";
-    assertShow(store.script("bikes[0].color"), "green");
-    store.script("bikes[0].color = blue ");
-    assertShow(store.script("bikes[0].color"), "blue");
+    assertShow(store.get("bikes[0].color"), "green");
+    store.set("bikes[0].color = blue ");
+    assertShow(store.get("bikes[0].color"), "blue");
 
-    assertShow(store.script("book[3].price"), 23.42);
-    store.script("book[3].price= 20.00 ");
-    assertShow(store.script("book[3].price"), 20.00);
+    assertShow(store.get("book[3].price"), 23.42);
+    store.exec("book[3].price= 20.00 ");
+    assertShow(store.get("book[3].price"), 20.00);
   });
 
   test('try new values non existing', () {
-    store.script("bikes[0].battery = true ");
-    assertShow(store.script("bikes[0].battery"), true);
-    store.script("bikes[1].battery = false ");
-    assertShow(store.script("bikes[1].battery"), false);
+    store.set("bikes[0].battery = true ");
+    assertShow(store.get("bikes[0].battery"), true);
+    store.set("bikes[1].battery = false ");
+    assertShow(store.get("bikes[1].battery"), false);
     store
-        .script("book")
+        .get("book")
         .add({"category": "children", "name": "sleeping beauty"});
-    assertShow(store.script("book[4].category"), "children");
+    assertShow(store.get("book[4].category"), "children");
   });
 
   test('try Types in string ', () {
     // strings in quotes
-    store.script("bikes[1].color = 'violet'");
+    store.set("bikes[1].color = 'violet'");
     assertShow(store.bikes[1].color, "violet");
-    store.script('bikes[1].color = "yellow"');
+    store.exec('bikes[1].color = "yellow"');
     assertShow(store.bikes[1].color, "yellow");
-    store.script("bikes[1].color = maroon");
+    store.exec("bikes[1].color = maroon");
     assertShow(store.bikes[1].color, "maroon");
   });
 
   test(' try item in string by error in interpreter ', () {
     dynamic book = MapList('{"name":"zaza", "friends": [{"name": "lulu" }]}');
     assert(book.friends[0].name == "lulu");
-    assert(book.script('friends[0].name') == "lulu");
+    assert(book.get('friends[0].name') == "lulu");
     assert(book.name == "zaza");
-    book.script('"name"="zorro"');
+    book.set('"name"="zorro"');
     assert((book.name == "zorro") == false);
   });
 
   test('Access to a root List with only index ', () {
     dynamic list = MapList([]);
     list.add(15);
-    list.script('addAll([1, 2, 3])');
-    assert(list.script("length") == 4);
+    list.set('addAll([1, 2, 3])');
+    assert(list.get("length") == 4);
     assert(list[2] == 2);
-    assert(list.script('[2]') == 2);
+    assert(list.get('[2]') == 2);
   });
 
   test(' access to current with empty or index only script  ', () {
     dynamic book = MapList(
         '{"name":"zaza", "friends": [{"name": "lulu" , "scores":[10,20,30]}]}');
-    var interest = book.script('friends[0].scores');
+    var interest = book.get('friends[0].scores');
     // by script or by code, we reach the same json
-    assert(interest.script('[1]') == 20);
-    interest.script('[1]=33');
+    assert(interest.get('[1]') == 20);
+    interest.set('[1]=33');
     assert(interest[1] == 33);
     // but we cannot compare as they are two different Maplist (but with same pointers to json
-    assert((interest.script().runtimeType == interest.runtimeType));
-    assert(interest.script().json == interest.json);
+    assert((interest.get().runtimeType == interest.runtimeType));
+    assert(interest.get().json == interest.json);
     // verify change
-    interest.script('[1]=33');
+    interest.set('[1]=33');
     assert(interest[1] == 33);
 
-    assert((book.script().json) == book.json);
+    assert((book.get().json) == book.json);
   });
 }
