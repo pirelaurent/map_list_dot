@@ -58,7 +58,7 @@ void main() {
     //'[255]' = 20: wrong index [255]. null returned
     root.set(" '[255]' = 20");
   });
-  test('trapp out of range in script ', () {
+  test('trapp out of range in exec', () {
     dynamic root = MapList([0, 1, 2, 3, 4]);
     // calling a key on a list
     assert(root.get('price[200]') == null);

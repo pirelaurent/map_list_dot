@@ -28,7 +28,7 @@ void main() {
     assert(root.data[3] == 14);
   });
 
-  test("extends a map to a map by addAll in script  ", () {
+  test("extends a map to a map by addAll in exec ", () {
     // reset
     dynamic car = MapList();
     car.name = "Ford";

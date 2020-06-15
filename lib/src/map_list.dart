@@ -82,7 +82,7 @@ class MapList {
   ///   the last step returns a data (ie getter)
   /// else the last step set the data (ie setter) and return nothing.
   ///
-  /// see later that script reuses this internal mechanism to share code.
+  /// see later that execreuses this internal mechanism to share code.
 
   @override
   dynamic noSuchMethod(Invocation invocation) {
@@ -93,7 +93,7 @@ class MapList {
       name = MirrorSystem.getName(member);
       // ------------------ setters if equals
       if (name.endsWith('=') == false) {
-        // special case if pseudo index in quotes at root: root.script(" '[255]' = 20");
+        // special case if pseudo index in quotes at root: root.exec(" '[255]' = 20");
         if (name == "''") {
           stderr.write(
               "** wrong name : index between quote. '[ ]'.  null returned \n");
@@ -134,9 +134,9 @@ class MapList {
 
   /// Some regex to help
   /// \ is useful for some regex (doubled avoid to be trapped by dart)
-  /// scalp : extract a front part of a script
+  /// scalp : extract a front part of a script before a . or an equal
 
-  // to allow trap of [toto]
+
   static final reg_scalp_relax = RegExp(
       r"""(add\s?\(.*\)|addAll\s?\(.*\)|[\w\d_ \?\s\[\]{}:,"']*)[\.=]""");
 
@@ -158,7 +158,7 @@ class MapList {
   /// isolate var name person[12] or name.  -> person
   static final reg_dry_name = RegExp(r"""(^[A-Za-z_][A-Za-z_0-9]*)""");
 
-  /// identify json script candidates : begin and end by [ ] or { }
+  /// identify json execcandidates : begin and end by [ ] or { }
   static final reg_mapList = RegExp("^[\\[\\{].*[\\}\\]]");
 
   /// trap .add method in a part
@@ -195,7 +195,7 @@ class MapList {
     return false;
   }
 
-  /// interpreted script must be something like set('lhs = rhs')
+  /// interpreted execmust be something like set('lhs = rhs')
   /// due to habits, tolerate a set('lhs',rhs)
   /// which is transformed for interpreter in the right script
   ///
@@ -222,12 +222,12 @@ class MapList {
      return null;
   }
 
-  /// script demands arrives here in one big string
+  /// execdemands arrives here in one big string
   /// A front part is isolated and executed to find next position
-  /// script call itself recursively for the following step
+  /// execcall itself recursively for the following step
   /// On last step, depending of an equal sign, returns a data or set a data
   ///
-  /// Empty script will return current position
+  /// Empty execwill return current position
   /// solo index '[1]' will return the [1] of current (if list)
   ///
   dynamic exec([String aScript = ""]) {
@@ -273,7 +273,7 @@ class MapList {
       //remove the dot
       bool nullable = aPathStep.endsWith('?');
       // get name only (can be null if [ ] direct )
-
+print('PLA1: $aPathStep ${aLhs.group(0)}');
       // could be a reserved word
       var foundAdd = reg_check_add.firstMatch(aPathStep);
       if (!(foundAdd == null)) {

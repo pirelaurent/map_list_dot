@@ -22,7 +22,7 @@ void main() {
     assert(store.wrongName?.someData == null);
   });
 
-  test("null test on path with script ", () {
+  test("null test on path with exec", () {
     assert(store.get("wrongName") == null);
     // if tagada is null, avoid following
     assert(store.get("wrongName?.someData") == null);
@@ -49,12 +49,12 @@ Try updating your pubspec.yaml to set the minimum SDK constraint to 2.9 or highe
 
   test("dataAccess with null test with script", () {
     assert(store.get("book[4]") == null);
-    // assert(store.script("book[4].author") == null); //nok
+    // assert(store.exec("book[4].author") == null); //nok
     assert(store.get("book[4]?.author") == null);
     assert(store.bookList == null);
     assert(store.get("bookList") == null);
     assert(store.get("bookList[0]") == null);
-    // available in script right now
+    // available in execright now
     assertShow(store.get("bookList?[0]"), null);
     assertShow(store.get("bookList?[0].date"), null);
   });

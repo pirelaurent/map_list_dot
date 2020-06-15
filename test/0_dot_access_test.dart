@@ -42,7 +42,7 @@ void main() {
     assertShow(root.show.videos[1].questions[1].options[2].answer, "go");
   });
 
-  test("access to structure dot notation with script ", () {
+  test("access to structure dot notation with exec", () {
     dynamic root = MapList(xYaml);
     // --- now the same with a dot notation
     assertShow(root.get("show.name"), "quiz on video");
@@ -52,7 +52,7 @@ void main() {
         root.get("show.videos[1].questions[1].options[2].answer"), "go");
   });
 
-  test("access to structure classic notation with script ", () {
+  test("access to structure classic notation with exec", () {
     dynamic root = MapList(xYaml);
     // --- now the same with a dot notation
     assertShow(root.get('["show"]["name"]'), "quiz on video");
@@ -66,7 +66,7 @@ void main() {
         "go");
   });
 
-  test("access to structure with a dumb mix of notation with script ", () {
+  test("access to structure with a dumb mix of notation with exec", () {
     dynamic root = MapList(xYaml);
     // --- now the same with a dot notation
     assertShow(root.get('show["name"]'), "quiz on video");

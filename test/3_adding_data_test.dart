@@ -75,7 +75,7 @@ void main() {
     Map m1 = {"pouet": 10};
     root.data.add(m1);
     assert(root.data[5].pouet == 10);
-    // of course cannot do that in script as m1 is unknown
+    // of course cannot do that in execas m1 is unknown
     root.set('data.add(m1)'); //will add 'm1'
   });
 
@@ -167,7 +167,7 @@ void main() {
     assert(car.length == 5);
   });
 
-  test("extends a map to a map in script  ", () {
+  test("extends a map to a map in exec ", () {
     // reset
     dynamic car = MapList();
     car.name = "Ford";
@@ -177,7 +177,7 @@ void main() {
     assert(car.length == 5);
   });
 
-  test("extends a map to a map in script with addAll ", () {
+  test("extends a map to a map in execwith addAll ", () {
     // reset
     dynamic car = MapList();
     car.name = "Ford";

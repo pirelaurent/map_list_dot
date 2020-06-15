@@ -79,7 +79,7 @@ void main() {
     assert(squad.score == 38.5);
   });
 
-  test("create a List in a Map with script  ", () {
+  test("create a List in a Map with exec ", () {
     // warning : continuing with previous data can't run alone
     assert(squad.formed == 2016);
     squad.set('members = []');
@@ -90,7 +90,7 @@ void main() {
     assert(squad.members[0].powers[1] == "Turning tiny");
   });
 
-  test("deep changes mixed with script and code from file ", () {
+  test("deep changes mixed with execand code from file ", () {
     var testFile = path.join(
         Directory.current.path, 'test', 'models', 'json', 'super_heroes.json');
     var file = File(testFile);
@@ -101,7 +101,7 @@ void main() {
     squad.members[0].powers[1] = "Turning heavy";
     squad.set('members[0].powers[1] = "Turning heavy"');
     assert(squad.members[0].powers[1] == "Turning heavy");
-    // change by script, test by script and code
+    // change by script, test by execand code
     squad.set('members[0].powers[1] = "Turning weird"');
     assert(squad.members[0].powers[1] == "Turning weird");
     assert(squad.get('members[0].powers[1]') == "Turning weird");

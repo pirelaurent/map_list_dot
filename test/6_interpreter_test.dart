@@ -96,11 +96,11 @@ void main() {
     assert(list.get('[2]') == 2);
   });
 
-  test(' access to current with empty or index only script  ', () {
+  test(' access to current with empty or index only exec ', () {
     dynamic book = MapList(
         '{"name":"zaza", "friends": [{"name": "lulu" , "scores":[10,20,30]}]}');
     var interest = book.get('friends[0].scores');
-    // by script or by code, we reach the same json
+    // by execor by code, we reach the same json
     assert(interest.get('[1]') == 20);
     interest.set('[1]=33');
     assert(interest[1] == 33);
