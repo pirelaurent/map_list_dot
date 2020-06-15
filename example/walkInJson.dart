@@ -7,6 +7,8 @@
  Final verifications are done.
 
  */
+import 'dart:convert';
+
 import 'package:map_list_dot/map_list_dot.dart';
 
 import 'resources/personInDart.dart';
@@ -68,28 +70,27 @@ void main() {
   }
   // and so on
 
-  print('Sample 3: --------------- same as sample 1 with interpreter  ----- ');
+  print('Sample 3: --------------- same as 1 with interpreter  ----- ');
+  var script = <String>[
+    'contacts = []',
+    // a large json compatible string
+    'contacts.add({"name": "peter", "age": 44, "interest":["litterature", "sport", "video games"]   })',
+    // just a piece of cake
+    'contacts.add({"name": "Lily"})',
+    // completed with keyword last and do notation in the script
+    'contacts[last].age = 35',
+    'contacts[last].interest = ["nature", "maths", "golf"]',
+    'contacts.add({"name": "Jimmy", "age": 20 })',
+    'contacts[last].color = "blue"',
+  ];
+
+
   dynamic root_i = MapList();
-  root_i.set('contacts = []');
-  // creating a MapList allows dot notation including creation
-  dynamic person_i = MapList();
-  person_i.set('name = "Peter"');
-  person_i.set('age = 44');
-  // can create inline maps & lists
-  person_i.set('interest = ["litterature", "sport", "video games"]');
-  root_i.exec('contacts.add($person)');
-  // reuse of the same to verify isolation
-  person_i.clear();
-  person_i.name = 'Lily';
-  person_i.age = 35;
-  person_i.interest = ["nature", "maths", "golf"];
-  root_i.contacts.add(person_i);
-  // can have different keys
-  person_i.clear();
-  person_i.name = 'Jimmy';
-  person_i.age = 20;
-  person_i.color = 'blue';
-  root_i.contacts.add(person_i);
+  // execute previous script
+  for (var aStep in script){
+    root_i.exec(aStep);
+  }
+
 /*
  verifying data
  */
@@ -97,16 +98,12 @@ void main() {
 /*
   loop on a MapList is restricted to indices
  */
-  for (int i = 0; i < root_i.contacts.length; i++) {
-    dynamic someone = root_i.contacts[i];
-    if (someone.interest != null)
+  for (int i = 0; i < root_i.get('contacts.length'); i++) {
+    // remember scripted with strin; So [$i]
+    dynamic someone = root_i.get('contacts[$i]');
+    if (root_i.get('someone.interest') != null)
       print('${someone.name} loves ${someone.interest}');
     if (someone.color != null)
       print('${someone.name} prefers the ${someone.color} color');
   }
-
-
-
-
-
 }

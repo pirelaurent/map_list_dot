@@ -11,9 +11,13 @@ import 'package:map_list_dot/map_list_dot.dart';
 class MapList {
   /// internal data structure . not private as no protected option
   dynamic wrapped_json;
+
   /// better to use this getter
   get json => wrapped_json;
-  set json(dynamic someJson){ wrapped_json = someJson;}
+
+  set json(dynamic someJson) {
+    wrapped_json = someJson;
+  }
 
   /// for debug purpose
   static String lastInvocation;
@@ -51,15 +55,17 @@ class MapList {
 
   /// common methods for map ad list in front of the json data
   get isEmpty => json.isEmpty;
+
   get isNotEmpty => json.isNotEmpty;
+
   clear() => json.clear();
+
   remove(var someEntry);
+
   // overriden by MapListMap only
-  bool containsKey(String aKey){
+  bool containsKey(String aKey) {
     return false;
   }
-
-
 
 /*
  -------------- incompatible methods not set to this level
@@ -132,7 +138,6 @@ class MapList {
   /// \ is useful for some regex (doubled avoid to be trapped by dart)
   /// scalp : extract a front part of a script before a . or an equal
 
-
   static final reg_scalp_relax = RegExp(
       r"""(add\s?\(.*\)|addAll\s?\(.*\)|[\w\d_ \?\s\[\]{}:,"']*)[\.=]""");
 
@@ -143,7 +148,8 @@ class MapList {
   static final reg_brackets_relax = RegExp(r"""\[["']?[A-Za-z0-9]*["']?]\??""");
 
   // extract from ["abcAZA"] or ['abcAZA'] or [  "abcAZA" ] etc.
-  static final reg_indexString = RegExp(r"""\[\s*['"]?([a-zA-Z0-9\s]*)['"]?\]""");
+  static final reg_indexString =
+      RegExp(r"""\[\s*['"]?([a-zA-Z0-9\s]*)['"]?\]""");
 
   // extract form [123] or [  123  ]
   static final reg_indexNum = RegExp(r"""\[\s*([(0-9\s]*)\]""");
@@ -162,13 +168,15 @@ class MapList {
 
   /// trap .add or .addAll in a raw script
   ///
-  static final reg_check_add_addAll = RegExp(r"""(["'][\w\s=]*["'])|((add|addAll)\((.*)\))""");
+  static final reg_check_add_addAll =
+      RegExp(r"""(["'][\w\s=]*["'])|((add|addAll)\((.*)\))""");
 
   /// trap .addAll method in a script
   static final reg_check_addAll = RegExp(r"""^addAll\((.*)\)""");
 
   /// trap equal sign = out of quotes
-  static final reg_equals_outside_quotes = RegExp(r"""(["'][\w\s=]*["'])|(=)""");
+  static final reg_equals_outside_quotes =
+      RegExp(r"""(["'][\w\s=]*["'])|(=)""");
 
   /*
  with this regex,
@@ -177,17 +185,17 @@ class MapList {
  group(2) : equal sign, out of quotes
 
  */
-  static bool foundEqualsSign(String aScript){
+  static bool foundEqualsSign(String aScript) {
     var itEquals = MapList.reg_equals_outside_quotes.allMatches(aScript);
     if (itEquals == null) return false;
-    for(var x in itEquals){
-      if (x.group(2)=='='){
+    for (var x in itEquals) {
+      if (x.group(2) == '=') {
         return true;
       }
     }
     // allow set word for add and addAll
-    
-  if  (reg_check_add_addAll.firstMatch(aScript)?.group(2) != null) return true;
+
+    if (reg_check_add_addAll.firstMatch(aScript)?.group(2) != null) return true;
     return false;
   }
 
@@ -196,26 +204,29 @@ class MapList {
   /// which is transformed for interpreter in the right script
   ///
   /// to indicate a setter in exec a script. Check for an equals
-  dynamic set([String aScript, dynamic optionalRhs]){
-    if (optionalRhs != null){
-      aScript='$aScript = ${optionalRhs.toString()}';
+  dynamic set([String aScript, dynamic optionalRhs]) {
+    if (optionalRhs != null) {
+      aScript = '$aScript = ${optionalRhs.toString()}';
     }
-    if (foundEqualsSign(aScript)){
+    if (foundEqualsSign(aScript)) {
       return (exec(aScript));
-    }else{
-      stderr.write('** warning : calling set with no equal sign. Probably want a get : $aScript\n');
+    } else {
+      stderr.write(
+          '** warning : calling set with no equal sign. Probably want a get : $aScript\n');
       return null;
     }
   }
 
   /// to indicate a getter in exec a script. Check no equals
-  dynamic get([String aScript]){
+  dynamic get([String aScript]) {
     if (aScript == null) return exec();
-   if (!foundEqualsSign(aScript)){
-     return(exec(aScript));
-   }else{
-     stderr.write('** warning : calling get with an equal sign. be sure it\'s not a set . null returned: $aScript\n');}
-     return null;
+    if (!foundEqualsSign(aScript)) {
+      return (exec(aScript));
+    } else {
+      stderr.write(
+          '** warning : calling get with an equal sign. be sure it\'s not a set . null returned: $aScript\n');
+    }
+    return null;
   }
 
   /// execdemands arrives here in one big string
@@ -318,12 +329,12 @@ class MapList {
         // we have a name : must exists an entry . Implies a map, except for length
         if (aVarName == "length") {
           if (where is List) return where.length;
-          if (where is Map){
+          if (where is Map) {
             if (aPathStep == "length") return where.length;
             // otherwise will be some ["length"] asking for a key leave it
           }
         }
-      // any key is valid only on a map
+        // any key is valid only on a map
         if (!(where is Map)) {
           stderr.write(
               "** $originalScript: searching \'$aVarName\' in a ${where.runtimeType} null returned \n");
@@ -392,9 +403,20 @@ class MapList {
         if (stringIndex != null) {
           var nameOfIndex = stringIndex.group(1);
           if (!(where is Map)) {
-            stderr.write(
-                '** $originalScript: index $anIndex must be applied to a map. null returned\n ');
-            return null;
+          // only case if 'last' word found on a List
+            if ((nameOfIndex == "last") && (where is List)) {
+              int rank = where.length-1;
+              // advance
+              previous = where;
+              where = where[rank];
+              lastRank = rank;
+              lastNameOfIndex = null;
+              continue;
+            } else {
+              stderr.write(
+                  '** $originalScript: index $anIndex must be applied to a map. null returned\n ');
+              return null;
+            }
           }
           var next = where[nameOfIndex];
           if (next == null) {
@@ -505,8 +527,7 @@ class MapList {
         m.add(thingToAdd);
       }
     } else {
-      stderr.write(
-          "** trying to use add $thingToAdd out of Map or List ");
+      stderr.write("** trying to use add $thingToAdd out of Map or List ");
     }
     return true;
   }
@@ -602,10 +623,12 @@ class MapList {
   /// Not so efficient? but used only one time on setter
   ///
   static dynamic normaliseByJson(var something) {
-    if( something is MapList) something = something.wrapped_json;
+    if (something is MapList) something = something.wrapped_json;
+
     var prepare = convert.json.encode(something);
+
     var resu = trappedJsonDecode(prepare);
-    return resu ;
+    return resu;
   }
 
   /// choose to return null rather to crash
@@ -617,10 +640,9 @@ class MapList {
       return null;
     }
   }
+
   @override
   String toString() {
     return json.toString();
   }
-
-
 }

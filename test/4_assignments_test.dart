@@ -83,14 +83,14 @@ void main() {
     // warning : continuing with previous data can't run alone
     assert(squad.formed == 2016);
     squad.set('members = []');
-    squad.set(
+    squad.exec(
         'members.add({ "name": "Molecule Man","age": 29,"secretIdentity": "Dan Jukes",'
         '"powers": ["Radiation resistance", "Turning tiny", "Radiation blast"]})');
 
     assert(squad.members[0].powers[1] == "Turning tiny");
   });
 
-  test("deep changes mixed with execand code from file ", () {
+  test("deep changes mixed with exec and code from file ", () {
     var testFile = path.join(
         Directory.current.path, 'test', 'models', 'json', 'super_heroes.json');
     var file = File(testFile);

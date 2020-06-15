@@ -110,7 +110,6 @@ void main() {
     // verify change
     interest.set('[1]=33');
     assert(interest[1] == 33);
-
     assert((book.get().json) == book.json);
   });
 }

@@ -167,7 +167,7 @@ void main() {
     assert(car.length == 5);
   });
 
-  test("extends a map to a map in exec ", () {
+  test("extends a map to a map in set ", () {
     // reset
     dynamic car = MapList();
     car.name = "Ford";
@@ -177,7 +177,7 @@ void main() {
     assert(car.length == 5);
   });
 
-  test("extends a map to a map in execwith addAll ", () {
+  test("extends a map to a map in exec with addAll ", () {
     // reset
     dynamic car = MapList();
     car.name = "Ford";
