@@ -1,4 +1,4 @@
-import 'package:map_list_dot/map_list_dot_lib.dart';
+import 'package:map_list_dot/map_list_dot.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -17,6 +17,9 @@ void main() {
     list.addAll([1, 2, 3]);
     assert(list.length == 4);
     assert(list[2] == 2);
+    list.add(16);
+    assert(list.length == 5);
+
   });
 
   test("add raw data int in a List later than root ", () {
@@ -55,7 +58,7 @@ void main() {
   test('addAll in script', () {
     // caution must be dynamic, var won't work as addAll is not defined in MapList
     dynamic map = MapList();
-    map.exec('name = "toto"');
+    map.set('name = "toto"');
     map.exec('addAll({"A": "aa", "B": "bb"})');
     assert(map.get("length") == 3);
     assert(map.get("A") == "aa");
@@ -70,4 +73,27 @@ void main() {
     assert(map.get("length") == 3);
     assert(map.get("A") == "aa");
   });
+
+
+  test ('add a MapList to a MapList ',(){
+    dynamic map = MapList({"friends":[]});
+    // add a standard maps & list
+    dynamic aGuy ={"name":"polo", "age":33};
+    // print(aGuy.name); will not work as it is not a MapList
+    map.friends.add(aGuy);
+    aGuy= MapList({"name":"zaza","age":44});
+    // print(aGuy.name);  will return zaza as it is a MapList
+    map.friends.add(aGuy);
+    //
+    aGuy.clear();
+    aGuy.name ="lulu";
+    aGuy.age = 66;
+    map.friends.add(aGuy);
+
+    assert(map.friends.length == 3);
+    assert(map.friends[1].age == 44);
+  });
+
+
+
 }

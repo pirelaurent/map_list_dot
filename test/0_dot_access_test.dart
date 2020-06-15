@@ -1,5 +1,5 @@
 //import 'package:map_lib_dot/src/map_list.dart';
-import 'package:map_list_dot/map_list_dot_lib.dart';
+import 'package:map_list_dot/map_list_dot.dart';
 import 'package:test/test.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;

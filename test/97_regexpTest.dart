@@ -1,4 +1,4 @@
-import 'package:map_list_dot/map_list_dot_lib.dart';
+import 'package:map_list_dot/map_list_dot.dart';
 void show(var reg, var aString){
   Iterable foundAll = reg.allMatches(aString);
   print('String: $aString');

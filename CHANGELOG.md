@@ -1,3 +1,5 @@
-## [0.0.1] - TODO: Add release date.
 
-* TODO: Describe initial release.
+## 0.0.1
+Initial version .  
+All unit tests are ok, but not yet in production
+

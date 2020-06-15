@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:map_list_dot/map_list_dot_lib.dart';
+import 'package:map_list_dot/map_list_dot.dart';
 
 /// extends MapList to offer Map methods
 

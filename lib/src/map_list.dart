@@ -2,7 +2,7 @@ import 'dart:mirrors';
 import 'dart:convert' as convert;
 import 'dart:io';
 
-import 'package:map_list_dot/map_list_dot_lib.dart';
+import 'package:map_list_dot/map_list_dot.dart';
 
 /// MapList storage is a simple Wrapper on any structure made of
 /// Lists, Maps and leaf Values of any type, as or like a json structure
@@ -59,10 +59,7 @@ class MapList {
     return false;
   }
 
-  @override
-  String toString() {
-    return json.toString();
-  }
+
 
 /*
  -------------- incompatible methods not set to this level
@@ -125,8 +122,7 @@ class MapList {
         param = normaliseByJson(param);
 
         if (param is String) param = adjustParam(param);
-
-        json[name] = param;
+        wrapped_json[name] = param;
         return;
       }
     }
@@ -273,7 +269,7 @@ class MapList {
       //remove the dot
       bool nullable = aPathStep.endsWith('?');
       // get name only (can be null if [ ] direct )
-print('PLA1: $aPathStep ${aLhs.group(0)}');
+
       // could be a reserved word
       var foundAdd = reg_check_add.firstMatch(aPathStep);
       if (!(foundAdd == null)) {
@@ -606,7 +602,10 @@ print('PLA1: $aPathStep ${aLhs.group(0)}');
   /// Not so efficient? but used only one time on setter
   ///
   static dynamic normaliseByJson(var something) {
-    return trappedJsonDecode(convert.json.encode(something));
+    if( something is MapList) something = something.wrapped_json;
+    var prepare = convert.json.encode(something);
+    var resu = trappedJsonDecode(prepare);
+    return resu ;
   }
 
   /// choose to return null rather to crash
@@ -617,6 +616,10 @@ print('PLA1: $aPathStep ${aLhs.group(0)}');
       stderr.write('** wrong data. MapList will return null :  $e ');
       return null;
     }
+  }
+  @override
+  String toString() {
+    return json.toString();
   }
 
 

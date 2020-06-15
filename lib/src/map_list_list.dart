@@ -1,4 +1,6 @@
-import 'package:map_list_dot/map_list_dot_lib.dart';
+import 'dart:collection';
+
+import 'package:map_list_dot/map_list_dot.dart';
 import 'dart:io';
 
 /// extends MapList to wrap List methods
@@ -23,7 +25,7 @@ class MapListList extends MapList {
   /// remove an entry by value in a list
   @override
   void remove(var aValue) {
-    json.remove(aValue);
+    wrapped_json.remove(aValue);
   }
 
   ///
@@ -31,7 +33,8 @@ class MapListList extends MapList {
   /// to allow dot notation on the list, returns a MapList
   operator [](Object keyIndex) {
     try {
-      var next = json[keyIndex];
+      var next = wrapped_json[keyIndex];
+
       // wrap result in a MapList to allow next dot notation
       if (next is List || next is Map)
         return MapList(next, false);
@@ -39,8 +42,8 @@ class MapListList extends MapList {
       else
         return next;
     } catch (e) {
-      var from = MapList.lastInvocation??"at root: ";
-       stderr.write("** List error: \"$from [$keyIndex]\" : $e \n");
+      var from = MapList.lastInvocation ?? "at root: ";
+      stderr.write("** List error: \"$from [$keyIndex]\" : $e \n");
       return null;
     }
   }
@@ -48,8 +51,8 @@ class MapListList extends MapList {
   ///
   ///  Add a new element in a List
   void add(dynamic something) {
-    something = MapList.normaliseByJson(something);
-    this.json.add(something);
+      var toAdd = MapList.normaliseByJson(something);
+      this.json.add(toAdd);
   }
 
   ///
