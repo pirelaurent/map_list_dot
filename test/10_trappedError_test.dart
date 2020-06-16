@@ -80,4 +80,34 @@ void main() {
     });
     assert(book.get('price[200]') == null);
   });
+
+  test(' wrong function calls on clear  ',(){
+    dynamic root = MapList([0, 1, 2, 3, 4]);
+    root.set('clear()');
+    //** warning : clear(). Calling set without = .Be sure it's not a get or an exec .no action done
+    root.exec('clearAll()');
+    //** unknown function : clearAll() . No action done
+    root.exec('clear');
+    //**  cannot search a key (clear) in a List<dynamic>
+    root.exec('clear()'); // ok
+    assert(root.length == 0);
+  });
+
+
+  test(' wrong function calls with last  ',(){
+    dynamic root = MapList([0, 1, 2, 3, 4]);
+    root.get('root.last');
+    // **  cannot search a key (root.last) in a List<dynamic>
+    root.get('last'); //ok
+    root.get('[last]');
+    //** warning : [11,12,13]. Calling set without = .Be sure it's not a get or an exec .no action done
+    root.set('[11,12,13]');
+   //** warning : [11,12,13]. Calling set without = .Be sure it's not a get or an exec .no action done
+    root.set('= [11,12,13]');//
+    root.exec('add({"name":"polo", "age":33})');
+    dynamic x = root.get('last');
+    assert(x.age == 33);
+    assert(root.get('last').age  == 33);
+    assert(root.get('last.age')  == 33);
+  });
 }

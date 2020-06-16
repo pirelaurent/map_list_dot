@@ -34,7 +34,13 @@ bool foundEqualsTest(String aScript){
 void main() {
   var s;
   s = "show.videos[1].questions[1].options[2].answer";
-  //show(MapList.reg_scalp_relax,s+'.');
+  show(MapList.reg_scalp_relax,s+'.');
+
+  s = "show.videos.addAll([1,2,3])";
+  show(MapList.reg_scalp_relax,s+'.');
+
+
+
 
   s = "homeTown = 'Metro City'";
   assert(MapList.foundEqualsSign(s));

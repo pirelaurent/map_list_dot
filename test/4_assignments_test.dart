@@ -24,80 +24,62 @@ void main() {
 
   test("assignment to add & replace data in Map & List", () {
     root = MapList();
+    // check creation
     root.dico = {"US": "hello", "FR": "bonjour"};
     root.dico.addAll({"JP": "こんにちは"});
     assert(root.dico.FR == 'bonjour');
+    assert(root.dico.JP == 'こんにちは');
+    // check modification
     root.dico.FR = "salut";
     assert(root.dico.FR == 'salut');
+    //check length
     assert(root.dico.length == 3);
-
     // change type of an entry
     root.dico.FR = ["bonjour", "salut", "helloxx"];
-
     assert(root.dico.length == 3);
-    assert(root.dico.FR[1] == "salut");
     root.dico.FR[2] = "hello";
     assert(root.dico.FR.length == 3);
+    // change by code, verify by interpreter
     assert(root.dico.FR[0] == "bonjour");
-    assert(root.dico.FR[2] == "hello");
-
-    root.exec('dico.FR[2] = "comment va"');
+    assert(root.get('dico.FR[1]') == "salut");
+    // change by interpreter. verify by code
+    root.set('dico.FR[2] = "comment va"');
     assert(root.dico.FR[2] == "comment va");
   });
 
-  test("assignment on first level with code", () {
-    squad = MapList();
-    squad.name = "Super hero squad"; // String
-    squad.homeTown = 'Metro City'; // String
-    squad.formed = 2016; // int
-    squad.active = true; // bool
-    squad.score = 38.5; // double
-
-    assert(squad.formed == 2016);
-    assert(squad.active);
-    assert(squad.score == 38.5);
-  });
-
-  test("create a List in a Map ", () {
-    // continuing with previous data can't run alone
-    assert(squad.formed == 2016);
-    squad.members = [];
-    // assign a full structure in one shot
+  test('create new data from scratch in several ways', () {
+    dynamic squad = MapList();
+    squad.name = "Super hero squad"; // String entry
+    assert(squad.name == "Super hero squad");
+    squad.members = []; // Empty list names members
+    assert(squad.members.isEmpty);
+    // create a member with a compiled map json
     squad.members.add({
       "name": "Molecule Man",
       "age": 29,
       "secretIdentity": "Dan Jukes",
       "powers": ["Radiation resistance", "Turning tiny", "Radiation blast"]
     });
-    assert(squad.members[0].powers[1] == "Turning tiny");
+    assert(squad.members[0].age == 29);
+    // create another member using first a MapList
+    dynamic aMember = MapList();
+    aMember.name = "Madame Uppercut";
+    aMember.age = 39;
+    aMember.secretIdentity = "Jane Wilson";
+    aMember.powers = [
+      "Million tonne punch",
+      "Damage resistance",
+      "Superhuman reflexes"
+    ];
+    squad.members.add(aMember);
+    assert(squad.members[1].powers[2] == "Superhuman reflexes");
   });
 
-  test("assignement on first level with script", () {
-    squad = MapList();
-    squad.set('name = "Super hero squad"');
-    squad.set("homeTown = 'Metro City'");
-    squad.set('formed = 2016');
-    squad.set('active = true');
-    squad.set('score = 38.5');
 
-    assert(squad.homeTown == "Metro City");
-    assert(squad.formed == 2016);
-    assert(squad.active);
-    assert(squad.score == 38.5);
-  });
 
-  test("create a List in a Map with exec ", () {
-    // warning : continuing with previous data can't run alone
-    assert(squad.formed == 2016);
-    squad.set('members = []');
-    squad.exec(
-        'members.add({ "name": "Molecule Man","age": 29,"secretIdentity": "Dan Jukes",'
-        '"powers": ["Radiation resistance", "Turning tiny", "Radiation blast"]})');
 
-    assert(squad.members[0].powers[1] == "Turning tiny");
-  });
 
-  test("deep changes mixed with exec and code from file ", () {
+  test("deep changes mixed with interpreter and code from file ", () {
     var testFile = path.join(
         Directory.current.path, 'test', 'models', 'json', 'super_heroes.json');
     var file = File(testFile);

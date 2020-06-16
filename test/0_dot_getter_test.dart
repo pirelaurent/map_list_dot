@@ -78,6 +78,9 @@ void main() {
     // --- now the same with a dot notation
     assertShow(root.get('show').name, "quiz on video");
     assertShow(root.show.get('videos[1]["name"]'), "japaneese fashion");
+
+    print(root.show.get('["videos"][1]'));
+
     assertShow(root.show.get('["videos"][1]').questions[1].name, "games");
     assertShow(root.show.videos[1].get('questions[1].options[2]').answer, "go");
   });

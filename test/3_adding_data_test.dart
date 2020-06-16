@@ -46,7 +46,7 @@ void main() {
     root.data = [11, 12, 13];
     assert(root.data[2] == 13);
     // cannot write like this :
-    root.set('data.add(31)');
+    root.exec('data.add(31)');
     assert(root.data[3] == 31);
   });
 
@@ -58,26 +58,27 @@ void main() {
     // by default a [11,12,13] is a List<int> can't add a string
     root.data.add("hello");
     assert(root.data[3] == "hello");
-    root.set('data.add(15.5)');
+    root.exec('data.add(15.5)');
     assert(root.data[4] == 15.5);
     // now add a map
     root.data.add({"name": "polo", "age":27});
     assert(root.data[5] is MapListMap);
     // interpreter
-    root.set('data.add({"name": "pili", "age":20})');
+    root.exec('data.add({"name": "pili", "age":20})');
     assert(root.data[6] is MapListMap);
     assert(root.data[5].name == "polo" );
 
   });
 
   test(" add json to a List , direct and interpreted  ", () {
+    root = MapList();
     root.results = [];
     // code
     root.results.add({"elapsed_time": 30, "temperature": 18});
     root.results.add({"elapsed_time": 60, "temperature": 40});
     assert(root.results[1].temperature == 40);
     // script
-    root.set('results.add({"elapsed_time": 120, "temperature": 58  })');
+    root.exec('results.add({"elapsed_time": 120, "temperature": 58  })');
     assert(root.results[2].temperature == 58);
   });
 
@@ -96,40 +97,6 @@ void main() {
     assert(root.results[1].duration is String, '${root.results[1].duration}');
   });
 
-
-
-  test('create new data from scratch in several ways', () {
-    dynamic squad = MapList();
-    squad.name = "Super hero squad"; // String entry
-    assert(squad.name == "Super hero squad");
-    squad.members = []; // Empty list names members
-    assert(squad.members.isEmpty);
-    // create a member with a compiled map json
-    squad.members.add({
-      "name": "Molecule Man",
-      "age": 29,
-      "secretIdentity": "Dan Jukes",
-      "powers": ["Radiation resistance", "Turning tiny", "Radiation blast"]
-    });
-    assert(squad.members[0].age == 29);
-    // create another member using first a MapList
-    dynamic aMember = MapList();
-    aMember.name = "Madame Uppercut";
-    aMember.age = 39;
-    aMember.secretIdentity = "Jane Wilson";
-    aMember.powers = [
-      "Million tonne punch",
-      "Damage resistance",
-      "Superhuman reflexes"
-    ];
-    squad.members.add(aMember);
-    assert(squad.members[1].powers[2] == "Superhuman reflexes");
-  });
-
-
-
-
-
   // seems that add and addAll are the same
   test("extends a map to a map in code  with add", () {
     // reset
@@ -144,23 +111,4 @@ void main() {
   });
 
 
-  test("extends a map to a map with interpreter ", () {
-    // reset
-    dynamic car = MapList();
-    car.set('name = "Ford"');
-    car.set('color = "blue"');
-    assert(car.color == "blue");
-    car.set('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
-    assert(car.length == 5);
-  });
-
-  test("extends a map to a map in exec with addAll ", () {
-    // reset
-    dynamic car = MapList();
-    car.name = "Ford";
-    car.color = "blue";
-    assert(car.color == "blue");
-    car.set('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
-    assert(car.length == 5);
-  });
 }

@@ -45,7 +45,7 @@ void main() {
     car.name = "Ford";
     car.color = "blue";
     assert(car.color == "blue");
-    car.set('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
+    car.exec('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
     assert(car.length == 5);
   });
 
@@ -67,7 +67,9 @@ void main() {
     // caution must be dynamic, var won't work as addAll is not defined in MapList
     dynamic map = MapList();
     map.set('name = "toto"');
+    print(map);
     map.exec('addAll({"A": "aa", "B": "bb"})');
+    print(map);
     assert(map.get("length") == 3);
     assert(map.get("A") == "aa");
 
@@ -77,7 +79,7 @@ void main() {
      */
 
     map = MapList({"name": "toto"});
-    map.set('addAll({"A": "aa", "B": "bb"})');
+    map.exec('addAll({"A": "aa", "B": "bb"})');
     assert(map.get("length") == 3);
     assert(map.get("A") == "aa");
   });

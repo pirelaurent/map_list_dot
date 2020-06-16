@@ -2,7 +2,6 @@ import 'dart:mirrors';
 import 'dart:convert' as convert;
 import 'dart:io';
 
-
 import 'package:map_list_dot/map_list_dot.dart';
 
 /// MapList storage is a simple Wrapper on any structure made of
@@ -11,6 +10,7 @@ import 'package:map_list_dot/map_list_dot.dart';
 
 class MapList {
   static final log = Logger('MapList');
+
   /// internal data structure . not private as no protected option
   dynamic wrapped_json;
 
@@ -95,31 +95,42 @@ class MapList {
     String name;
     if (member is Symbol) {
       name = MirrorSystem.getName(member);
-      // ------------------ setters if equals
+      // ------------------ getters if no equals sign
       if (name.endsWith('=') == false) {
-        // function calls have arguments
-        if (invocation.positionalArguments.length>0) {
+        // detect function calls that have arguments
+        var next;
+        if (invocation.positionalArguments.length > 0) {
           return checkFunctionCall(invocation);
         }
 
         /// getter returns another MapList to continue or a data at the end
-        /// but if it is a list, error
+        /// but if it is a list, error as we expect a [ ]
         if (this is MapListList) {
-          log.warning(
-              '** Naming error: trying to get a key "$name" in a List. Null returned ');
-          return null;
+          if (name == 'last') {
+            next = wrapped_json[wrapped_json.length - 1];
+          } else {
+            log.warning(
+                '** Naming error: trying to get a key "$name" in a List. Null returned ');
+            return null;
+          }
+        } else // not a List advance in map
+        {
+          lastInvocation = name;
+          next = wrapped_json[name];
         }
-        lastInvocation = name;
-        var next = json[name];
-
         if ((next is Map) || (next is List)) {
           return MapList(next, false);
         } else
-          return this.json[name];
-      } /* else this is a setter */
-    else
-       {
+          return next; //wrapped_json[name];
+      }
+      /*
+      else this is a setter
+      */
+      else
+      // setters with equal sign
+      {
         name = name.replaceAll("=", "");
+
         dynamic param = invocation.positionalArguments[0];
         /*
            if coming by code, param is generally a constructed thing
@@ -127,29 +138,39 @@ class MapList {
            in both cases something to do before insertion
          */
         param = normaliseByJson(param);
-
         if (param is String) param = adjustParam(param);
+        // special case : '.last = '
+        if (name == 'last') {
+          if (this is MapListList) {
+            wrapped_json[wrapped_json.length - 1] = param;
+            return true;
+          } else {
+            log.warning(
+                '** calling .last is allowed only on a List $lastInvocation');
+          }
+        }
         wrapped_json[name] = param;
-        return;
+        return true;
       }
     } else {
-      log.warning ('illegal call : $member');
+      log.warning('illegal symbol in a method call : $member');
     }
   }
 
   /// at these days no specific method call are allowed
-  dynamic checkFunctionCall(Invocation invocation){
-    log.severe('** ${invocation.memberName} ${invocation.positionalArguments[0]} is invalid. No action done **');
+  dynamic checkFunctionCall(Invocation invocation) {
+    log.severe(
+        '** ${invocation.memberName} ${invocation.positionalArguments[0]} is invalid. No action done **');
     return false;
   }
 
   /// ----------------------- Interpreter ----------------------
   /// Some regex to help
-  /// scalp : extract a front part of a script before a . or an equal
+  /// scalp : group 1 : all terms like root.show[1].etc splitted by .
+  /// group2 : function signature someFunc( some parameter)
   static final reg_scalp_relax = RegExp(
-      r"""(add\s?\(.*\)|addAll\s?\(.*\)|[\w\d_ \?\s\[\]{}:,"']*)[\.=]""");
-
-
+      //r"""(add\s?\(.*\)|addAll\s?\(.*\)|[\w\d_ \?\s\[\]{}:,"']*)[\.=]""");
+      r"""(|[\w\d_ \?\s\[\]{}:,"']*)[\.=\s]|(.*\(.*\))""");
 
   /// detect (several) index [123] ["abc"]
   static final reg_brackets_relax = RegExp(r"""\[["']?[A-Za-z0-9]*["']?]\??""");
@@ -159,7 +180,8 @@ class MapList {
       RegExp(r"""\[\s*['"]?([a-zA-Z0-9\s]*)['"]?\]""");
 
   /// extract num index [123] group(1) and [last] group(2) . space allowed
-  static final reg_index_List = RegExp(r"""\[\s*?([(0-9]*\s*?)\]|\[\s?(last)\s?\]""");
+  static final reg_index_List =
+      RegExp(r"""\[\s*?([(0-9]*\s*?)\]|\[\s?(last)\s?\]""");
 
   // get part after = if exists
   static final reg_rhs = RegExp(r"""=.*""");
@@ -181,11 +203,15 @@ class MapList {
   /// trap .addAll method in a script
   static final reg_check_addAll = RegExp(r"""^addAll\((.*)\)""");
 
+  /// find remove with parameter
+  static final reg_check_remove = RegExp(r"""^remove\s*?\((.*)\)""");
+
+  /// find remove with parameter
+  static final reg_check_clear = RegExp(r"""^clear\s*?\((\s*)\)""");
+
   /// trap equal sign = out of quotes
   static final reg_equals_outside_quotes =
       RegExp(r"""(["'][\w\s=]*["'])|(=)""");
-
-
 
   /*
  with this regex,
@@ -202,40 +228,24 @@ class MapList {
         return true;
       }
     }
-    // allow set word for add and addAll
+    // allow setter for add and addAll
 
     if (reg_check_add_addAll.firstMatch(aScript)?.group(2) != null) return true;
     return false;
   }
 
-  /// interpreted execmust be something like set('lhs = rhs')
+  /// interpreted exec must be something like set('lhs = rhs')
   /// due to habits, tolerate a set('lhs',rhs)
   /// which is transformed for interpreter in the right script
   ///
   /// to indicate a setter in exec a script. Check for an equals
-  dynamic set([String aScript, dynamic optionalRhs]) {
-    if (optionalRhs != null) {
-      aScript = '$aScript = ${optionalRhs.toString()}';
-    }
-    if (foundEqualsSign(aScript)) {
-      return (exec(aScript));
-    } else {
-      stderr.write(
-          '** warning : calling set with no equal sign. Probably want a get : $aScript');
-      return null;
-    }
+  dynamic set(String aScript) {
+    return (exec(aScript, 'set'));
   }
 
   /// to indicate a getter in exec a script. Check no equals
   dynamic get([String aScript]) {
-    if (aScript == null) return exec();
-    if (!foundEqualsSign(aScript)) {
-      return (exec(aScript));
-    } else {
-      stderr.write(
-          '** warning : calling get with an equal sign. be sure it\'s not a set . null returned: $aScript');
-      return null;
-    }
+    return (exec(aScript, 'get'));
   }
 
   /// exec demands arrives here in one big string
@@ -246,10 +256,14 @@ class MapList {
   /// Empty execwill return current position
   /// solo index '[1]' will return the [1] of current (if list)
   ///
-  dynamic exec([String aScript = ""]) {
+  dynamic exec([String aScript = "", String getOrSet]) {
     bool setter = false;
+    // if a call with empty parenthesis
+    if (aScript == null) aScript = '';
     aScript = aScript.trim();
     var originalScript = aScript;
+    var dataToSet;
+    var exitMessageOnWarning='';
 
     /*
      split into parts ending by . or =
@@ -257,19 +271,22 @@ class MapList {
      soo we add it a dot : boof.price. to facilitate split
      */
     Iterable rhs_s = reg_rhs.allMatches(aScript);
-    var dataToSet;
+    exitMessageOnWarning = ' -> null returned';
     if (rhs_s.isNotEmpty) {
       // found an = evaluate rhs . it begins with '='
       String rawDataName = rhs_s.elementAt(0).group(0);
       var aDataName = rawDataName.substring(1).trim();
       dataToSet = adjustParam(aDataName);
+      // remember we are in a set with an equal
 
       setter = true;
+      exitMessageOnWarning = 'no action done. -> false returned';
+
       // retract this part from script
       aScript = aScript.replaceAll(rawDataName, "").trim();
     }
 
-    // add an ending point to facilitate split
+    // add an ending point to facilitate detection of isolated word
     aScript += '.';
     // now the named variable one per one
     Iterable lhs_s = reg_scalp_relax.allMatches(aScript);
@@ -278,89 +295,93 @@ class MapList {
     the variable part can have enclosed index
 
      */
-    dynamic where = this.json;
-    dynamic previous = where;
+    dynamic where, previous, next;
+    where = this.json;
+    // when progressing must remember previous
+    // as a get returns current value but a set affects the owner
+    previous = where;
     // to remember position once leaf reached
-    var lastRank, lastNameOfIndex;
-    var aVarName;
+    var lastRank, lastNameOfKeyInMap;
+    var aDryName;
 
+    // help to use the right term
+    if (setter && (getOrSet != 'set')) {
+      log.warning(
+          '** warning : calling get with an equal sign. Be sure it\'s not a set . null returned: $aScript');
+      return null;
+    }
+    if (!setter && (getOrSet == 'set')) {
+      log.warning(
+          '** warning : $aScript Calling set without = .Be sure it\'s not a get or an exec .no action done');
+      return false;
+    }
+
+    /*------ will progress part1.part2.part3[ ]. etc
+    can found at the end a function like remove(), clear() ..
+
+     */
     for (var aLhs in lhs_s) {
+      var aFunction = aLhs.group(2);
+      // if a function allows exec, get or set
+      if (aFunction != null) return execFunction(where, aFunction); //--> exit
+      // get the part
       var aPathStep = aLhs.group(1);
-      //remove the dot
-      bool nullable = aPathStep.endsWith('?');
-      // get name only (can be null if [ ] direct )
 
-      // could be a reserved word
-      var foundAdd = reg_check_add.firstMatch(aPathStep);
-      if (!(foundAdd == null)) {
-        dataToSet = foundAdd.group(1);
-        dataToSet = adjustParam(dataToSet);
-
-        if (where is List)
-          where.add(dataToSet);
-        else {
-          stderr.write(
-              '** $originalScript:  method add is not valid outside a List . data not added\n');
-        }
-
-        return null;
+      // get part name only without brackets (can be null if [ ] direct )
+      aDryName = reg_dry_name.firstMatch(aPathStep)?.group(1);
+      bool nullable = false;
+      if (aDryName != null) {
+        //check nullable . checked only at the end of the name part?[1]
+        // no matter as returns null without crash at any step in a List.
+        nullable = aDryName.endsWith('?');
+        if (nullable) aDryName = aDryName.substring(0, aDryName.length - 1);
       }
-
-      // could be a reserved word addAll
-      var foundAddAll = reg_check_addAll.firstMatch(aPathStep);
-      if (!(foundAddAll == null)) {
-        dataToSet = foundAddAll.group(1);
-        dataToSet = adjustParam(dataToSet);
-        where.addAll(dataToSet);
-        return null;
-      }
-
-/*
-    not add or addAll, isolate dry name against any index [ ]
- */
-      aVarName = reg_dry_name.firstMatch(aPathStep)?.group(1);
 
       /*
-      try to find this var name. could be :
-      simple : dico
-      simple with nullable : dico?
-      with brackets : scores[10]
-      with nullable at several places : scores?[10]?
-      with several brackets : name["what"].scores[10]
-      starting at the very front : [12] ["pouet"]
+      try to find this dry name in data .
+      Next step will apply the [ ] [ ] on the found entry
       */
-
-      if (nullable) aVarName = aVarName.substring(0, aVarName.length - 1);
-      /*
-       before attempting to apply some index, find the dry part
-       */
-      if (aVarName != null) {
-        // we have a name : must exists an entry . Implies a map, except for length
-        if (aVarName == "length") {
+      if (aDryName != null) {
+        // some name are special properties
+        if (aDryName == "length") {
           if (where is List) return where.length;
           if (where is Map) {
             if (aPathStep == "length") return where.length;
             // otherwise will be some ["length"] asking for a key leave it
           }
-        }
-        // any key is valid only on a map
-        if (!(where is Map)) {
+        } //--> exit
+        if (aDryName == "isEmpty") return where.isEmpty; //--> exit
+        if (aDryName == "isNotEmpty") return where.isNotEmpty; //--> exit
+
+        // any other key is valid only on a map except the word 'last'
+        if ((!(where is Map)) && (aDryName != "last")) {
           log.warning(
-              "** $originalScript: searching '$aVarName' in a ${where.runtimeType} ");
-          if (setter)return false; else return null;
+              "**  cannot search a key ($originalScript) in a ${where.runtimeType}. $exitMessageOnWarning ");
+          return (setter ? false : null);
+        }
+
+        if (aDryName == 'last') {
+          previous = where;
+          var rank = where.length - 1;
+          next = where[rank];
+          where = next;
+          lastRank = rank;
+          lastNameOfKeyInMap = null;
+          continue;
         }
         // could be unknown but a creation
+
         previous = where;
-        var next = where[aVarName];
-        lastNameOfIndex = aVarName;
+        next = where[aDryName];
+        lastNameOfKeyInMap = aDryName;
         lastRank = null;
 
-        if (nullable && (next == null)) return null; // that's all
+        if (nullable && (next == null)) return null; //--> exit
         if (next == null) {
           // if setter create en entry . will be overwrite by the equals
           if (setter) {
-            previous[aVarName] = null;
-            next = where[aVarName];
+            previous[aDryName] = null;
+            next = where[aDryName];
           } else {
             return null;
           }
@@ -371,57 +392,63 @@ class MapList {
       }
 
       /*
+       if dryName was null we are still at the root,
+       otherwise en new place has been set in where
        we now progress on index
-         accept ["abc"] ['abc'] on a map and [123] [last] on a list
+         accept ["abc"] ['abc'] on a map and [123] on a list
        */
       var bracketsList = reg_brackets_relax.allMatches(aPathStep);
 
       for (var aBl in bracketsList) {
         var anIndex = aBl.group(0);
+
         bool nullable = anIndex.endsWith('?');
-        // extract num index [123] group(1) and [last] group(2) . space allowed
+        // extract num index [123] group(1)  . space allowed
         var numIndex = reg_index_List.firstMatch(anIndex);
         //-------------------- [ 123 ] on List ----------
         if (numIndex != null) {
           if (!(where is List)) {
             log.warning(
-                '** $originalScript: $anIndex must be applied to a List ');
-            if (setter) return false; else return null;
+                '** $originalScript: $anIndex must be applied to a List. $exitMessageOnWarning ');
+            return (setter ? false : null);
           }
+
           var rawRank, rank;
           lastRank = null;
           // normal num index
           rawRank = numIndex.group(1);
-          if(rawRank != null) rank = num.tryParse(rawRank);
-          // keyword last
-           else {
-          rawRank = numIndex.group(2);
-          if (rawRank!=null) rank = where.length-1;
-               }
-           // check range
+          if (rawRank != null) {
+            rank = num.tryParse(rawRank);
+          } else {
+            log.warning('** wrong index on a list :$originalScript. $exitMessageOnWarning');
+            return (setter ? false : null);
+          }
+
+          // check range
           if ((rank < 0) || (rank >= where.length)) {
             if (!nullable) // no error if anticipated
               log.warning(
-                  '** unexisting $originalScript in interpreter . null returned  ');
-            if (setter) return false; else return null;
+                  '** $originalScript not found by interpreter . $exitMessageOnWarning  ');
+            return (setter ? false : null);
           }
+
           // advance
           previous = where;
           where = where[rank];
           lastRank = rank;
-          lastNameOfIndex = null;
+          lastNameOfKeyInMap = null;
           continue;
         } // num index
         //----------------------["abc"] on Map -------------
-        lastNameOfIndex = null;
+        lastNameOfKeyInMap = null;
         var stringIndex = reg_indexString.firstMatch(anIndex);
         if (stringIndex != null) {
           var nameOfIndex = stringIndex.group(1);
           if (!(where is Map)) {
-             {
+            {
               log.warning(
-                  '** $originalScript: index $anIndex must be applied to a map.  ');
-              if (setter) return false; else return null;
+                  '** $originalScript: index $anIndex must be applied to a map. $exitMessageOnWarning  ');
+              return (setter ? false : null); //----> exit
             }
           }
           var next = where[nameOfIndex];
@@ -430,13 +457,14 @@ class MapList {
             if (setter) {
               where[nameOfIndex] = Map<String, dynamic>();
               where = where[nameOfIndex];
-              lastNameOfIndex = nameOfIndex;
+              lastNameOfKeyInMap = nameOfIndex;
             } else {
               log.warning(
-                  '** $originalScript: warning $nameOfIndex in $anIndex not found. ');
-              if (setter) return false; else return null;
+                  '** $originalScript: warning $nameOfIndex in $anIndex not found. $exitMessageOnWarning ');
+              return (setter ? false : null); //----> exit
             }
           }
+          // advance a step
           previous = where;
           where = next;
           continue;
@@ -444,37 +472,37 @@ class MapList {
       } //for brackets
 
 /*
- when we arrive here, all index have been applied to the dry variable
- but if it is not the last part, let's loop
- check if a set or get
+ when we arrive here, all optional index have been applied to the dry variable
+ where is the last leaf , previous is it's owner
+ A get returns the leaf while a set change its value using the owner
  */
-    } // for lhs
+    } // end loop for lhs
 
-    if (setter) {
-      if (previous is List) {
-        if (lastRank != null)
-          previous[lastRank] = dataToSet;
-        else
-          previous = dataToSet;
-        return true;
-      }
-
-      if (previous is Map) {
-        if (lastNameOfIndex != null)
-          previous[lastNameOfIndex] = dataToSet;
-        else
-          previous = dataToSet;
-        return true;
-      }
-      // we have reached a leaf
-      where = dataToSet;
-      return true;
-    } else // getter
-    {
-      if (where is List) return MapListList.json(where);
-      if (where is Map) return MapListMap.json(where);
-      return where;
+    // getter
+    if (!setter) {
+      if (where is List) return MapListList.json(where); //----> exit
+      if (where is Map) return MapListMap.json(where); //----> exit
+      return where; //----> exit
     }
+    // setter
+    // could be the list to set or an element in the list
+    if (previous is List) {
+      if (lastRank != null)
+        previous[lastRank] = dataToSet;
+      else
+        previous = dataToSet;
+      return true;
+    }
+
+    if (previous is Map) {
+      if (lastNameOfKeyInMap != null)
+        previous[lastNameOfKeyInMap] = dataToSet;
+      else
+        previous = dataToSet;
+      return true;
+    }
+    log.warning('** try to set a value $dataToSet on a ${where.runtimeType}. $exitMessageOnWarning');
+    return false;
   }
 
   ///
@@ -511,64 +539,48 @@ class MapList {
     // nothing special returns original
     return param;
   }
+  ///
+  /// when found in script soome func( ) , execute here
+  dynamic execFunction(dynamic where, dynamic aFunction) {
+// could be a reserved word add
+    var foundAdd = reg_check_add.firstMatch(aFunction);
+    if (!(foundAdd == null)) {
+      dynamic dataToSet = foundAdd.group(1);
+      dataToSet = adjustParam(dataToSet);
 
-  /*
-    .add or .addAll method directly on json data
-  */
-  bool foundAdd(var aScript) {
-    var foundTermAdd = reg_check_add.firstMatch(aScript);
-    if (foundTermAdd == null) return false;
-    // add is significant for List when script
-    dynamic thingToAdd;
-    if ((this is MapListList) || (this is MapListMap)) {
-      // what is the something part
-      thingToAdd = foundTermAdd.group(0);
-      // remove "add(   )" parts
-      thingToAdd = thingToAdd.substring(4, thingToAdd.length - 1);
-      thingToAdd = adjustParam(thingToAdd);
-      if (this is MapListList) {
-        MapListList m = this;
-        m.add(thingToAdd);
+      if (where is List)
+        where.add(dataToSet);
+      else {
+        stderr.write(
+            '** $aFunction:  method add is not valid outside a List . data not added\n');
       }
-      if (this is MapListMap) {
-        MapListMap m = this;
-        m.addAll(thingToAdd);
-      }
-    } else {
-      log.warning("** trying to use add $thingToAdd out of a List ");
-      return false;
+      return null;
     }
-    return true;
-  }
 
-  /*
-       if (.addAll(same for .addAll
-  */
-  bool foundAddAll(aScript) {
-    var foundTermAddAll = reg_check_addAll.firstMatch(aScript);
-    if (foundTermAddAll == null) return false;
-    dynamic thingToAdd;
-    if ((this is MapListList) || (this is MapListMap)) {
-      // what is the something part
-      thingToAdd = foundTermAddAll.group(0);
-      // remove "addAll(   )" parts
-      thingToAdd = thingToAdd.substring(7, thingToAdd.length - 1);
-      thingToAdd = adjustParam(thingToAdd);
-      if (this is MapListList) {
-        MapListList m = this;
-        m.addAll(thingToAdd);
-      }
-      if (this is MapListMap) {
-        MapListMap m = this;
-        m.addAll(thingToAdd);
-      }
-    } else {
-      log.warning("** trying to use addAll $thingToAdd out of a Map or a List ");
-      return false;
+    // could be a reserved word addAll
+    var foundAddAll = reg_check_addAll.firstMatch(aFunction);
+    if (!(foundAddAll == null)) {
+      dynamic dataToSet = foundAddAll.group(1);
+      dataToSet = adjustParam(dataToSet);
+      where.addAll(dataToSet);
+      return null;
     }
-    return true;
-  }
 
+    var foundRemove = reg_check_remove.firstMatch(aFunction);
+    if (foundRemove != null) {
+      dynamic dataToRemove = foundRemove.group(1);
+      dataToRemove = adjustParam(dataToRemove);
+      return where.remove(dataToRemove);
+    }
+    var foundClear = reg_check_clear.firstMatch(aFunction);
+    if ((foundClear != null)) {
+      where.clear();
+      return true;
+    }
+
+    log.warning('** unknown function : $aFunction . No action done ');
+    return false;
+  }
 
   /// the most simple and sure method to align the types
   /// Not so efficient? but used only one time on setter
@@ -578,8 +590,8 @@ class MapList {
 
     var prepare = convert.json.encode(something);
 
-    var resu = trappedJsonDecode(prepare);
-    return resu;
+    var result = trappedJsonDecode(prepare);
+    return result;
   }
 
   /// choose to return null rather to crash
@@ -587,7 +599,8 @@ class MapList {
     try {
       return convert.json.decode(something);
     } catch (e) {
-       log.warning ('** wrong data. MapList will return null . \n Original error: $e ');
+      log.warning(
+          '** wrong data. MapList will return null . \n Original error: $e ');
       return null;
     }
   }
