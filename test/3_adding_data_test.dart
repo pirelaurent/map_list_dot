@@ -9,30 +9,15 @@ void assertShow(var what, var expected) {
       "\nexpected: $expected  ${expected.runtimeType} got: $what ${what.runtimeType}");
 }
 
-
-
 void main() {
-  dynamic root;
-  test('create new data ',(){
-  dynamic squad = MapList();
-  squad.name = "Super hero squad"; // String entry
-  squad.members = []; // Empty list names members
-  squad.members.add({}); // members[0] is another map
-
-  squad = MapList();
-  squad.set('name = "Super hero squad"'); // String entry
-  assert(squad.name == "Super hero squad");
-
-  squad.set('name',"Super super hero squad"); // second form of set with code
-  assert(squad.name == "Super super hero squad");
-
-  squad.set('members = []'); // Empty list names members
-  assert(squad.members.isEmpty, '${squad.members}');
-
-  squad.set('members.add({})'); // members[0] is another map
-  //print(squad);
-
+  // set a logger
+  Logger.root.level = Level.ALL; // defaults to Level.INFO
+  Logger.root.onRecord.listen((record) {
+    print('${record.level.name}: ${record.time}: ${record.message}');
   });
+
+
+  dynamic root;
 
   test("add raw data int in a List", () {
     // reset
@@ -41,98 +26,18 @@ void main() {
     var hash1 = root.json.hashCode;
     root.data = [11, 12, 13];
     assert(root.data[2] == 13);
-    var hash3 = root.data.json.hashCode;
-    var hash33 = root.json["data"].hashCode;
+    // internal control of pointers : root stays the same once data added
     var hash2 = root.json.hashCode;
     assert(hash1 == hash2, ' bad mutation on root.json');
-
-    root.data.add(14);
-    hash3 = root.data.json.hashCode;
-    hash33 = root.json["data"].hashCode;
+    // check different access points on the same data
+    var hash3 = root.data.json.hashCode;
+    var hash33 = root.json["data"].hashCode;
     assert(hash3 == hash33, '$hash3 $hash33');
-
-    var hash4 = root.data.json.hashCode;
-    assert(hash3 == hash4);
-
+    // check that an add don't change the pointers
+    root.data.add(14);
     assert(root.data[3] == 14);
-    // now in script
-    root.set('data.add(15)');
-    assert(root.data[4] == 15);
-  });
-
-  test("add a map in a List created with int ", () {
-    // reset
-    root = MapList();
-    root.data = [11, 12, 13];
-    assert(root.data[2] == 13);
-    //print('${root.data.runtimeType}');//MapListList
-    root.data.add({"name": 10});
-    assert(root.data[3] is MapListMap);
-    root.set('data.add({"name":20})');
-    assert(root.data[4] is MapListMap);
-
-    // can do that in code
-    Map m1 = {"pouet": 10};
-    root.data.add(m1);
-    assert(root.data[5].pouet == 10);
-    // of course cannot do that in execas m1 is unknown
-    root.set('data.add(m1)'); //will add 'm1'
-  });
-
-  test("add raw heterogeneous data in a List", () {
-    // reset
-    root = MapList();
-    root.data = [11, 12, 13];
-    assert(root.data[2] == 13);
-    // by default a [11,12,13] is a List<int> can't add a string
-    root.data.add("hello");
-    assert(root.data[3] == "hello");
-    root.set('data.add(15.5)');
-    assert(root.data[4] == 15.5);
-    //-------------assert(root.data[3]==14);
-  });
-
-  /*
-   sharing root between test to share data needs to run all tests,
-   not one per one
-   */
-
-  test(" add json to a doted List , direct and interpreted  ", () {
-    root.results = [];
-    // code
-    root.results.add({"elapsed_time": 30, "temperature": 18});
-    root.results.add({"elapsed_time": 60, "temperature": 40});
-    assert(root.results[1].temperature == 40);
-    // script
-    root.set('results.add({"elapsed_time": 120, "temperature": 58  })');
-    assert(root.results[2].temperature == 58);
-  });
-
-  test("Adding new entries on an existing map ", () {
-    // code
-    root = MapList();
-    root.results = [];
-    root.results.add({"elapsed_time": 30, "temperature": 18});
-    root.results.add({"elapsed_time": 60, "temperature": 40});
-
-    root.results[1].time = "12:58:00";
-
-    assert(root.results[1].time is String, '${root.results[1].time}');
-    // script
-    root.set('results[1].duration = "01:00:00"');
-    //print(root);
-    assert(root.results[1].duration is String, '${root.results[1].duration}');
-  });
-
-  test("creation of data at very beginning", () {
-    root = MapList();
-    root.results = [];
-    root.results.add({"elapsed_time": 30, "temperature": 18});
-    root.elapsed_time_total = 33;
-    assert(root.elapsed_time_total == 33);
-    assert(root.length == 2);
-    root.set('elapsed_time_total = null');
-    assert(root.elapsed_time_total == null,'${root.elapsed_time_total}');
+    var hash333 = root.data.json.hashCode;
+    assert(hash3 == hash333, '$hash3 $hash333');
   });
 
   test("add a List to a List", () {
@@ -145,6 +50,86 @@ void main() {
     assert(root.data[3] == 31);
   });
 
+  test("add raw heterogeneous data in a List", () {
+    // reset
+    root = MapList();
+    root.data = [11, 12, 13];
+    assert(root.data[2] == 13);
+    // by default a [11,12,13] is a List<int> can't add a string
+    root.data.add("hello");
+    assert(root.data[3] == "hello");
+    root.set('data.add(15.5)');
+    assert(root.data[4] == 15.5);
+    // now add a map
+    root.data.add({"name": "polo", "age":27});
+    assert(root.data[5] is MapListMap);
+    // interpreter
+    root.set('data.add({"name": "pili", "age":20})');
+    assert(root.data[6] is MapListMap);
+    assert(root.data[5].name == "polo" );
+
+  });
+
+  test(" add json to a List , direct and interpreted  ", () {
+    root.results = [];
+    // code
+    root.results.add({"elapsed_time": 30, "temperature": 18});
+    root.results.add({"elapsed_time": 60, "temperature": 40});
+    assert(root.results[1].temperature == 40);
+    // script
+    root.set('results.add({"elapsed_time": 120, "temperature": 58  })');
+    assert(root.results[2].temperature == 58);
+  });
+
+
+
+  test("Adding new entries on an existing map ", () {
+    // code
+    root = MapList();
+    root.results = [];
+    root.results.add({"elapsed_time": 30, "temperature": 18});
+    root.results.add({"elapsed_time": 60, "temperature": 40});
+    root.results[1].time = "12:58:00";
+    assert(root.results[1].time is String, '${root.results[1].time}');
+    // script
+    root.set('results[1].duration = "01:00:00"');
+    assert(root.results[1].duration is String, '${root.results[1].duration}');
+  });
+
+
+
+  test('create new data from scratch in several ways', () {
+    dynamic squad = MapList();
+    squad.name = "Super hero squad"; // String entry
+    assert(squad.name == "Super hero squad");
+    squad.members = []; // Empty list names members
+    assert(squad.members.isEmpty);
+    // create a member with a compiled map json
+    squad.members.add({
+      "name": "Molecule Man",
+      "age": 29,
+      "secretIdentity": "Dan Jukes",
+      "powers": ["Radiation resistance", "Turning tiny", "Radiation blast"]
+    });
+    assert(squad.members[0].age == 29);
+    // create another member using first a MapList
+    dynamic aMember = MapList();
+    aMember.name = "Madame Uppercut";
+    aMember.age = 39;
+    aMember.secretIdentity = "Jane Wilson";
+    aMember.powers = [
+      "Million tonne punch",
+      "Damage resistance",
+      "Superhuman reflexes"
+    ];
+    squad.members.add(aMember);
+    assert(squad.members[1].powers[2] == "Superhuman reflexes");
+  });
+
+
+
+
+
   // seems that add and addAll are the same
   test("extends a map to a map in code  with add", () {
     // reset
@@ -152,26 +137,18 @@ void main() {
     car.name = "Ford";
     car.color = "blue";
     assert(car.color == "blue");
-    car.add({"price": 5000, "fuel": "diesel", "hybrid": false});
-    assert(car.length == 5);
-  });
-
-  // seems that add and addAll are the same
-  test("extends a map to a map in code with addALl  ", () {
-    // reset
-    dynamic car = MapList();
-    car.name = "Ford";
-    car.color = "blue";
-    assert(car.color == "blue");
+    // be sure to use addAll, not add on a map
+    //** Symbol("add") {price: 5000, fuel: diesel, hybrid: false} is invalid. No action done
     car.addAll({"price": 5000, "fuel": "diesel", "hybrid": false});
     assert(car.length == 5);
   });
 
-  test("extends a map to a map in set ", () {
+
+  test("extends a map to a map with interpreter ", () {
     // reset
     dynamic car = MapList();
-    car.name = "Ford";
-    car.color = "blue";
+    car.set('name = "Ford"');
+    car.set('color = "blue"');
     assert(car.color == "blue");
     car.set('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
     assert(car.length == 5);
@@ -186,6 +163,4 @@ void main() {
     car.set('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
     assert(car.length == 5);
   });
-
-
 }

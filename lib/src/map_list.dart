@@ -2,6 +2,7 @@ import 'dart:mirrors';
 import 'dart:convert' as convert;
 import 'dart:io';
 
+
 import 'package:map_list_dot/map_list_dot.dart';
 
 /// MapList storage is a simple Wrapper on any structure made of
@@ -9,10 +10,11 @@ import 'package:map_list_dot/map_list_dot.dart';
 /// MapList allows access by a dot notation in code and with script
 
 class MapList {
+  static final log = Logger('MapList');
   /// internal data structure . not private as no protected option
   dynamic wrapped_json;
 
-  /// better to use this getter
+  /// better to use this getter outside
   get json => wrapped_json;
 
   set json(dynamic someJson) {
@@ -39,7 +41,6 @@ class MapList {
     else {
       if (initial) jsonInput = normaliseByJson(jsonInput);
     }
-    ;
 
     if (jsonInput is List) return MapListList.json(jsonInput);
     if (jsonInput is Map) return MapListMap.json(jsonInput);
@@ -85,7 +86,7 @@ class MapList {
   ///   the last step returns a data (ie getter)
   /// else the last step set the data (ie setter) and return nothing.
   ///
-  /// see later that execreuses this internal mechanism to share code.
+  /// see later that exec reuses this internal mechanism to share code.
 
   @override
   dynamic noSuchMethod(Invocation invocation) {
@@ -96,18 +97,16 @@ class MapList {
       name = MirrorSystem.getName(member);
       // ------------------ setters if equals
       if (name.endsWith('=') == false) {
-        // special case if pseudo index in quotes at root: root.exec(" '[255]' = 20");
-        if (name == "''") {
-          stderr.write(
-              "** wrong name : index between quote. '[ ]'.  null returned \n");
-          return null;
+        // function calls have arguments
+        if (invocation.positionalArguments.length>0) {
+          return checkFunctionCall(invocation);
         }
 
         /// getter returns another MapList to continue or a data at the end
         /// but if it is a list, error
         if (this is MapListList) {
-          stderr.write(
-              '** List error: trying to get a key "$name" from a List. Null returned ');
+          log.warning(
+              '** Naming error: trying to get a key "$name" in a List. Null returned ');
           return null;
         }
         lastInvocation = name;
@@ -117,12 +116,14 @@ class MapList {
           return MapList(next, false);
         } else
           return this.json[name];
-      } else
-      /* else this is a setter */ {
+      } /* else this is a setter */
+    else
+       {
         name = name.replaceAll("=", "");
         dynamic param = invocation.positionalArguments[0];
-        /* if coming with script, param is a string
-           if coming by code, param is already a constructed thing
+        /*
+           if coming by code, param is generally a constructed thing
+           but string is allowed like in interpreter.
            in both cases something to do before insertion
          */
         param = normaliseByJson(param);
@@ -131,18 +132,24 @@ class MapList {
         wrapped_json[name] = param;
         return;
       }
+    } else {
+      log.warning ('illegal call : $member');
     }
   }
 
-  /// Some regex to help
-  /// \ is useful for some regex (doubled avoid to be trapped by dart)
-  /// scalp : extract a front part of a script before a . or an equal
+  /// at these days no specific method call are allowed
+  dynamic checkFunctionCall(Invocation invocation){
+    log.severe('** ${invocation.memberName} ${invocation.positionalArguments[0]} is invalid. No action done **');
+    return false;
+  }
 
+  /// ----------------------- Interpreter ----------------------
+  /// Some regex to help
+  /// scalp : extract a front part of a script before a . or an equal
   static final reg_scalp_relax = RegExp(
       r"""(add\s?\(.*\)|addAll\s?\(.*\)|[\w\d_ \?\s\[\]{}:,"']*)[\.=]""");
 
-  /// detect num index [123]
-  static final reg_brackets = RegExp("\\[[0-9]*\\]");
+
 
   /// detect (several) index [123] ["abc"]
   static final reg_brackets_relax = RegExp(r"""\[["']?[A-Za-z0-9]*["']?]\??""");
@@ -151,8 +158,8 @@ class MapList {
   static final reg_indexString =
       RegExp(r"""\[\s*['"]?([a-zA-Z0-9\s]*)['"]?\]""");
 
-  // extract form [123] or [  123  ]
-  static final reg_indexNum = RegExp(r"""\[\s*([(0-9\s]*)\]""");
+  /// extract num index [123] group(1) and [last] group(2) . space allowed
+  static final reg_index_List = RegExp(r"""\[\s*?([(0-9]*\s*?)\]|\[\s?(last)\s?\]""");
 
   // get part after = if exists
   static final reg_rhs = RegExp(r"""=.*""");
@@ -177,6 +184,8 @@ class MapList {
   /// trap equal sign = out of quotes
   static final reg_equals_outside_quotes =
       RegExp(r"""(["'][\w\s=]*["'])|(=)""");
+
+
 
   /*
  with this regex,
@@ -212,7 +221,7 @@ class MapList {
       return (exec(aScript));
     } else {
       stderr.write(
-          '** warning : calling set with no equal sign. Probably want a get : $aScript\n');
+          '** warning : calling set with no equal sign. Probably want a get : $aScript');
       return null;
     }
   }
@@ -224,12 +233,12 @@ class MapList {
       return (exec(aScript));
     } else {
       stderr.write(
-          '** warning : calling get with an equal sign. be sure it\'s not a set . null returned: $aScript\n');
+          '** warning : calling get with an equal sign. be sure it\'s not a set . null returned: $aScript');
+      return null;
     }
-    return null;
   }
 
-  /// execdemands arrives here in one big string
+  /// exec demands arrives here in one big string
   /// A front part is isolated and executed to find next position
   /// execcall itself recursively for the following step
   /// On last step, depending of an equal sign, returns a data or set a data
@@ -336,9 +345,9 @@ class MapList {
         }
         // any key is valid only on a map
         if (!(where is Map)) {
-          stderr.write(
-              "** $originalScript: searching \'$aVarName\' in a ${where.runtimeType} null returned \n");
-          return null;
+          log.warning(
+              "** $originalScript: searching '$aVarName' in a ${where.runtimeType} ");
+          if (setter)return false; else return null;
         }
         // could be unknown but a creation
         previous = where;
@@ -363,32 +372,38 @@ class MapList {
 
       /*
        we now progress on index
+         accept ["abc"] ['abc'] on a map and [123] [last] on a list
        */
       var bracketsList = reg_brackets_relax.allMatches(aPathStep);
 
       for (var aBl in bracketsList) {
         var anIndex = aBl.group(0);
         bool nullable = anIndex.endsWith('?');
-        /*
-         accept ["abc"] ['abc'] on a map and [123] on a list
-         */
-        var numIndex = reg_indexNum.firstMatch(anIndex);
-        lastRank = null;
-
+        // extract num index [123] group(1) and [last] group(2) . space allowed
+        var numIndex = reg_index_List.firstMatch(anIndex);
+        //-------------------- [ 123 ] on List ----------
         if (numIndex != null) {
-          var rawRank = numIndex.group(1);
           if (!(where is List)) {
-            stderr.write(
-                '** $originalScript: $anIndex must be applied to a List. null returned\n ');
-            return null;
+            log.warning(
+                '** $originalScript: $anIndex must be applied to a List ');
+            if (setter) return false; else return null;
           }
-
-          var rank = num.tryParse(rawRank);
+          var rawRank, rank;
+          lastRank = null;
+          // normal num index
+          rawRank = numIndex.group(1);
+          if(rawRank != null) rank = num.tryParse(rawRank);
+          // keyword last
+           else {
+          rawRank = numIndex.group(2);
+          if (rawRank!=null) rank = where.length-1;
+               }
+           // check range
           if ((rank < 0) || (rank >= where.length)) {
             if (!nullable) // no error if anticipated
-              stderr.write(
-                  '** $originalScript: wrong index $anIndex. null returned\n '); //@todo mmore explicit
-            return null;
+              log.warning(
+                  '** unexisting $originalScript in interpreter . null returned  ');
+            if (setter) return false; else return null;
           }
           // advance
           previous = where;
@@ -397,37 +412,29 @@ class MapList {
           lastNameOfIndex = null;
           continue;
         } // num index
-
+        //----------------------["abc"] on Map -------------
         lastNameOfIndex = null;
         var stringIndex = reg_indexString.firstMatch(anIndex);
         if (stringIndex != null) {
           var nameOfIndex = stringIndex.group(1);
           if (!(where is Map)) {
-          // only case if 'last' word found on a List
-            if ((nameOfIndex == "last") && (where is List)) {
-              int rank = where.length-1;
-              // advance
-              previous = where;
-              where = where[rank];
-              lastRank = rank;
-              lastNameOfIndex = null;
-              continue;
-            } else {
-              stderr.write(
-                  '** $originalScript: index $anIndex must be applied to a map. null returned\n ');
-              return null;
+             {
+              log.warning(
+                  '** $originalScript: index $anIndex must be applied to a map.  ');
+              if (setter) return false; else return null;
             }
           }
           var next = where[nameOfIndex];
           if (next == null) {
+            // unknown key in map creates the entry in anticipation of an =
             if (setter) {
               where[nameOfIndex] = Map<String, dynamic>();
               where = where[nameOfIndex];
               lastNameOfIndex = nameOfIndex;
             } else {
-              stderr.write(
-                  '** $originalScript: warning $nameOfIndex in $anIndex not found . null returned\n ');
-              return null;
+              log.warning(
+                  '** $originalScript: warning $nameOfIndex in $anIndex not found. ');
+              if (setter) return false; else return null;
             }
           }
           previous = where;
@@ -449,19 +456,19 @@ class MapList {
           previous[lastRank] = dataToSet;
         else
           previous = dataToSet;
-        return;
+        return true;
       }
-      ;
+
       if (previous is Map) {
         if (lastNameOfIndex != null)
           previous[lastNameOfIndex] = dataToSet;
         else
           previous = dataToSet;
-        return;
+        return true;
       }
       // we have reached a leaf
       where = dataToSet;
-      return;
+      return true;
     } else // getter
     {
       if (where is List) return MapListList.json(where);
@@ -478,6 +485,7 @@ class MapList {
   /// any string (without quotes) are tested to be a valid number
   /// a string eligible to be a json-like structure is decoded
   /// if the json is not valid, returns a null and log a warning error
+  ///
   dynamic adjustParam(var param) {
     // if between ' or between " extract and leaves as String
     if ((param[0] == '"') && param.endsWith('"')) {
@@ -500,13 +508,13 @@ class MapList {
     if (found != null) {
       return trappedJsonDecode(found.group(0));
     }
-    // nothing special not yet returned
+    // nothing special returns original
     return param;
   }
 
   /*
-       .add or .addAll method directly on json data
-       */
+    .add or .addAll method directly on json data
+  */
   bool foundAdd(var aScript) {
     var foundTermAdd = reg_check_add.firstMatch(aScript);
     if (foundTermAdd == null) return false;
@@ -524,10 +532,11 @@ class MapList {
       }
       if (this is MapListMap) {
         MapListMap m = this;
-        m.add(thingToAdd);
+        m.addAll(thingToAdd);
       }
     } else {
-      stderr.write("** trying to use add $thingToAdd out of Map or List ");
+      log.warning("** trying to use add $thingToAdd out of a List ");
+      return false;
     }
     return true;
   }
@@ -554,70 +563,12 @@ class MapList {
         m.addAll(thingToAdd);
       }
     } else {
-      stderr.write("** trying to use addAll $thingToAdd out of Map or List ");
+      log.warning("** trying to use addAll $thingToAdd out of a Map or a List ");
+      return false;
     }
     return true;
   }
 
-  /// find an item by its string name 'name' or name[rank]
-  /// uses the common code by invokink noSuchMethod on the MapList
-  /// can generate an error if rank is not valid and no nullable option
-
-  dynamic getItemWithOptionalRank(String item) {
-    dynamic where;
-    var originalItem = item;
-    int rank;
-    bool withBrackets = false;
-    var rawRank;
-
-    Iterable foundAll = reg_brackets_relax.allMatches(item); //
-    for (var ff in foundAll) {
-      rawRank = ff.group(0); // at this step, get the last one only
-
-    } // à déplacer
-
-    // calculate a rank if numerical
-    if (foundAll.isNotEmpty) {
-      withBrackets = true;
-      //found sample :rawRank-> [1]
-      // clean the item -> book
-      item = item.replaceAll(rawRank, '');
-      // remove brackets  : rawRank ->1
-      rawRank = rawRank.substring(1, rawRank.length - 1);
-      rank = num.tryParse(rawRank);
-    }
-    /*
-     in rare case where the root is a List,
-     some calls can arrive empty or as pure index '[2]'
-     in this case apply to current
-     */
-    if (item == "") {
-      where = this;
-    } else {
-      // first try to get an access to the item
-      Invocation invocation = Invocation.getter(Symbol(item));
-      where = noSuchMethod(invocation);
-    }
-
-    if (where == null) return where;
-    // found something correct : if a valid rank, apply it
-    if (withBrackets) {
-      if (rank != null) {
-        if (where is MapListList) {
-          return where[rank];
-        }
-        stderr.write(
-            '** wrong index [$rank]. $originalItem is not a List. get: null returned ; set: no change\n');
-        return null; // previously where
-      } else {
-        stderr.write(
-            "** bad index : $originalItem . get: null returned. set: no change \n");
-        // wrong demand into [ ]
-        return null;
-      }
-    } else // no brackets
-      return where;
-  }
 
   /// the most simple and sure method to align the types
   /// Not so efficient? but used only one time on setter
@@ -636,7 +587,7 @@ class MapList {
     try {
       return convert.json.decode(something);
     } catch (e) {
-      stderr.write('** wrong data. MapList will return null :  $e ');
+       log.warning ('** wrong data. MapList will return null . \n Original error: $e ');
       return null;
     }
   }

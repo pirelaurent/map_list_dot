@@ -11,6 +11,13 @@ void assertShow(var what, var expected) {
 }
 
 void main() {
+
+  // set a logger
+  Logger.root.level = Level.ALL; // defaults to Level.INFO
+  Logger.root.onRecord.listen((record) {
+    print('${record.level.name}: ${record.time}: ${record.message}');
+  });
+
   var testFile = path.join(
       Directory.current.path, 'test', 'models', 'json', 'super_heroes.json');
   var file = File(testFile);

@@ -2,6 +2,14 @@ import 'package:map_list_dot/map_list_dot.dart';
 import 'package:test/test.dart';
 
 void main() {
+  // set a logger
+  Logger.root.level = Level.ALL; // defaults to Level.INFO
+  Logger.root.onRecord.listen((record) {
+    print('${record.level.name}: ${record.time}: ${record.message}');
+  });
+
+
+
   test('addAll in code', () {
     // caution must be dynamic, var won't work as addAll is not defined in MapList
     dynamic map = MapList({"name": "toto"});

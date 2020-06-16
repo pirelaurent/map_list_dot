@@ -13,17 +13,16 @@ MapList uses a factory and allows several constructors :
  MapList(someStructure);  // uses an already 'maps & list' structure or a Dart json object
 ```
 ### Accessing data
+For the examples, a MapList *root* has been loaded with a json.
 #### classical notation reminder
-```
-// root has been loaded with a maps and lists structure 
+``` dart
 root["show"]["name"]
 root["show"]["videos"][1]["name"]
 root["show"]["videos"][1]["questions"][1]["options"][2]["answer"]
 ```
 ##### Available dot notation
-```
-// root has been loaded with a maps and lists structure
-root.show.name, "quiz on video");
+``` dart
+root.show.name
 root.show.videos[1].name
 root.show.videos[1].questions[1].options[2].answer
 ```
@@ -31,7 +30,7 @@ root.show.videos[1].questions[1].options[2].answer
 ### Creating & setting data
 #### in a map
 Any new name at a map level will create the data if it not exists ( or replace it if exists)
-```
+``` dart
 dynamic squad = MapList();
 squad.name = "Super hero squad";    // String
 squad.homeTown = 'Metro City';      // String
@@ -41,20 +40,20 @@ squad.score = 38.5;                 // double
 ```
 #### Creating and setting maps or lists
 ##### empty structures
-```
+``` dart
 dynamic squad = MapList();
-// create a list and a map  
+// create a list then a map  
 squad.members = [];              // empty list
 squad.myMap = {};                // empty map   
 ```
-##### addAll to a Map
-```
+##### addAll (of another Map) to a Map
+``` dart
 dynamic car = MapList();
 car.name = "Ford";
 car.addAll({ "price": 5000, "fuel":"diesel","hybrid":false});
 ```
-##### add & addAll to a List
-```
+##### add (anything) & addAll (of another List of anything) to a List
+``` dart
 dynamic list = MapList([]);  
 list.add(15);
 list.addAll([1, 2, 3]);
@@ -86,10 +85,11 @@ store.wrongName?.someData
  To avoid an error,  MapList returns null if an existing list is accessed with a wrong index.
 ```
 assert(store.book[400] == null);
-->** wrong index [400]. null returned
+    WARNING: 2020-06-16 10:43:27.773563: unexisting book [400] : null returned .
+     Original message : RangeError (index): Invalid value: Not in range 0..3, inclusive: 4 
 store.book[400]?.author = "zaza" ); // the ? avoids a Dart error 'author was called on null' 
 ```
-( MapList send error's trace on stderr to have no dependencies on a logger. Feel free to replace)
+( MapList send warning and errors on standard **logging** . Apps must set an effective logger )
 
 #### Non existing List - Dart restriction
  if the List doesn't exists at all, the nullable must be checked before
@@ -135,7 +135,7 @@ Mainly, the trapped errors send a message on **stdErr** and **return null on a g
 #### Sample : wrong json message
 ```
 dynamic root = MapList('{"this": is not a[12] valid entry }');
-stderr : -> ** wrong data. MapList will be null :  FormatException: Unexpected character (at character 10)
+Warning : -> ** wrong data. MapList will be null :  FormatException: Unexpected character (at character 10)
 {"this": is not a [12] valid entry }
        ^   
 ```

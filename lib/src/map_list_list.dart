@@ -1,7 +1,6 @@
-import 'dart:collection';
 
 import 'package:map_list_dot/map_list_dot.dart';
-import 'dart:io';
+
 
 /// extends MapList to wrap List methods
 ///
@@ -43,21 +42,23 @@ class MapListList extends MapList {
         return next;
     } catch (e) {
       var from = MapList.lastInvocation ?? "at root: ";
-      stderr.write("** List error: \"$from [$keyIndex]\" : $e \n");
+      MapList.log.warning("unexisting $from [$keyIndex] : null returned .\n Original message : $e ");
       return null;
     }
   }
 
   ///
   ///  Add a new element in a List
-  void add(dynamic something) {
+  dynamic add(dynamic something) {
       var toAdd = MapList.normaliseByJson(something);
       this.json.add(toAdd);
+      return true;
   }
 
   ///
   /// add another List to this one
-  void addAll(dynamic something) {
+  dynamic addAll(dynamic something) {
     this.json.addAll(something);
+    return true;
   }
 }

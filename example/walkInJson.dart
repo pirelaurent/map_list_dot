@@ -7,13 +7,19 @@
  Final verifications are done.
 
  */
-import 'dart:convert';
+
 
 import 'package:map_list_dot/map_list_dot.dart';
 
 import 'resources/personInDart.dart';
 
 void main() {
+  // set a logger
+  Logger.root.level = Level.ALL; // defaults to Level.INFO
+  Logger.root.onRecord.listen((record) {
+    print('${record.level.name}: ${record.time}: ${record.message}');
+  });
+
   print(
       'Sample 1: --------------- create some data by hand and loop on list ----- ');
   /*

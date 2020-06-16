@@ -1,7 +1,6 @@
 import 'package:map_list_dot/map_list_dot.dart';
 import 'package:test/test.dart';
 import 'dart:io';
-import 'dart:convert';
 import 'package:path/path.dart' as path;
 
 /*
@@ -12,6 +11,16 @@ void assertShow(var what, var expected) {
 }
 
 void main() {
+  // set a logger
+  Logger.root.level = Level.ALL; // defaults to Level.INFO
+  Logger.root.onRecord.listen((record) {
+    print('${record.level.name}: ${record.time}: ${record.message}');
+  });
+
+
+
+
+
   var testFile =
       path.join(Directory.current.path, 'test', 'models', 'json', 'store.json');
   var file = File(testFile);

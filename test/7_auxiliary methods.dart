@@ -8,6 +8,15 @@ import 'package:test/test.dart';
 ///   isNotEmpty
 ///   remove
 void main() {
+  // set a logger
+  Logger.root.level = Level.ALL; // defaults to Level.INFO
+  Logger.root.onRecord.listen((record) {
+    print('${record.level.name}: ${record.time}: ${record.message}');
+  });
+
+
+
+
   test('tests about deleting in code ', () {
     dynamic root = MapList('{ "name":"zaza", "age": 7, "scores": [10,20,30]}');
     assert(root.containsKey("age"));
