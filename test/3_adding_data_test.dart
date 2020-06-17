@@ -97,6 +97,7 @@ void main() {
     root.results = [];
     // doing the following results[0] is a Map<String,int>
     root.results.add({"elapsed_time": 30, "temperature": 18});
+    //root.results[0].time = "12:58:00"; //type 'String' is not a subtype of type 'int' of 'value'
     // as we plan to add a <String,String> in this results[1] : we cast
     root.results.add( <String,dynamic>{"elapsed_time": 60, "temperature": 40});
     root.results[1].time = "12:58:00";

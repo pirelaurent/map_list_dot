@@ -8,12 +8,11 @@ void main() {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
   print(
-      '------------------  These tests will write trapped errors on stdErr -------------');
+      '------------------  These tests will log  trapped errors with logging  -------------');
 
   test('wrong json in constructor ', () {
     // dynamic root = MapList({"this": is not a[12] valid entry }); syntax error
     dynamic root = MapList('{"this": is not a[12] valid entry }');
-    print(root);
     assert(root == null);
   });
 
@@ -65,9 +64,11 @@ void main() {
     //'[255]' = 20: wrong index [255]. null returned
     root.set(" '[255]' = 20");
   });
+
   test('trapp out of range in exec', () {
     dynamic root = MapList([0, 1, 2, 3, 4]);
     // calling a key on a list
+    //print(root.price);  ** Naming error: trying to get a key "price" in a List. Null returned
     assert(root.get('price[200]') == null);
 
     assert(root.get('[2]') == 2);
@@ -103,6 +104,7 @@ void main() {
      then addAll the data : root.addAll([0, 1, 2, 3, 4])
    */
     dynamic root = MapList(<dynamic>[0, 1, 2, 3, 4]);
+    root.get('root.video.name = "Max"');
     root.get('root.last');
     // **  cannot search a key (root.last) in a List<dynamic>
     root.get('last'); //ok

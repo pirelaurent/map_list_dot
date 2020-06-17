@@ -15,7 +15,7 @@ class MapListList extends MapList {
     try {
       json[key] = value;
     } catch (e) {
-      print("** on List : \"${MapList.lastInvocation} [$key] = \" : $e \n");
+      MapList.log.warning("** on List : \"${MapList.lastInvocation} [$key] = \" : $e \n");
       return null;
     }
   }
@@ -33,7 +33,7 @@ class MapListList extends MapList {
   operator [](Object keyIndex) {
     try {
       var next = wrapped_json[keyIndex];
-
+      MapList.lastInvocation=""; // as ok, forget
       // wrap result in a MapList to allow next dot notation
       if (next is List || next is Map)
         return MapList(next); //, false
@@ -42,7 +42,7 @@ class MapListList extends MapList {
         return next;
     } catch (e) {
       var from = MapList.lastInvocation ?? "at root: ";
-      MapList.log.warning("unexisting $from [$keyIndex] : null returned .\n Original message : $e ");
+      MapList.log.warning("unknown accessor: .$from [$keyIndex] : null returned .\n Original message : $e ");
       return null;
     }
   }

@@ -110,7 +110,7 @@ class MapList {
             next = wrapped_json[wrapped_json.length - 1];
           } else {
             log.warning(
-                '** Naming error: trying to get a key "$name" in a List. Null returned ');
+                '** Naming error: trying to get a key "$name" in a List. null returned ');
             return null;
           }
         } else // not a List advance in map
@@ -280,7 +280,7 @@ class MapList {
       // remember we are in a set with an equal
 
       setter = true;
-      exitMessageOnWarning = 'no action done. -> false returned';
+      exitMessageOnWarning = 'no action done.';
 
       // retract this part from script
       aScript = aScript.replaceAll(rawDataName, "").trim();
@@ -307,12 +307,12 @@ class MapList {
     // help to use the right term
     if (setter && (getOrSet != 'set')) {
       log.warning(
-          '** warning : calling get with an equal sign. Be sure it\'s not a set . null returned: $aScript');
+          '** calling get with an equal sign. Be sure it\'s not a set . null returned: $aScript');
       return null;
     }
     if (!setter && (getOrSet == 'set')) {
       log.warning(
-          '** warning : $aScript Calling set without = .Be sure it\'s not a get or an exec .no action done');
+          '**  $aScript Calling set without = .Be sure it\'s not a get or an exec .no action done');
       return false;
     }
 
@@ -356,7 +356,7 @@ class MapList {
         // any other key is valid only on a map except the word 'last'
         if ((!(where is Map)) && (aDryName != "last")) {
           log.warning(
-              "**  cannot search a key ($originalScript) in a ${where.runtimeType}. $exitMessageOnWarning ");
+              "**  cannot access a ${where.runtimeType} with a key like: ($originalScript) $exitMessageOnWarning ");
           return (setter ? false : null);
         }
 
