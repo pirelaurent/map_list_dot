@@ -8,8 +8,6 @@ void main() {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
 
-
-
   test('addAll in code', () {
     // caution must be dynamic, var won't work as addAll is not defined in MapList
     dynamic map = MapList({"name": "toto"});
@@ -27,7 +25,6 @@ void main() {
     assert(list[2] == 2);
     list.add(16);
     assert(list.length == 5);
-
   });
 
   test("add raw data int in a List later than root ", () {
@@ -55,17 +52,24 @@ void main() {
     car.name = "Ford";
     car.color = "blue";
     assert(car.color == "blue");
-    car.addAll({ "price": 5000, "fuel":"diesel","hybrid":false});
+    car.addAll({"price": 5000, "fuel": "diesel", "hybrid": false});
     assert(car.length == 5);
   });
 
-
-
-
-
   test('addAll in script', () {
-    // caution must be dynamic, var won't work as addAll is not defined in MapList
+
     dynamic map = MapList();
+    /*
+     in interpreter, every json string is converted to dynamic
+     internal map addAll check compatibility
+     */
+    map = MapList({"name": "toto"});
+    map.exec('addAll({"A": "aa", "B": "bb"})');
+    assert(map.get("length") == 3);
+    assert(map.get("A") == "aa");
+
+    // caution must be dynamic, var won't work as addAll is not defined in MapList
+
     map.set('name = "toto"');
     print(map);
     map.exec('addAll({"A": "aa", "B": "bb"})');
@@ -73,37 +77,30 @@ void main() {
     assert(map.get("length") == 3);
     assert(map.get("A") == "aa");
 
-    /*
-     don't work if initialized with data
-     type '_InternalLinkedHashMap<String, dynamic>' is not a subtype of type 'Map<String, String>' of 'other'
-     */
 
-    map = MapList({"name": "toto"});
-    map.exec('addAll({"A": "aa", "B": "bb"})');
-    assert(map.get("length") == 3);
-    assert(map.get("A") == "aa");
   });
 
-
-  test ('add a MapList to a MapList ',(){
-    dynamic map = MapList({"friends":[]});
+  test('add a MapList to a MapList ', () {
+    dynamic map = MapList({"friends": []});
     // add a standard maps & list
-    dynamic aGuy ={"name":"polo", "age":33};
+    dynamic aGuy = {"name": "polo", "age": 33};
     // print(aGuy.name); will not work as it is not a MapList
     map.friends.add(aGuy);
-    aGuy= MapList({"name":"zaza","age":44});
-    // print(aGuy.name);  will return zaza as it is a MapList
+    aGuy = MapList({"name": "zaza", "age": 44});
+    print(aGuy.name); // will return zaza as it is a MapList
     map.friends.add(aGuy);
-    //
-    aGuy.clear();
-    aGuy.name ="lulu";
-    aGuy.age = 66;
+    aGuy = MapList({"name": "lulu", "age": 66});
     map.friends.add(aGuy);
-
+    print(map);
     assert(map.friends.length == 3);
     assert(map.friends[1].age == 44);
+    // remember pointer aGuy is still linked to the internal json
+    aGuy.clear();
+    assert(map.friends.last.length == 0);
+    aGuy.addAll({"name" : "lulu", "age":77, "color":"blue"});
+    assert(map.friends[2].age == 77);
+
+    aGuy == null;
+    assert(map.friends[2].age == 77);
   });
-
-
-
 }

@@ -20,12 +20,12 @@ void main() {
 
 
   dynamic root;
-  dynamic squad; // to be shared between several tests
 
   test("assignment to add & replace data in Map & List", () {
     root = MapList();
     // check creation
-    root.dico = {"US": "hello", "FR": "bonjour"};
+    // as we plan to add heterogeneous data in that map we cast
+    root.dico = <String,dynamic> {"US": "hello", "FR": "bonjour"};
     root.dico.addAll({"JP": "こんにちは"});
     assert(root.dico.FR == 'bonjour');
     assert(root.dico.JP == 'こんにちは');

@@ -42,6 +42,7 @@ void main() {
   test('constructor with json String (not compiled) ', () {
     String sJsonString = r""" {"name": "toto", "age": 15, "weight": 65} """;
     dynamic rootMap = MapList(sJsonString);
+
     assert(rootMap is MapListMap, true);
     assert(rootMap.name == "toto");
     assert(rootMap.age == 15);

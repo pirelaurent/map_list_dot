@@ -13,11 +13,13 @@ void main() {
   test('wrong json in constructor ', () {
     // dynamic root = MapList({"this": is not a[12] valid entry }); syntax error
     dynamic root = MapList('{"this": is not a[12] valid entry }');
+    print(root);
     assert(root == null);
   });
 
   test('wrong json in assignment  ', () {
-    dynamic root = MapList({"name": "zaza"});
+    // to try to add a List in a Map of <String, String> we cast
+    dynamic root = MapList(<String,dynamic>{"name": "zaza"});
     root.name = [
       10,
       11,
@@ -95,7 +97,12 @@ void main() {
 
 
   test(' wrong function calls with last  ',(){
-    dynamic root = MapList([0, 1, 2, 3, 4]);
+    /* as we plan to add a map to a list<int> we cast it <dynamic>
+     the other way could have been :
+     1st create an instance of an empty List :root = MapList([]);
+     then addAll the data : root.addAll([0, 1, 2, 3, 4])
+   */
+    dynamic root = MapList(<dynamic>[0, 1, 2, 3, 4]);
     root.get('root.last');
     // **  cannot search a key (root.last) in a List<dynamic>
     root.get('last'); //ok

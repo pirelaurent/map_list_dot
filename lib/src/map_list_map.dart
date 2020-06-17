@@ -20,7 +20,7 @@ class MapListMap extends MapList {
   operator [](Object key) {
     var next = json[key];
     if (next is List || next is Map)
-      return MapList(next, false);
+      return MapList(next); //, false
     else
       return next;
   }
@@ -40,21 +40,30 @@ class MapListMap extends MapList {
   }
 
   @override
-  bool containsKey(String aKey)
-  {
+  bool containsKey(String aKey) {
     return wrapped_json.containsKey(aKey);
   }
 
- dynamic addict(dynamic something){
+  dynamic addict(dynamic something) {
     MapList.log.warning('** add not implemented on maps');
- }
+  }
 
+  /// method used whe a call by code
+  /// similar exists at MapList level for interpreter
+  /// done by hand to enforce type compatibility
+  ///
   dynamic addAll(dynamic something) {
     // add new entries to the current map
+
     if (something is Map) {
-      this.json.addAll(something);
-      // to allow continuation
-      return MapList(this);
+      something.forEach((key, value) {
+        wrapped_json[key] = value;
+      });
+      // we don't use addAll standard
+      // as it check that the new entries are exactly the same type as the current
+      //this.json.addAll(something);
+
+      return true;
     }
     MapList.log.warning(
         '** trying to addAll to a Map something else than another map \n $something');

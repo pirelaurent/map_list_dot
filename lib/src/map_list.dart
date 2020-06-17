@@ -32,21 +32,26 @@ class MapList {
   /// initial is to retype the map & list in dynamic at first construct
   /// and to avoid to redo that in recursive construction.
 
-  factory MapList([dynamic jsonInput, bool initial = true]) {
+  factory MapList([dynamic jsonInput]) {
+
     // if empty, create a simple Map<dynamic, dynamic>
-    if (jsonInput == null) jsonInput = {};
+    if (jsonInput == null) {
+      return MapListMap.json({});
+    }
     // try to decode a string and normalise structure
-    if (jsonInput is String)
-      jsonInput = trappedJsonDecode(jsonInput);
-    else {
-      if (initial) jsonInput = normaliseByJson(jsonInput);
+    if (jsonInput is String){
+      var result = trappedJsonDecode(jsonInput);
+      if (result == null) return null;
+      if (result is Map) return (MapListMap.json(result));
+      if (result is List) return (MapListList.json(result));
+      return MapList.json(result);
     }
 
     if (jsonInput is List) return MapListList.json(jsonInput);
     if (jsonInput is Map) return MapListMap.json(jsonInput);
+    log.warning(
+        '** a MapList must be json compatible, not a ${jsonInput.runtimeType}. null returned');
     return null;
-    // if empty, create a simple Map<dynamic, dynamic>
-    //return MapListMap.json(normaliseByJson({}));
   }
 
   /// real common constructor behind the factory
@@ -67,12 +72,6 @@ class MapList {
   bool containsKey(String aKey) {
     return false;
   }
-
-/*
- -------------- incompatible methods not set to this level
- MAP:  addAll(Map<dynamic,dynamic> other)
- LIST: addAll(Iterable <dynamic> iterable
- */
 
   /// Trap all calls on this class, allowed by dart:mirrors
   /// aa.bb.cc comes first with a call to aa
@@ -95,6 +94,7 @@ class MapList {
     String name;
     if (member is Symbol) {
       name = MirrorSystem.getName(member);
+
       // ------------------ getters if no equals sign
       if (name.endsWith('=') == false) {
         // detect function calls that have arguments
@@ -119,7 +119,7 @@ class MapList {
           next = wrapped_json[name];
         }
         if ((next is Map) || (next is List)) {
-          return MapList(next, false);
+          return MapList(next); //,false
         } else
           return next; //wrapped_json[name];
       }
@@ -137,8 +137,7 @@ class MapList {
            but string is allowed like in interpreter.
            in both cases something to do before insertion
          */
-        param = normaliseByJson(param);
-        if (param is String) param = adjustParam(param);
+
         // special case : '.last = '
         if (name == 'last') {
           if (this is MapListList) {
@@ -149,6 +148,7 @@ class MapList {
                 '** calling .last is allowed only on a List $lastInvocation');
           }
         }
+
         wrapped_json[name] = param;
         return true;
       }
@@ -263,7 +263,7 @@ class MapList {
     aScript = aScript.trim();
     var originalScript = aScript;
     var dataToSet;
-    var exitMessageOnWarning='';
+    var exitMessageOnWarning = '';
 
     /*
      split into parts ending by . or =
@@ -420,7 +420,8 @@ class MapList {
           if (rawRank != null) {
             rank = num.tryParse(rawRank);
           } else {
-            log.warning('** wrong index on a list :$originalScript. $exitMessageOnWarning');
+            log.warning(
+                '** wrong index on a list :$originalScript. $exitMessageOnWarning');
             return (setter ? false : null);
           }
 
@@ -501,7 +502,8 @@ class MapList {
         previous = dataToSet;
       return true;
     }
-    log.warning('** try to set a value $dataToSet on a ${where.runtimeType}. $exitMessageOnWarning');
+    log.warning(
+        '** try to set a value $dataToSet on a ${where.runtimeType}. $exitMessageOnWarning');
     return false;
   }
 
@@ -515,6 +517,7 @@ class MapList {
   /// if the json is not valid, returns a null and log a warning error
   ///
   dynamic adjustParam(var param) {
+
     // if between ' or between " extract and leaves as String
     if ((param[0] == '"') && param.endsWith('"')) {
       return param.substring(1, param.length - 1);
@@ -534,13 +537,16 @@ class MapList {
    */
     var found = reg_mapList.firstMatch(param);
     if (found != null) {
-      return trappedJsonDecode(found.group(0));
+      var result = trappedJsonDecode(found.group(0));
+
+      return result;
     }
     // nothing special returns original
     return param;
   }
+
   ///
-  /// when found in script soome func( ) , execute here
+  /// when found in script some func( ) , execute here
   dynamic execFunction(dynamic where, dynamic aFunction) {
 // could be a reserved word add
     var foundAdd = reg_check_add.firstMatch(aFunction);
@@ -562,7 +568,22 @@ class MapList {
     if (!(foundAddAll == null)) {
       dynamic dataToSet = foundAddAll.group(1);
       dataToSet = adjustParam(dataToSet);
-      where.addAll(dataToSet);
+
+      if (where is List) {
+        dataToSet.forEach((value) {
+          where.add(value);
+        });
+        return true;
+      }
+      if (where is Map) {
+          dataToSet.forEach((key, value) {
+            where[key] = value;
+        });
+        return true;
+      }
+
+
+      // where.addAll(dataToSet);
       return null;
     }
 
@@ -582,16 +603,15 @@ class MapList {
     return false;
   }
 
-  /// the most simple and sure method to align the types
-  /// Not so efficient? but used only one time on setter
   ///
-  static dynamic normaliseByJson(var something) {
-    if (something is MapList) something = something.wrapped_json;
+  ///
+  static dynamic normaliseByJson(dynamic something) {
 
-    var prepare = convert.json.encode(something);
-
-    var result = trappedJsonDecode(prepare);
-    return result;
+    // can assign or add a Maplist
+    if (something is MapList)
+      return something.wrapped_json; //something = something.wrapped_json;
+    if ((something is List) || (something is Map)) return something;
+    return something;
   }
 
   /// choose to return null rather to crash
@@ -599,8 +619,7 @@ class MapList {
     try {
       return convert.json.decode(something);
     } catch (e) {
-      log.warning(
-          '** wrong data. MapList will return null . \n Original error: $e ');
+      log.warning('** wrong json data. null returned . \n Original error: $e ');
       return null;
     }
   }

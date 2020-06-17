@@ -4,6 +4,7 @@ import 'package:test/test.dart';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
+import 'dart:convert';
 
 /*
 
@@ -31,8 +32,10 @@ void main() {
       path.join(Directory.current.path, 'test', 'models', 'yaml', 'quiz.yaml');
   var file = File(testFile);
   var yamlString = file.readAsStringSync();
-  var xYaml = loadYaml(yamlString);
-  dynamic root = MapList(xYaml);
+  var yamlStructure = loadYaml(yamlString);
+  // warning : leaving in YamlMap & YamlList makes a read only structure
+  // but getter still ok, not setters
+  dynamic root = MapList(yamlStructure);
 
   test("direct access with standard notation", () {
     // --- verify still working with standard notation
@@ -54,7 +57,7 @@ void main() {
   });
 
   test("access with dot notation in interpreter ", () {
-    dynamic root = MapList(xYaml);
+    dynamic root = MapList(yamlStructure);
     assertShow(root.get("show.name"), "quiz on video");
     assertShow(root.get("show.videos[1].name"), "japaneese fashion");
     assertShow(root.get("show.videos[1].questions[1].name"), "games");
@@ -62,7 +65,7 @@ void main() {
   });
 
   test("access with standard notation in interpreter", () {
-    dynamic root = MapList(xYaml);
+    dynamic root = MapList(yamlStructure);
     assertShow(root.get('["show"]["name"]'), "quiz on video");
     assertShow(root.get('["show"]["videos"][1]["name"]'), "japaneese fashion");
     assertShow(
@@ -74,19 +77,27 @@ void main() {
   });
 
   test("access with a dumb mix of direct and interpreted notation", () {
-    dynamic root = MapList(xYaml);
+    dynamic root = MapList(yamlStructure);
     // --- now the same with a dot notation
     assertShow(root.get('show').name, "quiz on video");
     assertShow(root.show.get('videos[1]["name"]'), "japaneese fashion");
 
-    print(root.show.get('["videos"][1]'));
+    //print(root.show.get('["videos"][1]'));
 
     assertShow(root.show.get('["videos"][1]').questions[1].name, "games");
     assertShow(root.show.videos[1].get('questions[1].options[2]').answer, "go");
   });
 
-
-
-
-
+  test(" Yaml loader generates read only data", () {
+    dynamic root = MapList(yamlStructure);
+    try {
+      root.show.name = "new video title";
+    } catch (e) {
+      assert(e.toString() ==
+          'Unsupported operation: Cannot modify an unmodifiable Map');
+    }
+    root = MapList(json.decode(json.encode(yamlStructure)));
+    root.show.name = "new video title";
+    assert(root.show.name == "new video title");
+  });
 }

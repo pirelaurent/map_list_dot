@@ -55,7 +55,14 @@ void main() {
     root = MapList();
     root.data = [11, 12, 13];
     assert(root.data[2] == 13);
-    // by default a [11,12,13] is a List<int> can't add a string
+    /* by default a [11,12,13] is a List<int> can't add a string
+    root.data.add("hello");
+    type 'String' is not a subtype of type 'int' of 'value'
+    */
+    // so better to do like following :
+    root.data = []; // will create a List<dynamic>
+    root.data.addAll([11, 12, 13]); // addAll for initialising with <int>
+    assert(root.data[2] == 13);
     root.data.add("hello");
     assert(root.data[3] == "hello");
     root.exec('data.add(15.5)');
@@ -73,7 +80,7 @@ void main() {
   test(" add json to a List , direct and interpreted  ", () {
     root = MapList();
     root.results = [];
-    // code
+    // code : the map in Map <String, int> we can add other same couples
     root.results.add({"elapsed_time": 30, "temperature": 18});
     root.results.add({"elapsed_time": 60, "temperature": 40});
     assert(root.results[1].temperature == 40);
@@ -88,13 +95,16 @@ void main() {
     // code
     root = MapList();
     root.results = [];
+    // doing the following results[0] is a Map<String,int>
     root.results.add({"elapsed_time": 30, "temperature": 18});
-    root.results.add({"elapsed_time": 60, "temperature": 40});
+    // as we plan to add a <String,String> in this results[1] : we cast
+    root.results.add( <String,dynamic>{"elapsed_time": 60, "temperature": 40});
     root.results[1].time = "12:58:00";
     assert(root.results[1].time is String, '${root.results[1].time}');
     // script
     root.set('results[1].duration = "01:00:00"');
     assert(root.results[1].duration is String, '${root.results[1].duration}');
+
   });
 
   // seems that add and addAll are the same
@@ -106,8 +116,8 @@ void main() {
     assert(car.color == "blue");
     // be sure to use addAll, not add on a map
     //** Symbol("add") {price: 5000, fuel: diesel, hybrid: false} is invalid. No action done
-    car.addAll({"price": 5000, "fuel": "diesel", "hybrid": false});
-    assert(car.length == 5);
+    car.addAll(<String,dynamic>{"price": 5001, "fuel": "diesel", "hybrid": false});
+    //assert(car.length == 5);
   });
 
 

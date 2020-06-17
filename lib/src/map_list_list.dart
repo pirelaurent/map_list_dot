@@ -36,7 +36,7 @@ class MapListList extends MapList {
 
       // wrap result in a MapList to allow next dot notation
       if (next is List || next is Map)
-        return MapList(next, false);
+        return MapList(next); //, false
       // if a leaf, return a simple value
       else
         return next;
@@ -55,10 +55,16 @@ class MapListList extends MapList {
       return true;
   }
 
-  ///
-  /// add another List to this one
+  /// method used whe a call by code
+  /// similar exists at MapList level for interpreter
+  /// done by hand to enforce type compatibility
+
   dynamic addAll(dynamic something) {
-    this.json.addAll(something);
+    something.forEach((value) {
+      wrapped_json.add(value);
+    });
     return true;
   }
+
+
 }
