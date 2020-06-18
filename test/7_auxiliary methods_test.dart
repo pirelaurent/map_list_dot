@@ -42,28 +42,28 @@ void main() {
   test('tests interpreter about containsKey isEmpty, isNotEmpty, clear , remove , last ', () {
     dynamic root = MapList('{ "name":"zaza", "age": 7, "scores": [10,20,30]}');
     // contains is not available but a get will return null
-    assert(root.get("age")!=null);
-    assert(root.get('scores.isNotEmpty'));
+    assert(root.exec("age")!=null);
+    assert(root.exec('scores.isNotEmpty'));
     root.exec('scores.remove(20)');
     // verify remove
-    assert(root.get('scores[1]') == 30);
+    assert(root.exec('scores[1]') == 30);
     // verify using last
 
-    assert(root.get('scores.last')==30);
+    assert(root.exec('scores.last')==30);
 
     // add at the end by special name last
 
-    root.set('scores.last = 100');
+    root.exec('scores.last = 100');
 
-    assert(root.get('scores[1]')==100);
+    assert(root.exec('scores[1]')==100);
     // clear data, not holder
     root.exec('scores.clear()');
-    assert(root.get('scores.isEmpty'));
-    assert(root.get('length') == 3);
+    assert(root.exec('scores.isEmpty'));
+    assert(root.exec('length') == 3);
     root.exec('remove("scores")');
-    assert(root.get('length') == 2);
+    assert(root.exec('length') == 2);
     root.exec('clear()');
-    assert(root.get('length') == 0);
+    assert(root.exec('length') == 0);
   });
 
 

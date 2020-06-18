@@ -58,20 +58,20 @@ void main() {
 
   test("access with dot notation in interpreter ", () {
     dynamic root = MapList(yamlStructure);
-    assertShow(root.get("show.name"), "quiz on video");
-    assertShow(root.get("show.videos[1].name"), "japaneese fashion");
-    assertShow(root.get("show.videos[1].questions[1].name"), "games");
-    assertShow(root.get("show.videos[1].questions[1].options[2].answer"), "go");
+    assertShow(root.exec("show.name"), "quiz on video");
+    assertShow(root.exec("show.videos[1].name"), "japaneese fashion");
+    assertShow(root.exec("show.videos[1].questions[1].name"), "games");
+    assertShow(root.exec("show.videos[1].questions[1].options[2].answer"), "go");
   });
 
   test("access with standard notation in interpreter", () {
     dynamic root = MapList(yamlStructure);
-    assertShow(root.get('["show"]["name"]'), "quiz on video");
-    assertShow(root.get('["show"]["videos"][1]["name"]'), "japaneese fashion");
+    assertShow(root.exec('["show"]["name"]'), "quiz on video");
+    assertShow(root.exec('["show"]["videos"][1]["name"]'), "japaneese fashion");
     assertShow(
-        root.get('["show"]["videos"][1]["questions"][1]["name"]'), "games");
+        root.exec('["show"]["videos"][1]["questions"][1]["name"]'), "games");
     assertShow(
-        root.get(
+        root.exec(
             '["show"]["videos"][1]["questions"][1]["options"][2]["answer"]'),
         "go");
   });
@@ -79,13 +79,13 @@ void main() {
   test("access with a dumb mix of direct and interpreted notation", () {
     dynamic root = MapList(yamlStructure);
     // --- now the same with a dot notation
-    assertShow(root.get('show').name, "quiz on video");
-    assertShow(root.show.get('videos[1]["name"]'), "japaneese fashion");
+    assertShow(root.exec('show').name, "quiz on video");
+    assertShow(root.show.exec('videos[1]["name"]'), "japaneese fashion");
 
-    //print(root.show.get('["videos"][1]'));
+    //print(root.show.exec('["videos"][1]'));
 
-    assertShow(root.show.get('["videos"][1]').questions[1].name, "games");
-    assertShow(root.show.videos[1].get('questions[1].options[2]').answer, "go");
+    assertShow(root.show.exec('["videos"][1]').questions[1].name, "games");
+    assertShow(root.show.videos[1].exec('questions[1].options[2]').answer, "go");
   });
 
   test(" Yaml loader generates read only data", () {

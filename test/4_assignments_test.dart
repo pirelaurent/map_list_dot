@@ -41,9 +41,9 @@ void main() {
     assert(root.dico.FR.length == 3);
     // change by code, verify by interpreter
     assert(root.dico.FR[0] == "bonjour");
-    assert(root.get('dico.FR[1]') == "salut");
+    assert(root.exec('dico.FR[1]') == "salut");
     // change by interpreter. verify by code
-    root.set('dico.FR[2] = "comment va"');
+    root.exec('dico.FR[2] = "comment va"');
     assert(root.dico.FR[2] == "comment va");
   });
 
@@ -88,11 +88,11 @@ void main() {
     assert(squad.members[0].powers[1] == "Turning tiny");
     // change by code, test by code & script
     squad.members[0].powers[1] = "Turning heavy";
-    squad.set('members[0].powers[1] = "Turning heavy"');
+    squad.exec('members[0].powers[1] = "Turning heavy"');
     assert(squad.members[0].powers[1] == "Turning heavy");
     // change by script, test by execand code
-    squad.set('members[0].powers[1] = "Turning weird"');
+    squad.exec('members[0].powers[1] = "Turning weird"');
     assert(squad.members[0].powers[1] == "Turning weird");
-    assert(squad.get('members[0].powers[1]') == "Turning weird");
+    assert(squad.exec('members[0].powers[1]') == "Turning weird");
   });
 }

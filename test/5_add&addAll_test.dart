@@ -21,10 +21,12 @@ void main() {
 
     list.add(15);
     list.addAll([1, 2, 3]);
-    assert(list.length == 4);
+    list.add({"date":"october 16"});
+    print(list); //[15, 1, 2, 3, {date: october 16}]
+    assert(list.length == 5);
     assert(list[2] == 2);
     list.add(16);
-    assert(list.length == 5);
+    assert(list.length == 6);
   });
 
   test("add raw data int in a List later than root ", () {
@@ -65,17 +67,17 @@ void main() {
      */
     map = MapList({"name": "toto"});
     map.exec('addAll({"A": "aa", "B": "bb"})');
-    assert(map.get("length") == 3);
-    assert(map.get("A") == "aa");
+    assert(map.exec("length") == 3);
+    assert(map.exec("A") == "aa");
 
     // caution must be dynamic, var won't work as addAll is not defined in MapList
 
-    map.set('name = "toto"');
+    map.exec('name = "toto"');
     print(map);
     map.exec('addAll({"A": "aa", "B": "bb"})');
     print(map);
-    assert(map.get("length") == 3);
-    assert(map.get("A") == "aa");
+    assert(map.exec("length") == 3);
+    assert(map.exec("A") == "aa");
 
 
   });

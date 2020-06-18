@@ -54,7 +54,7 @@ class MapListMap extends MapList {
   ///
   dynamic addAll(dynamic something) {
     // add new entries to the current map
-
+  if (something is MapListMap) something = something.json;
     if (something is Map) {
       something.forEach((key, value) {
         wrapped_json[key] = value;

@@ -103,7 +103,7 @@ void main() {
     root.results[1].time = "12:58:00";
     assert(root.results[1].time is String, '${root.results[1].time}');
     // script
-    root.set('results[1].duration = "01:00:00"');
+    root.exec('results[1].duration = "01:00:00"');
     assert(root.results[1].duration is String, '${root.results[1].duration}');
 
   });
@@ -117,9 +117,31 @@ void main() {
     assert(car.color == "blue");
     // be sure to use addAll, not add on a map
     //** Symbol("add") {price: 5000, fuel: diesel, hybrid: false} is invalid. No action done
-    car.addAll(<String,dynamic>{"price": 5001, "fuel": "diesel", "hybrid": false});
-    //assert(car.length == 5);
+    car.addAll(<String,dynamic>{"price": 5001, "fuel": "diesel", "hybrid": false}); // with an inline structure
+    // or with another prepared MapList :
+    dynamic carInfo = MapList();
+    carInfo.price = 6000;
+    carInfo.tires = "slim";
+    carInfo.color = ["blue","black","white"];
+    car.addAll(carInfo);
+    print(car);//{name: Ford, color: [blue, black, white], price: 6000, fuel: diesel, hybrid: false, tires: slim}
+    print(car.color); // [blue, black, white]
+    print(car.color[2]); // white
   });
+
+/* not available
+ test('multi-level data creation',(){
+   dynamic Bb = MapList();
+   Bb.car.color.option = 'metal';
+   print(Bb);
+ });
+// a creation of data is done with an equal at the right level. Cannot anticipate.
+  test('multi-level data creation in script',(){
+    dynamic Bb = MapList();
+    Bb.exec("car.color.option = 'metal'");
+    print(Bb);
+  });
+*/
 
 
 }

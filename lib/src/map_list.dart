@@ -90,7 +90,6 @@ class MapList {
   @override
   dynamic noSuchMethod(Invocation invocation) {
     var member = invocation.memberName;
-
     String name;
     if (member is Symbol) {
       name = MirrorSystem.getName(member);
@@ -132,11 +131,6 @@ class MapList {
         name = name.replaceAll("=", "");
 
         dynamic param = invocation.positionalArguments[0];
-        /*
-           if coming by code, param is generally a constructed thing
-           but string is allowed like in interpreter.
-           in both cases something to do before insertion
-         */
 
         // special case : '.last = '
         if (name == 'last') {
@@ -187,9 +181,9 @@ class MapList {
   static final reg_rhs = RegExp(r"""=.*""");
 
   /// isolate var name person[12] or name.  -> person
-  static final reg_dry_name = RegExp(r"""(^[A-Za-z_][A-Za-z_0-9]*)""");
+  static final reg_dry_name = RegExp(r"""^"?([A-Za-z_][A-Za-z_0-9]*)"?""");
 
-  /// identify json execcandidates : begin and end by [ ] or { }
+  /// identify json candidates : begin and end by [ ] or { }
   static final reg_mapList = RegExp("^[\\[\\{].*[\\}\\]]");
 
   /// trap .add method in a part
@@ -212,9 +206,8 @@ class MapList {
   /// trap equal sign = out of quotes
   static final reg_equals_outside_quotes =
       RegExp(r"""(["'][\w\s=]*["'])|(=)""");
-
   /*
- with this regex,
+ with reg_equals_outside_quotes,
  A match:
  group(1) : anything in quote
  group(2) : equal sign, out of quotes
@@ -228,35 +221,20 @@ class MapList {
         return true;
       }
     }
-    // allow setter for add and addAll
-
+    // allow setter to be true for add and addAll
     if (reg_check_add_addAll.firstMatch(aScript)?.group(2) != null) return true;
     return false;
   }
 
-  /// interpreted exec must be something like set('lhs = rhs')
-  /// due to habits, tolerate a set('lhs',rhs)
-  /// which is transformed for interpreter in the right script
-  ///
-  /// to indicate a setter in exec a script. Check for an equals
-  dynamic set(String aScript) {
-    return (exec(aScript, 'set'));
-  }
-
-  /// to indicate a getter in exec a script. Check no equals
-  dynamic get([String aScript]) {
-    return (exec(aScript, 'get'));
-  }
 
   /// exec demands arrives here in one big string
-  /// A front part is isolated and executed to find next position
-  /// execcall itself recursively for the following step
-  /// On last step, depending of an equal sign, returns a data or set a data
+  /// A front part is isolated and code walk through to find position
+  /// Once found, depending of an equal sign, returns a data or set a data
   ///
-  /// Empty execwill return current position
+  /// Empty exec script will return current position
   /// solo index '[1]' will return the [1] of current (if list)
   ///
-  dynamic exec([String aScript = "", String getOrSet]) {
+  dynamic exec([String aScript = ""]) {
     bool setter = false;
     // if a call with empty parenthesis
     if (aScript == null) aScript = '';
@@ -278,7 +256,6 @@ class MapList {
       var aDataName = rawDataName.substring(1).trim();
       dataToSet = adjustParam(aDataName);
       // remember we are in a set with an equal
-
       setter = true;
       exitMessageOnWarning = 'no action done.';
 
@@ -304,19 +281,7 @@ class MapList {
     var lastRank, lastNameOfKeyInMap;
     var aDryName;
 
-    // help to use the right term
-    if (setter && (getOrSet != 'set')) {
-      log.warning(
-          '** calling get with an equal sign. Be sure it\'s not a set . null returned: $aScript');
-      return null;
-    }
-    if (!setter && (getOrSet == 'set')) {
-      log.warning(
-          '**  $aScript Calling set without = .Be sure it\'s not a get or an exec .no action done');
-      return false;
-    }
-
-    /*------ will progress part1.part2.part3[ ]. etc
+       /*------ will progress part1.part2.part3[ ]. etc
     can found at the end a function like remove(), clear() ..
 
      */
@@ -343,8 +308,8 @@ class MapList {
       */
       if (aDryName != null) {
         // some name are special properties
-        if (aDryName == "length") {
-          if (where is List) return where.length;
+        if ((aDryName == "length")&& (!setter)) {
+            if (where is List) return where.length;
           if (where is Map) {
             if (aPathStep == "length") return where.length;
             // otherwise will be some ["length"] asking for a key leave it
@@ -354,7 +319,7 @@ class MapList {
         if (aDryName == "isNotEmpty") return where.isNotEmpty; //--> exit
 
         // any other key is valid only on a map except the word 'last'
-        if ((!(where is Map)) && (aDryName != "last")) {
+        if ((!(where is Map)) && (aDryName != "last")&&(aDryName != "length")) {
           log.warning(
               "**  cannot access a ${where.runtimeType} with a key like: ($originalScript) $exitMessageOnWarning ");
           return (setter ? false : null);
@@ -369,10 +334,10 @@ class MapList {
           lastNameOfKeyInMap = null;
           continue;
         }
-        // could be unknown but a creation
+        // could be unknown but a creation except for length We stay there
 
         previous = where;
-        next = where[aDryName];
+        if (aDryName!='length')  next = where[aDryName];
         lastNameOfKeyInMap = aDryName;
         lastRank = null;
 
@@ -386,14 +351,13 @@ class MapList {
             return null;
           }
         }
-
         previous = where;
         where = next;
       }
 
       /*
        if dryName was null we are still at the root,
-       otherwise en new place has been set in where
+       otherwise a new place has been set in where
        we now progress on index
          accept ["abc"] ['abc'] on a map and [123] on a list
        */
@@ -487,6 +451,16 @@ class MapList {
     }
     // setter
     // could be the list to set or an element in the list
+
+    if (aDryName == 'length') {
+      if (previous is List){
+      previous.length = dataToSet;
+      return true;} else {
+        log.warning(
+            '** trying to set length on a ${aScript} which is not a List $exitMessageOnWarning');
+      }
+    }
+
     if (previous is List) {
       if (lastRank != null)
         previous[lastRank] = dataToSet;

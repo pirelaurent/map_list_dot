@@ -60,6 +60,7 @@ class MapListList extends MapList {
   /// done by hand to enforce type compatibility
 
   dynamic addAll(dynamic something) {
+    if (something is MapListList) something = something.json;
     something.forEach((value) {
       wrapped_json.add(value);
     });

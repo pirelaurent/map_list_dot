@@ -33,10 +33,10 @@ void main() {
   });
 
   test("null test on path with interpreter", () {
-    assert(store.get("wrongName") == null);
+    assert(store.exec("wrongName") == null);
     // interpreter won't fail but returns null
-    assert(store.get("wrongName.someData") == null);
-    assert(store.get("wrongName?.someData") == null);
+    assert(store.exec("wrongName.someData") == null);
+    assert(store.exec("wrongName?.someData") == null);
   });
 
   test("dataAccess with null test with code", () {
@@ -46,7 +46,7 @@ void main() {
     //
     assert(store.book[4]?.author == null);
     assert(store.bookList == null);
-    assert(store.get("bookList") == null);
+    assert(store.exec("bookList") == null);
 
     // NoSuchMethodError: The method '[]' was called on null.
     // assert(store.bookList[0]==null);
@@ -59,15 +59,15 @@ void main() {
   });
 
   test("dataAccess with null test with interpreter", () {
-    assert(store.get("book[4]") == null);
-    assert(store.get("book[4].author") == null);
+    assert(store.exec("book[4]") == null);
+    assert(store.exec("book[4].author") == null);
     //-> Warning ** unexisting book[4].author in interpreter . null returned
-    assert(store.get("book[4]?.author") == null);
+    assert(store.exec("book[4]?.author") == null);
     assert(store.bookList == null);
-    assert(store.get("bookList") == null);
-    assert(store.get("bookList[0]") == null);
+    assert(store.exec("bookList") == null);
+    assert(store.exec("bookList[0]") == null);
     // available in execright now
-    assertShow(store.get("bookList?[0]"), null);
-    assertShow(store.get("bookList?[0].date"), null);
+    assertShow(store.exec("bookList?[0]"), null);
+    assertShow(store.exec("bookList?[0].date"), null);
   });
 }
