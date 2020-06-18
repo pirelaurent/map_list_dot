@@ -1,4 +1,4 @@
-import 'package:map_list_dot/map_list_dot_lib.dart';
+import 'package:map_list_dot/map_list_dot.dart';
 import 'package:test/test.dart';
 
 /*
@@ -10,27 +10,14 @@ void assertShow(var what, var expected) {
 }
 
 void main() {
-  dynamic root;
-
-  test('create new data ',(){
-
-
-  dynamic squad = MapList();
-  squad.name = "Super hero squad"; // String entry
-  squad.members = []; // Empty list names members
-  squad.members.add({}); // members[0] is another map
-
-  squad = MapList();
-  squad.script('name = "Super hero squad"'); // String entry
-  assert(squad.name == "Super hero squad");
-
-  squad.script('members = []'); // Empty list names members
-  assert(squad.members.isEmpty, '${squad.members}');
-
-  squad.script('members.add({})'); // members[0] is another map
-  //print(squad);
-
+  // set a logger
+  Logger.root.level = Level.ALL; // defaults to Level.INFO
+  Logger.root.onRecord.listen((record) {
+    print('${record.level.name}: ${record.time}: ${record.message}');
   });
+
+
+  dynamic root;
 
   test("add raw data int in a List", () {
     // reset
@@ -39,98 +26,18 @@ void main() {
     var hash1 = root.json.hashCode;
     root.data = [11, 12, 13];
     assert(root.data[2] == 13);
-    var hash3 = root.data.json.hashCode;
-    var hash33 = root.json["data"].hashCode;
+    // internal control of pointers : root stays the same once data added
     var hash2 = root.json.hashCode;
     assert(hash1 == hash2, ' bad mutation on root.json');
-
-    root.data.add(14);
-    hash3 = root.data.json.hashCode;
-    hash33 = root.json["data"].hashCode;
+    // check different access points on the same data
+    var hash3 = root.data.json.hashCode;
+    var hash33 = root.json["data"].hashCode;
     assert(hash3 == hash33, '$hash3 $hash33');
-
-    var hash4 = root.data.json.hashCode;
-    assert(hash3 == hash4);
-
+    // check that an add don't change the pointers
+    root.data.add(14);
     assert(root.data[3] == 14);
-    // now in script
-    root.script('data.add(15)');
-    assert(root.data[4] == 15);
-  });
-
-  test("add a map in a List created with int ", () {
-    // reset
-    root = MapList();
-    root.data = [11, 12, 13];
-    assert(root.data[2] == 13);
-    //print('${root.data.runtimeType}');//MapListList
-    root.data.add({"name": 10});
-    assert(root.data[3] is MapListMap);
-    root.script('data.add({"name":20})');
-    assert(root.data[4] is MapListMap);
-
-    // can do that in code
-    Map m1 = {"pouet": 10};
-    root.data.add(m1);
-    assert(root.data[5].pouet == 10);
-    // of course cannot do that in script as m1 is unknown
-    root.script('data.add(m1)'); //will add 'm1'
-  });
-
-  test("add raw heterogeneous data in a List", () {
-    // reset
-    root = MapList();
-    root.data = [11, 12, 13];
-    assert(root.data[2] == 13);
-    // by default a [11,12,13] is a List<int> can't add a string
-    root.data.add("hello");
-    assert(root.data[3] == "hello");
-    root.script('data.add(15.5)');
-    assert(root.data[4] == 15.5);
-    //-------------assert(root.data[3]==14);
-  });
-
-  /*
-   sharing root between test to share data needs to run all tests,
-   not one per one
-   */
-
-  test(" add json to a doted List , direct and interpreted  ", () {
-    root.results = [];
-    // code
-    root.results.add({"elapsed_time": 30, "temperature": 18});
-    root.results.add({"elapsed_time": 60, "temperature": 40});
-    assert(root.results[1].temperature == 40);
-    // script
-    root.script('results.add({"elapsed_time": 120, "temperature": 58  })');
-    assert(root.results[2].temperature == 58);
-  });
-
-  test("Adding new entries on an existing map ", () {
-    // code
-    root = MapList();
-    root.results = [];
-    root.results.add({"elapsed_time": 30, "temperature": 18});
-    root.results.add({"elapsed_time": 60, "temperature": 40});
-
-    root.results[1].time = "12:58:00";
-
-    assert(root.results[1].time is String, '${root.results[1].time}');
-    // script
-    root.script('results[1].duration = "01:00:00"');
-    //print(root);
-    assert(root.results[1].duration is String, '${root.results[1].duration}');
-  });
-
-  test("creation of data at very beginning", () {
-    root = MapList();
-    root.results = [];
-    root.results.add({"elapsed_time": 30, "temperature": 18});
-    root.elapsed_time_total = 33;
-    assert(root.elapsed_time_total == 33);
-    assert(root.length == 2);
-    root.script('elapsed_time_total = null');
-    assert(root.elapsed_time_total == null,'${root.elapsed_time_total}');
+    var hash333 = root.data.json.hashCode;
+    assert(hash3 == hash333, '$hash3 $hash333');
   });
 
   test("add a List to a List", () {
@@ -139,8 +46,66 @@ void main() {
     root.data = [11, 12, 13];
     assert(root.data[2] == 13);
     // cannot write like this :
-    root.script('data.add(31)');
+    root.exec('data.add(31)');
     assert(root.data[3] == 31);
+  });
+
+  test("add raw heterogeneous data in a List", () {
+    // reset
+    root = MapList();
+    root.data = [11, 12, 13];
+    assert(root.data[2] == 13);
+    /* by default a [11,12,13] is a List<int> can't add a string
+    root.data.add("hello");
+    type 'String' is not a subtype of type 'int' of 'value'
+    */
+    // so better to do like following :
+    root.data = []; // will create a List<dynamic>
+    root.data.addAll([11, 12, 13]); // addAll for initialising with <int>
+    assert(root.data[2] == 13);
+    root.data.add("hello");
+    assert(root.data[3] == "hello");
+    root.exec('data.add(15.5)');
+    assert(root.data[4] == 15.5);
+    // now add a map
+    root.data.add({"name": "polo", "age":27});
+    assert(root.data[5] is MapListMap);
+    // interpreter
+    root.exec('data.add({"name": "pili", "age":20})');
+    assert(root.data[6] is MapListMap);
+    assert(root.data[5].name == "polo" );
+
+  });
+
+  test(" add json to a List , direct and interpreted  ", () {
+    root = MapList();
+    root.results = [];
+    // code : the map in Map <String, int> we can add other same couples
+    root.results.add({"elapsed_time": 30, "temperature": 18});
+    root.results.add({"elapsed_time": 60, "temperature": 40});
+    assert(root.results[1].temperature == 40);
+    // script
+    root.exec('results.add({"elapsed_time": 120, "temperature": 58  })');
+    assert(root.results[2].temperature == 58);
+  });
+
+
+
+  test("Adding new entries on an existing map ", () {
+    // code
+    root = MapList();
+    root.results = [];
+    // doing the following results[0] is a Map<String,int>
+    root.results.add({"elapsed_time": 30, "temperature": 18});
+    //root.results[0].time = "12:58:00"; //type 'String' is not a subtype of type 'int' of 'value'
+    // as we plan to add a <String,String> in this results[1] : we cast
+    root.results.add( <String,dynamic>{"elapsed_time": 60, "temperature": 40});
+    root.results[1].time = "12:58:00";
+    assert(root.results[1].time is String, '${root.results[1].time}');
+    // script
+    root.exec('results[1].duration = "01:00:00"');
+    assert(root.results[1].duration is String, '${root.results[1].duration}');
+
   });
 
   // seems that add and addAll are the same
@@ -150,82 +115,33 @@ void main() {
     car.name = "Ford";
     car.color = "blue";
     assert(car.color == "blue");
-    car.add({"price": 5000, "fuel": "diesel", "hybrid": false});
-    assert(car.length == 5);
+    // be sure to use addAll, not add on a map
+    //** Symbol("add") {price: 5000, fuel: diesel, hybrid: false} is invalid. No action done
+    car.addAll(<String,dynamic>{"price": 5001, "fuel": "diesel", "hybrid": false}); // with an inline structure
+    // or with another prepared MapList :
+    dynamic carInfo = MapList();
+    carInfo.price = 6000;
+    carInfo.tires = "slim";
+    carInfo.color = ["blue","black","white"];
+    car.addAll(carInfo);
+    print(car);//{name: Ford, color: [blue, black, white], price: 6000, fuel: diesel, hybrid: false, tires: slim}
+    print(car.color); // [blue, black, white]
+    print(car.color[2]); // white
   });
 
-  // seems that add and addAll are the same
-  test("extends a map to a map in code with addALl  ", () {
-    // reset
-    dynamic car = MapList();
-    car.name = "Ford";
-    car.color = "blue";
-    assert(car.color == "blue");
-    car.addAll({"price": 5000, "fuel": "diesel", "hybrid": false});
-    assert(car.length == 5);
+/* not available
+ test('multi-level data creation',(){
+   dynamic Bb = MapList();
+   Bb.car.color.option = 'metal';
+   print(Bb);
+ });
+// a creation of data is done with an equal at the right level. Cannot anticipate.
+  test('multi-level data creation in script',(){
+    dynamic Bb = MapList();
+    Bb.exec("car.color.option = 'metal'");
+    print(Bb);
   });
+*/
 
-  test("extends a map to a map in script  ", () {
-    // reset
-    dynamic car = MapList();
-    car.name = "Ford";
-    car.color = "blue";
-    assert(car.color == "blue");
-    car.script('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
-    assert(car.length == 5);
-  });
 
-  test("extends a map to a map in script with addAll ", () {
-    // reset
-    dynamic car = MapList();
-    car.name = "Ford";
-    car.color = "blue";
-    assert(car.color == "blue");
-    car.script('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
-    assert(car.length == 5);
-  });
-
-/*
-  test(" exceptions not trapped on list index ", () {
-    // wrong index but tested before
-    if (root.results[11] != null)
-      assertShow(root.results[11].temperature, null);
-    // not tested, must do a try catch and test error
-    Error expectedError;
-    try {
-      assertShow((root.results[11].temperature > 20), true);
-    } catch (e) {
-      expectedError = e;
-      /*
-      print("trapped exception by test code : $e");
-
-      trapped exception by test code : NoSuchMethodError: The getter 'temperature' was called on null.
-      Receiver: null
-      Tried calling: temperature
-
-       */
-    }
-    assertShow(expectedError.runtimeType, NoSuchMethodError);
-  });
-
-  test("use index on a non list entry ", () {
-    root.map1.leaf2 = "hello";
-    // range on a map return null
-    assertShow(root.map1[0], null);
-    // can use index on  string :e :second letter of hello
-    assertShow(root.script("map1.leaf2[1]"), "e");
-    assertShow(root.map1.leaf2[1], "e");
-
-    /*
-     but cannot be tested in direct  : as map2 is a String
-     it's too late to catch the [] error on a String
-     */
-    try {
-      var result = root.map1.leaf2[1].value;
-      assertShow(result == null, true);
-    } catch (e) {
-      assertShow(e.runtimeType, NoSuchMethodError);
-    }
-  });
-  */
 }

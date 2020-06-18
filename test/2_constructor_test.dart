@@ -1,4 +1,4 @@
-import 'package:map_list_dot/map_list_dot_lib.dart';
+import 'package:map_list_dot/map_list_dot.dart';
 import 'package:test/test.dart';
 import 'dart:convert';
 
@@ -11,6 +11,14 @@ void assertShow(var what, var expected) {
 }
 
 void main() {
+  // set a logger
+  Logger.root.level = Level.ALL; // defaults to Level.INFO
+  Logger.root.onRecord.listen((record) {
+    print('${record.level.name}: ${record.time}: ${record.message}');
+  });
+
+
+
   test('constructor empty ', () {
     dynamic root = MapList();
     assert(root is MapListMap, true);
@@ -18,41 +26,35 @@ void main() {
     root.name = "toto";
     assert(root.name == "toto");
     // add is not a real map syntax but we tolerate this , as long this is a list of key:values
-    root.add({"age": 15, "weight": 65});
+    root.addAll({"age": 15, "weight": 65});
     assert(root.name == "toto");
   });
 
   test('constructor empty but List ', () {
-    dynamic root = MapList([]);
-    assert(root is MapListList, true);
-    assert(root.isEmpty, true);
-    // add is not a real map syntax but we tolerate this as addAll
-    // as long this is a list of key:values
+    dynamic rootList = MapList([]);
+    assert(rootList is MapListList, true);
+    assert(rootList.isEmpty, true);
     var x = {"name": "toto", "age": 15, "weight": 65};
-    root.add(x);
-    //root.add({"name": "toto", "age": 15, "weight": 65});
-    assert(root[0].name == "toto");
+    rootList.add(x);
+    assert(rootList[0].name == "toto");
   });
 
-  test('constructor with json String', () {
-    String sJson = r""" {"name": "toto", "age": 15, "weight": 65} """;
-    dynamic root = MapList(sJson);
-    assert(root is MapListMap, true);
-    assert(root.name == "toto");
+  test('constructor with json String (not compiled) ', () {
+    String sJsonString = r""" {"name": "toto", "age": 15, "weight": 65} """;
+    dynamic rootMap = MapList(sJsonString);
+
+    assert(rootMap is MapListMap, true);
+    assert(rootMap.name == "toto");
+    assert(rootMap.age == 15);
   });
 
-  test('constructor with a json map made of int ', () {
-    dynamic root = MapList({"age": 15, "weight": 65});
-    assert(root is MapListMap, true);
-    assert(root.age == 15);
-  });
 
-  test('constructor with json structured starting as List ', () {
+  test('constructor with an already established json ', () {
     String sJson =
         r""" [{"name": "toto", "age": 15, "weight": 65},{"name":"zaza", "age" :68}] """;
     var jj = json.decode(sJson);
+    // now give the result to constructor
     dynamic root = MapList(jj);
-
     assert(root is MapListList, true);
     assert(root[1].name == "zaza");
   });

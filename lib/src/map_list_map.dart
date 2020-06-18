@@ -1,6 +1,4 @@
-import 'dart:io';
-
-import 'package:map_list_dot/map_list_dot_lib.dart';
+import 'package:map_list_dot/map_list_dot.dart';
 
 /// extends MapList to offer Map methods
 
@@ -22,7 +20,7 @@ class MapListMap extends MapList {
   operator [](Object key) {
     var next = json[key];
     if (next is List || next is Map)
-      return MapList(next, false);
+      return MapList(next); //, false
     else
       return next;
   }
@@ -41,35 +39,34 @@ class MapListMap extends MapList {
     return (keys.length == 0);
   }
 
-  /*
-   In fact it's addALL filtered in MapList level
-   cannot override standard addALl
-   */
-  MapList add(var something) {
-    // add new raw entries to the current map
-    if (something is Map) {
-      json.addAll(something);
-      // to allow continuation
-      return MapList(this);
-    }
-    ;
-    /*
-     adding anything else to a map is forbidden
-     */
-    print(
-        '** error : trying to add non amp to current map $something to \n$this');
-    return MapList(this);
+  @override
+  bool containsKey(String aKey) {
+    return wrapped_json.containsKey(aKey);
   }
 
+  dynamic addict(dynamic something) {
+    MapList.log.warning('** add not implemented on maps');
+  }
+
+  /// method used whe a call by code
+  /// similar exists at MapList level for interpreter
+  /// done by hand to enforce type compatibility
+  ///
   dynamic addAll(dynamic something) {
     // add new entries to the current map
+  if (something is MapListMap) something = something.json;
     if (something is Map) {
-      this.json.addAll(something);
-      // to allow continuation
-      return MapList(this);
+      something.forEach((key, value) {
+        wrapped_json[key] = value;
+      });
+      // we don't use addAll standard
+      // as it check that the new entries are exactly the same type as the current
+      //this.json.addAll(something);
+
+      return true;
     }
-    ;
-    stderr.write(
+    MapList.log.warning(
         '** trying to addAll to a Map something else than another map \n $something');
+    return false;
   }
 }

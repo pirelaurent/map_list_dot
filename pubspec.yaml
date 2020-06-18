@@ -1,12 +1,14 @@
 name: map_list_dot
-description: accessing json & other with a dot notation in code or in script
+description:  'access json or maps & lists with a dot notation for getting or setting data, in code or string interpreter'
+
 version: 0.0.1
-author: pierre Laurent
+homepage: https://github.com/pirelaurent/map_list_dot
 
 environment:
   sdk: ">=2.7.0 <3.0.0"
 
 dependencies:
+  logging: ^0.11.3
 
 
 dev_dependencies:
@@ -51,3 +53,4 @@ dev_dependencies:
   #
   # For details regarding fonts in packages, see
   # https://flutter.dev/custom-fonts/#from-packages
+
