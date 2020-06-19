@@ -177,8 +177,8 @@ class MapList {
   static final reg_index_List =
       RegExp(r"""\[\s*?([(0-9]*\s*?)\]|\[\s?(last)\s?\]""");
 
-  // get part after = if exists
-  static final reg_rhs = RegExp(r"""=.*""");
+ /// clean before searching = sign
+ static final RegExp reg_clean_out_assignment = RegExp(r"""[\("'{].*[\('"\)}]""");
 
   /// isolate var name person[12] or name.  -> person
   static final reg_dry_name = RegExp(r"""^"?([A-Za-z_][A-Za-z_0-9]*)"?""");
@@ -192,7 +192,7 @@ class MapList {
   /// trap .add or .addAll in a raw script
   ///
   static final reg_check_add_addAll =
-      RegExp(r"""(["'][\w\s=]*["'])|((add|addAll)\((.*)\))""");
+      RegExp(r"""(.add\(.*\)|.addAll\(.*\))""");
 
   /// trap .addAll method in a script
   static final reg_check_addAll = RegExp(r"""^addAll\((.*)\)""");
@@ -204,27 +204,28 @@ class MapList {
   static final reg_check_clear = RegExp(r"""^clear\s*?\((\s*)\)""");
 
   /// trap equal sign = out of quotes
-  static final reg_equals_outside_quotes =
-      RegExp(r"""(["'][\w\s=]*["'])|(=)""");
-  /*
- with reg_equals_outside_quotes,
- A match:
- group(1) : anything in quote
- group(2) : equal sign, out of quotes
+  /// returns [lhs,rhs]
+  List split_lhs_rhs (String aScript) {
+    String lhs, rhs;
 
- */
-  static bool foundEqualsSign(String aScript) {
-    var itEquals = MapList.reg_equals_outside_quotes.allMatches(aScript);
-    if (itEquals == null) return false;
-    for (var x in itEquals) {
-      if (x.group(2) == '=') {
-        return true;
-      }
+    // first clean function parameters between
+    var aScriptCleaned= (aScript.replaceAll(reg_clean_out_assignment,""));
+    // search =
+    var equalsPos = aScriptCleaned.indexOf('=');
+    if (equalsPos != -1 ){
+      lhs = aScript.substring(0,equalsPos);
+      // rhs without = sign
+      rhs = aScript.substring(equalsPos+1);
     }
-    // allow setter to be true for add and addAll
-    if (reg_check_add_addAll.firstMatch(aScript)?.group(2) != null) return true;
-    return false;
+    else {
+      rhs= null;
+      lhs = aScript;
+    }
+   // print('PLA-lhs: $lhs   rhs: $rhs');
+    return [lhs,rhs];
   }
+
+
 
 
   /// exec demands arrives here in one big string
@@ -241,36 +242,33 @@ class MapList {
     aScript = aScript.trim();
     var originalScript = aScript;
     var dataToSet;
-    var exitMessageOnWarning = '';
+
 
     /*
      split into parts ending by . or =
      if no = can leave a last name like boof.price
      soo we add it a dot : boof.price. to facilitate split
      */
-    Iterable rhs_s = reg_rhs.allMatches(aScript);
-    exitMessageOnWarning = ' -> null returned';
-    if (rhs_s.isNotEmpty) {
-      // found an = evaluate rhs . it begins with '='
-      String rawDataName = rhs_s.elementAt(0).group(0);
-      var aDataName = rawDataName.substring(1).trim();
-      dataToSet = adjustParam(aDataName);
-      // remember we are in a set with an equal
+    print('PLA aScript: $aScript');
+    var result = split_lhs_rhs(aScript);
+    // keep Lhs as new script
+    aScript = result[0];
+    // prepare rhs data
+    String rawDataToSet = result[1];
+    if (rawDataToSet != null){
       setter = true;
-      exitMessageOnWarning = 'no action done.';
-
-      // retract this part from script
-      aScript = aScript.replaceAll(rawDataName, "").trim();
+      dataToSet = adjustParam(rawDataToSet.trim());
     }
-
-    // add an ending point to facilitate detection of isolated word
-    aScript += '.';
+    // some functions are setter despite no rhs
+    if (aScript.contains(reg_check_add_addAll)) setter = true;
+    /*
+      now split Lhs around dots and evaluate successively in a loop.
+     */
+     aScript += '.'; // more easy to split end part
     // now the named variable one per one
     Iterable lhs_s = reg_scalp_relax.allMatches(aScript);
-
     /*
     the variable part can have enclosed index
-
      */
     dynamic where, previous, next;
     where = this.json;
@@ -288,7 +286,7 @@ class MapList {
     for (var aLhs in lhs_s) {
       var aFunction = aLhs.group(2);
       // if a function allows exec, get or set
-      if (aFunction != null) return execFunction(where, aFunction); //--> exit
+      if (aFunction != null) return execFunction(where, aFunction, aScript); //--> exit
       // get the part
       var aPathStep = aLhs.group(1);
 
@@ -307,6 +305,7 @@ class MapList {
       Next step will apply the [ ] [ ] on the found entry
       */
       if (aDryName != null) {
+        print('PLA0:aDryName $aDryName $setter');
         // some name are special properties
         if ((aDryName == "length")&& (!setter)) {
             if (where is List) return where.length;
@@ -314,14 +313,14 @@ class MapList {
             if (aPathStep == "length") return where.length;
             // otherwise will be some ["length"] asking for a key leave it
           }
-        } //--> exit
+        }
         if (aDryName == "isEmpty") return where.isEmpty; //--> exit
         if (aDryName == "isNotEmpty") return where.isNotEmpty; //--> exit
 
         // any other key is valid only on a map except the word 'last'
         if ((!(where is Map)) && (aDryName != "last")&&(aDryName != "length")) {
           log.warning(
-              "**  cannot access a ${where.runtimeType} with a key like: ($originalScript) $exitMessageOnWarning ");
+              "**  cannot access a ${where.runtimeType} with a key like: ($aDryName) ${exitMessage(setter)} ");
           return (setter ? false : null);
         }
 
@@ -337,14 +336,17 @@ class MapList {
         // could be unknown but a creation except for length We stay there
 
         previous = where;
+        // except key length, progress in map
         if (aDryName!='length')  next = where[aDryName];
+
         lastNameOfKeyInMap = aDryName;
         lastRank = null;
 
         if (nullable && (next == null)) return null; //--> exit
         if (next == null) {
-          // if setter create en entry . will be overwrite by the equals
+          // if setter create en entry . will be overwrite by the assignment
           if (setter) {
+            print('PLA previous : $previous $aDryName');
             previous[aDryName] = null;
             next = where[aDryName];
           } else {
@@ -369,31 +371,35 @@ class MapList {
         bool nullable = anIndex.endsWith('?');
         // extract num index [123] group(1)  . space allowed
         var numIndex = reg_index_List.firstMatch(anIndex);
-        //-------------------- [ 123 ] on List ----------
+        //--- [ 123 ] only on a List ----------
         if (numIndex != null) {
           if (!(where is List)) {
             log.warning(
-                '** $originalScript: $anIndex must be applied to a List. $exitMessageOnWarning ');
+                '** $originalScript: $anIndex must be applied to a List. ${exitMessage(setter)} ');
             return (setter ? false : null);
           }
 
-          var rawRank, rank;
+          var rank;
           lastRank = null;
-          // normal num index
-          rawRank = numIndex.group(1);
-          if (rawRank != null) {
-            rank = num.tryParse(rawRank);
-          } else {
+          // a numeric index
+          print('PLA ${numIndex.group(1)} ${numIndex.group(2)}');
+          if (numIndex.group(1) != null) {
+              rank = num.tryParse(numIndex.group(1));
+            if (rank == null) {
             log.warning(
-                '** wrong index on a list :$originalScript. $exitMessageOnWarning');
+                '** wrong index on a list :$originalScript. ${exitMessage(setter)}');
             return (setter ? false : null);
+          }}
+          // [last] index
+          if (numIndex.group(2) != null){
+            rank = where.length -1;
           }
-
-          // check range
+            // check range
           if ((rank < 0) || (rank >= where.length)) {
-            if (!nullable) // no error if anticipated
+            if (! nullable) // no error if anticipated
               log.warning(
-                  '** $originalScript not found by interpreter . $exitMessageOnWarning  ');
+                  '** $originalScript not found by interpreter . ${exitMessage(setter)}  ');
+            log.warning('** Index $rank out of range   0.. ${where.length} in $originalScript' );
             return (setter ? false : null);
           }
 
@@ -412,7 +418,7 @@ class MapList {
           if (!(where is Map)) {
             {
               log.warning(
-                  '** $originalScript: index $anIndex must be applied to a map. $exitMessageOnWarning  ');
+                  '** $originalScript: index $anIndex must be applied to a map. ${exitMessage(setter)}  ');
               return (setter ? false : null); //----> exit
             }
           }
@@ -425,7 +431,7 @@ class MapList {
               lastNameOfKeyInMap = nameOfIndex;
             } else {
               log.warning(
-                  '** $originalScript: warning $nameOfIndex in $anIndex not found. $exitMessageOnWarning ');
+                  '** $originalScript: warning $nameOfIndex in $anIndex not found. ${exitMessage(setter)} ');
               return (setter ? false : null); //----> exit
             }
           }
@@ -457,7 +463,7 @@ class MapList {
       previous.length = dataToSet;
       return true;} else {
         log.warning(
-            '** trying to set length on a ${aScript} which is not a List $exitMessageOnWarning');
+            '** trying to set length on a ${aScript} which is not a List ${exitMessage(setter)}');
       }
     }
 
@@ -477,7 +483,7 @@ class MapList {
       return true;
     }
     log.warning(
-        '** try to set a value $dataToSet on a ${where.runtimeType}. $exitMessageOnWarning');
+        '** try to set a value $dataToSet on a ${where.runtimeType}. ${exitMessage(setter)}');
     return false;
   }
 
@@ -521,12 +527,14 @@ class MapList {
 
   ///
   /// when found in script some func( ) , execute here
-  dynamic execFunction(dynamic where, dynamic aFunction) {
+  dynamic execFunction(dynamic where, dynamic aFunction, [String aScript=""]) {
 // could be a reserved word add
+  print('PLA0: $aFunction');
     var foundAdd = reg_check_add.firstMatch(aFunction);
     if (!(foundAdd == null)) {
       dynamic dataToSet = foundAdd.group(1);
       dataToSet = adjustParam(dataToSet);
+      print('PLA1: $dataToSet');
 
       if (where is List)
         where.add(dataToSet);
@@ -543,21 +551,19 @@ class MapList {
       dynamic dataToSet = foundAddAll.group(1);
       dataToSet = adjustParam(dataToSet);
 
-      if (where is List) {
+      if (where is List && dataToSet is List) {
         dataToSet.forEach((value) {
           where.add(value);
         });
         return true;
       }
-      if (where is Map) {
+      if (where is Map && dataToSet is Map) {
           dataToSet.forEach((key, value) {
             where[key] = value;
         });
         return true;
       }
-
-
-      // where.addAll(dataToSet);
+      log.warning('try to addAll non compatible data : $aScript Allowed : map.addlAll(map); list.addAll(list);');
       return null;
     }
 
@@ -597,6 +603,11 @@ class MapList {
       return null;
     }
   }
+
+   String exitMessage(bool setter){
+    if (setter == null) return 'null returned';
+    return 'no action done ';
+   }
 
   @override
   String toString() {

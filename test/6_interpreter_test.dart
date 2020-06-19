@@ -18,11 +18,10 @@ void main() {
   });
 
   var testFile =
-  path.join(Directory.current.path, 'test', 'models', 'json', 'store.json');
+      path.join(Directory.current.path, 'test', 'models', 'json', 'store.json');
   var file = File(testFile);
   var jsonStringStore = file.readAsStringSync();
   //
-
 
   test("assignement on first level with script", () {
     dynamic squad;
@@ -32,13 +31,12 @@ void main() {
     squad.exec('formed = 2016');
     squad.exec('active = true');
     squad.exec('score = 38.5');
-
+print(squad);
     assert(squad.homeTown == "Metro City");
     assert(squad.formed == 2016);
     assert(squad.active);
     assert(squad.score == 38.5);
   });
-
 
   test("extends a map to a map with interpreter ", () {
     // reset
@@ -87,9 +85,6 @@ void main() {
     assert(squad.members[1].powers[2] == "Superhuman reflexes");
   });
 
-
-
-
   test('basic verification on interpreted access ', () {
     dynamic root = MapList(jsonStringStore);
     // get a lower entry point direclty on store
@@ -108,9 +103,9 @@ void main() {
     assertShow(store.exec("book.length"), 4);
     assertShow(store.exec("bikes.length"), 2);
     // size of the list
-    assert(store.exec('bikes[1].length')== 5);
+    assert(store.exec('bikes[1].length') == 5);
     //  the only way to get aproperty 'length' it is to use classical notation
-    assert(store.exec('bikes[1]["length"]')== 2.2);
+    assert(store.exec('bikes[1]["length"]') == 2.2);
     assertShow(store.exec("bikes[1]['length']"), 2.2);
   });
 
@@ -138,9 +133,7 @@ void main() {
     assertShow(store.exec("bikes[0].battery"), true);
     store.exec("bikes[1].battery = false ");
     assertShow(store.exec("bikes[1].battery"), false);
-    store
-        .exec("book")
-        .add({"category": "children", "name": "sleeping beauty"});
+    store.exec("book").add({"category": "children", "name": "sleeping beauty"});
     assertShow(store.exec("book[4].category"), "children");
   });
 
@@ -162,12 +155,11 @@ void main() {
     assert(book.friends[0].name == "lulu");
     assert(book.exec('friends[0].name') == "lulu");
     assert(book.name == "zaza");
-    // not recommended but tolerate name between quotes
-    book.exec('"name"="zorro"');
-    assert((book.name == "zorro") == true);
+    print(book.exec('"name"'));
+    // if overquoted wrong assignment
+    book.exec('"name" ="zorro"');
+    assert((book.name == "zorro") == false);
   });
-
-
 
   test(' access to current with empty or index only  ', () {
     // create with a string json-like
@@ -190,6 +182,20 @@ void main() {
     // verify changes affects both
     interest.exec('[1]=33');
     assert(interest[1] == 33);
+  });
 
+  test('add and adAll in interpreter', () {
+    var root = MapList();
+    root.exec('contacts = []');
+    root.exec('contacts.add({"name":"polo"})');
+    print(root);
+    assert(root.exec('contacts.length') == 1);
+    // the following will fail on a wrong json
+    root.exec(
+        'contacts[last].addAll({"firstName" : "marco", "birthDate" = "15/09/1254"})');
+    root.exec(
+        'contacts[last].addAll({"firstName" : "marco", "birthDate" : "15/09/1254"})');
+    print(root);
+    assert(root.exec('contacts[last].length') == 3);
   });
 }

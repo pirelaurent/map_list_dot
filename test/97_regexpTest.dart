@@ -1,4 +1,4 @@
-import 'package:map_list_dot/map_list_dot.dart';
+
 void show(var reg, var aString){
   Iterable foundAll = reg.allMatches(aString);
   print('String: $aString');
@@ -13,48 +13,55 @@ void show(var reg, var aString){
  group(2) : equal sign, out of quotes
 
  */
-bool foundEqualsTest(String aScript){
-  print('============> $aScript');
-  var itEquals = MapList.reg_equals_outside_quotes.allMatches(aScript);
-  if (itEquals == null) return false;
-  bool seeEquals = false;
-  for(var x in itEquals){
-   print('---');
-    print('0: ${x.group(0)}');
-    print('1: ${x.group(1)}');
-    print('2: ${x.group(2)}');
-    if (x.group(2)=='='){
-      seeEquals = true;
-    }
-}
-  return seeEquals;
+
+
+final RegExp reg_clean_out_assignment = RegExp(r"""[\("'{].*[\('"\)}]""");
+final reg_check_add_addAll = RegExp(r"""((.add\(.*\)|.addAll\(.*\))""");
+
+ List split_lhs_rhs (String aScript){
+  String lhs, rhs;
+
+  // first clean function parameters between
+  var aScriptCleaned= (aScript.replaceAll(reg_clean_out_assignment,""));
+  // search =
+  var equalsPos = aScriptCleaned.indexOf('=');
+  if (equalsPos != -1 ){
+    lhs = aScript.substring(0,equalsPos);
+    rhs = aScript.substring(equalsPos);
+  }
+  else {
+    rhs= null;
+    lhs = aScript;
+  }
+  print('lhs: $lhs   rhs: $rhs');
+  return [lhs,rhs];
 }
 
 
 void main() {
-  var s;
-  s = "show.videos[1].questions[1].options[2].answer";
-  show(MapList.reg_scalp_relax,s+'.');
+   var s;
+   var result, rhs, lhs;
+  s= 'contacts[last].addAll({"firstName" : "marco", "birthDate" = "15/09/1254"})';
+  split_lhs_rhs(s);
+  lhs = result[0]; print(lhs);
+  rhs = result[0]; print(rhs);
 
-  s = "show.videos.addAll([1,2,3])";
-  show(MapList.reg_scalp_relax,s+'.');
+   s= 'members[0].powers[1] = "Turning heavy"';
+   split_lhs_rhs(s);
+  s='dico.FR[2] = "comment = va"';
+   split_lhs_rhs(s);
+    s='[1] = 33';
+   split_lhs_rhs(s);
+
+   s = '';
 
 
 
 
-  s = "homeTown = 'Metro City'";
-  assert(MapList.foundEqualsSign(s));
-  s = " = {}";
-  assert(MapList.foundEqualsSign(s));
-  s= 'polo.truc[1].machin = "abcd"';
-  assert(MapList.foundEqualsSign(s));
-  s= 'polo.truc[1].machin.["abcd"]';
-  assert(MapList.foundEqualsSign(s)==false);
-  s='';
-  assert(MapList.foundEqualsSign(s)==false);
-  s=' polo["var x= 12"].truc.20Abd["===="]';
-  assert(MapList.foundEqualsSign(s)==false);
-  s=' polo["var x= 12"].truc.20Abd["===="] = "abc=23"';
-  assert(MapList.foundEqualsSign(s));
+
+ return;
+
+
+
 }
 

@@ -18,14 +18,16 @@ void main() {
 
   test('wrong json in assignment  ', () {
     // to try to add a List in a Map of <String, String> we cast
-    dynamic root = MapList(<String,dynamic>{"name": "zaza"});
+    dynamic root = MapList(<String, dynamic>{"name": "zaza"});
+    // what is allowed in dart is not allowed in json
     root.name = [
       10,
       11,
       12,
     ];
-    root.exec('name = [10,11,12,]');
-    assert(root.name == null);
+    print (root);
+    root.exec('name = [10,11,12,13,]');
+    assert(root.name == null, '$root');
   });
 
   test('applying spurious index on a map  ', () {
@@ -43,7 +45,6 @@ void main() {
     root.exec('name[0]="lulu"');
     //** name[0]="lulu": [0] must be applied to a List. null returned
     assert(root.name == "zaza");
-
   });
 
   test('applying spurious index on a map bis ', () {
@@ -84,7 +85,7 @@ void main() {
     assert(book.exec('price[200]') == null);
   });
 
-  test(' wrong function calls on clear  ',(){
+  test(' wrong function calls on clear  ', () {
     dynamic root = MapList([0, 1, 2, 3, 4]);
     root.exec('clear()');
     //** warning : clear(). Calling set without = .Be sure it's not a get or an exec .no action done
@@ -96,8 +97,7 @@ void main() {
     assert(root.length == 0);
   });
 
-
-  test(' wrong function calls with last  ',(){
+  test(' wrong function calls with last  ', () {
     /* as we plan to add a map to a list<int> we cast it <dynamic>
      the other way could have been :
      1st create an instance of an empty List :root = MapList([]);
@@ -111,12 +111,26 @@ void main() {
     root.exec('[last]');
     //** warning : [11,12,13]. Calling set without = .Be sure it's not a get or an exec .no action done
     root.exec('[11,12,13]');
-   //** warning : [11,12,13]. Calling set without = .Be sure it's not a get or an exec .no action done
-    root.exec('= [11,12,13]');//
+    //** warning : [11,12,13]. Calling set without = .Be sure it's not a get or an exec .no action done
+    root.exec('= [11,12,13]'); //
     root.exec('add({"name":"polo", "age":33})');
     dynamic x = root.exec('last');
     assert(x.age == 33);
-    assert(root.exec('last').age  == 33);
-    assert(root.exec('last.age')  == 33);
+    assert(root.exec('last').age == 33);
+    assert(root.exec('last.age') == 33);
+  });
+
+  test('more trapped bad assignments ', () {
+    dynamic root = MapList();
+    root.exec(
+        'car = {"name":"Ford", "color":"white"}'); // create and set with json-like string.
+    root.exec(
+        'car.addAll({ "price": 5000, "fuel":"diesel","hybrid":false})'); //add or merge with function addAll
+    root.exec('squad.members = [1,2,3,4]');
+    root.exec('squad.members.length = 2');
+    root.exec(
+        'squad.length = 2'); //** trying to set length on a squad.length. which is not a List no action done.
+    root.exec(
+        'squad."name" = "Super hero squad"'); // cannot access a String with a key like
   });
 }

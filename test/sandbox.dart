@@ -11,6 +11,15 @@ void main(){
 
 
   dynamic root = MapList();
+
+  root = MapList();
+  root.exec('contacts= []');
+  root.exec('contacts.add({"name":"polo"})');
+  print(root);
+  root.exec('contacts[last].addAll{"firstName" : "marco", "birthDate" = "15/09/1254"}');
+  print(root);
+
+
   root.exec('squad = {}'); // create a new map entry at root
   root.exec('squad.name = "Super hero squad"'); // String with '" "'
   root.exec("squad.homeTown = 'Metro City'");   // String with "' '"
@@ -24,9 +33,12 @@ void main(){
   root.exec('squad.members = [1,2,3,4]');
   root.exec('squad.members.length = 2');
   //root.exec('squad.length = 2'); ** trying to set length on a squad.length. which is not a List no action done.
-  root.exec('squad."name" = "Super hero squad"'); // String with '" "'
+  //root.exec('squad."name" = "Super hero squad"'); // cannot access a String with a key like
 
   //print(root.exec('squad.members.length'));
   print(root.squad.members);
+
+
+
 
 }
