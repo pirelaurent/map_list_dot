@@ -9,8 +9,7 @@ void main(){
   });
 
 
-
-  dynamic root = MapList();
+ /* dynamic root = MapList();
 
   root = MapList();
   root.exec('contacts= []');
@@ -37,7 +36,7 @@ void main(){
 
   //print(root.exec('squad.members.length'));
   print(root.squad.members);
-
+*/
 
 
 

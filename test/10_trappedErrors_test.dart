@@ -121,16 +121,34 @@ void main() {
   });
 
   test('more trapped bad assignments ', () {
-    dynamic root = MapList();
-    root.exec(
-        'car = {"name":"Ford", "color":"white"}'); // create and set with json-like string.
-    root.exec(
-        'car.addAll({ "price": 5000, "fuel":"diesel","hybrid":false})'); //add or merge with function addAll
-    root.exec('squad.members = [1,2,3,4]');
-    root.exec('squad.members.length = 2');
+    dynamic root = MapList({"squad": {"members":  [1,2,3,4]}});
+
+    //print(root.exec('squad.members.length '));// this is ok
+     root.exec('squad.members.length = 2');
+     print('----1--------');
     root.exec(
         'squad.length = 2'); //** trying to set length on a squad.length. which is not a List no action done.
+    print('-----2-------');
+    root.exec('car = 22');
+print('------------22---------');
+    root.exec(
+        'car = {"name":"Ford", "color":"white"}'); // create and set with json-like string.
+
+
+    print('-----3-------');
+    root.exec(
+        'car.addAll({ "price": 5000, "fuel":"diesel","hybrid":false})'); //add or merge with function addAll
+    print('-----4-------');
     root.exec(
         'squad."name" = "Super hero squad"'); // cannot access a String with a key like
   });
+
+
+  test('very basic creation of data in an existing filled root', (){
+    dynamic root = MapList(<String,dynamic>{"squad": {"members":  [1,2,3,4]}});
+    root.exec('car = 12');
+    print(root);
+
+  });
+
 }

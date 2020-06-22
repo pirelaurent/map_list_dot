@@ -94,7 +94,7 @@ void main() {
   test("Adding new entries on an existing map ", () {
     // code
     root = MapList();
-    root.results = [];
+    root.results = <dynamic>[];
     // doing the following results[0] is a Map<String,int>
     root.results.add({"elapsed_time": 30, "temperature": 18});
     //root.results[0].time = "12:58:00"; //type 'String' is not a subtype of type 'int' of 'value'
@@ -127,6 +127,34 @@ void main() {
     print(car);//{name: Ford, color: [blue, black, white], price: 6000, fuel: diesel, hybrid: false, tires: slim}
     print(car.color); // [blue, black, white]
     print(car.color[2]); // white
+  });
+
+  test('create new data from scratch in several ways', () {
+    dynamic squad = MapList();
+    squad.name = "Super hero squad"; // String entry
+    assert(squad.name == "Super hero squad");
+    squad.members = []; // Empty list names members
+    assert(squad.members.isEmpty);
+    // create a member with a compiled map json
+    squad.members.add({
+      "name": "Molecule Man",
+      "age": 29,
+      "secretIdentity": "Dan Jukes",
+      "powers": ["Radiation resistance", "Turning tiny", "Radiation blast"]
+    });
+    assert(squad.members[0].age == 29);
+    // create another member using first a MapList
+    dynamic aMember = MapList();
+    aMember.name = "Madame Uppercut";
+    aMember.age = 39;
+    aMember.secretIdentity = "Jane Wilson";
+    aMember.powers = [
+      "Million tonne punch",
+      "Damage resistance",
+      "Superhuman reflexes"
+    ];
+    squad.members.add(aMember);
+    assert(squad.members[1].powers[2] == "Superhuman reflexes");
   });
 
 /* not available

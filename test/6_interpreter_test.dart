@@ -156,7 +156,7 @@ print(squad);
     assert(book.exec('friends[0].name') == "lulu");
     assert(book.name == "zaza");
     print(book.exec('"name"'));
-    // if overquoted wrong assignment
+    print('this test will generate a warning : ("name" ="zorro" );');
     book.exec('"name" ="zorro"');
     assert((book.name == "zorro") == false);
   });

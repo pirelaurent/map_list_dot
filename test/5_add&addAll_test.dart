@@ -67,6 +67,7 @@ void main() {
      */
     map = MapList({"name": "toto"});
     map.exec('addAll({"A": "aa", "B": "bb"})');
+    assert(map.length == 3);
     assert(map.exec("length") == 3);
     assert(map.exec("A") == "aa");
 

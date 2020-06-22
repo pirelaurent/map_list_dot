@@ -17,9 +17,27 @@ void main() {
   Logger.root.onRecord.listen((record) {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
-
-
   dynamic root;
+
+  test("assignement on first level with script", () {
+    dynamic squad;
+    squad = MapList();
+    squad.exec("homeTown = 'Metro City'");
+    squad.exec('name = "Super hero squad"');
+    squad.exec('formed = 2016');
+    squad.exec('active = true');
+    squad.exec('score = 38.5');
+    print(squad);
+    assert(squad.homeTown == "Metro City");
+    assert(squad.formed == 2016);
+    assert(squad.active);
+    assert(squad.score == 38.5);
+  });
+
+
+
+
+
 
   test("assignment to add & replace data in Map & List", () {
     root = MapList();
@@ -34,49 +52,22 @@ void main() {
     assert(root.dico.FR == 'salut');
     //check length
     assert(root.dico.length == 3);
+    assert(root.exec('dico.length')==3);
     // change type of an entry
     root.dico.FR = ["bonjour", "salut", "helloxx"];
     assert(root.dico.length == 3);
-    root.dico.FR[2] = "hello";
     assert(root.dico.FR.length == 3);
+    assert(root.exec('dico.FR.length')==3);
     // change by code, verify by interpreter
     assert(root.dico.FR[0] == "bonjour");
     assert(root.exec('dico.FR[1]') == "salut");
+    //change by code, verify by interpreter
+    root.dico.FR[2] = "hello";
+    assert(root.exec('dico.FR[2]') == "hello");
     // change by interpreter. verify by code
     root.exec('dico.FR[2] = "comment va"');
     assert(root.dico.FR[2] == "comment va");
   });
-
-  test('create new data from scratch in several ways', () {
-    dynamic squad = MapList();
-    squad.name = "Super hero squad"; // String entry
-    assert(squad.name == "Super hero squad");
-    squad.members = []; // Empty list names members
-    assert(squad.members.isEmpty);
-    // create a member with a compiled map json
-    squad.members.add({
-      "name": "Molecule Man",
-      "age": 29,
-      "secretIdentity": "Dan Jukes",
-      "powers": ["Radiation resistance", "Turning tiny", "Radiation blast"]
-    });
-    assert(squad.members[0].age == 29);
-    // create another member using first a MapList
-    dynamic aMember = MapList();
-    aMember.name = "Madame Uppercut";
-    aMember.age = 39;
-    aMember.secretIdentity = "Jane Wilson";
-    aMember.powers = [
-      "Million tonne punch",
-      "Damage resistance",
-      "Superhuman reflexes"
-    ];
-    squad.members.add(aMember);
-    assert(squad.members[1].powers[2] == "Superhuman reflexes");
-  });
-
-
-
 
 
   test("deep changes mixed with interpreter and code from file ", () {
@@ -85,12 +76,14 @@ void main() {
     var file = File(testFile);
     var jsonString = file.readAsStringSync();
     dynamic squad = MapList(jsonString);
+
     assert(squad.members[0].powers[1] == "Turning tiny");
+    assert(squad.exec('members[0].powers[1]') == "Turning tiny");
+
     // change by code, test by code & script
     squad.members[0].powers[1] = "Turning heavy";
-    squad.exec('members[0].powers[1] = "Turning heavy"');
-    assert(squad.members[0].powers[1] == "Turning heavy");
-    // change by script, test by execand code
+    assert(squad.exec('members[0].powers[1]') == "Turning heavy");
+    // change by script, test by exec and code
     squad.exec('members[0].powers[1] = "Turning weird"');
     assert(squad.members[0].powers[1] == "Turning weird");
     assert(squad.exec('members[0].powers[1]') == "Turning weird");

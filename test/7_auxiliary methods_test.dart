@@ -42,7 +42,7 @@ void main() {
   test('tests interpreter about containsKey isEmpty, isNotEmpty, clear , remove , last ', () {
     dynamic root = MapList('{ "name":"zaza", "age": 7, "scores": [10,20,30]}');
     // contains is not available but a get will return null
-    assert(root.exec("age")!=null);
+    assert(root.exec("age") != null);
     assert(root.exec('scores.isNotEmpty'));
     root.exec('scores.remove(20)');
     // verify remove
