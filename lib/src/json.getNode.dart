@@ -24,26 +24,25 @@ class jsonNode {
   /// group(1) without .
   ///
   static final reg_scalp_relax =
-      RegExp(r"""(|[\w\d_ \?\s\[\]{}:,"']*)[\.=\s]""");
+      RegExp(r"""(|[\w\d_ \?\s\[\]{}:,"']*)[\.=\s]|(.*\(.*\))""");
 
   ///
   /// at the end of a script could be a function
-  static final reg_find_function = RegExp(r"""|(.*\(.*\))""");
+  static final reg_find_function = RegExp(r"""(.*\(.*\))""");
 
   /// detect (several) all index [123] ["abc"] [xxx]?
   ///  group(0) : [xxx]?
   ///  group(1) : 123 "abc" xxx
   ///  group(2) : 123  abc  xxx   // used to get dry name of map entry
+  /// to distinguish [last] from ["last"] group1 != group2
   static final reg_all_brackets =
-      RegExp(r"""\[(["']?([A-Za-z0-9]*)["']?)]\??""");
+      RegExp(r"""\[\s?(["']?([A-Za-z0-9]*)["']?)\s?]\??""");
 
   /// isolate var name person[12] or name.  -> person
   static final reg_dry_name = RegExp(r"""^"?([A-Za-z_][A-Za-z_0-9]*)"?""");
 
   /// find clear  with no parameter
   static final reg_check_clear = RegExp(r"""^clear\s*?\((\s*)\)""");
-
-
 
   // constructor
   jsonNode(this.currentNode, this.aScript);
@@ -58,20 +57,25 @@ class jsonNode {
     if (match != null) {
       print('match: $match');
       if (advance(match) == false) return this;
+      // clean this part and continue recursively
       aScript = aScript.replaceFirst(reg_scalp_relax, "");
       return jsonNode(currentNode, aScript).evaluate();
     }
     // no more match. could be a last part of any kind in script
     if (aScript == "") return this; // no more
     // is that last part a classical, a specific or a function ?
-
     if (["last", "length", "isEmpty", "isNotEmpty"].contains(aScript)) {
       specialWords(aScript);
       return this;
     }
-    var aFunction = reg_find_function.firstMatch(aScript)?.group(1);
-    if (aFunction != null) {
-      specialFunctions(aFunction);
+    // .clear() only
+    if (reg_check_clear.firstMatch(aScript)?.group(1) != null) {
+      currentNode.clear();
+      return this;
+    }
+    // other function call must be done at an upper level
+    if (reg_find_function.firstMatch(aScript)?.group(1) != null) {
+      advanceEdge = aScript;
       return this;
     }
     // else it is a normal last part of a path
@@ -85,9 +89,13 @@ class jsonNode {
   /// separate name and [ ] then advance
   bool advance(String aMatch) {
     var dryName = reg_dry_name.firstMatch(aMatch)?.group(1);
-    // search all [xxx]
+    // first apply a map name key if any except .last
+    if (dryName == 'last') {
+      specialWords(dryName);
+      return true;
+    }
+
     if (dryName != null) {
-      /*print('- dryName $dryName');*/
       if (advanceOnMap(dryName) == false) return false;
     }
     // we can now advance on index if any
@@ -96,19 +104,24 @@ class jsonNode {
     for (var block in bracketsList) {
       // check [xxx]? then get xxx and test numeric
       var anIndex = block.group(0);
-      /*print('anIndex :$anIndex');*/
+      var dryIndex = block.group(1); // with quotes
+      var mapIndex = block.group(2); // without
       bool nullable = anIndex.endsWith('?');
       // what is between [ ]
-      var dryIndex = block.group(1);
+
       var numericRank = num.tryParse(dryIndex);
-      var mapIndex = block.group(2);
+      // could also be [last] index in the middle of a chain
+      if (dryIndex == 'last') {
+        if (currentNode is List) {
+          numericRank = currentNode.length - 1;
+        }
+      }
 
       // --- several cases
       if (numericRank != null) {
         if (advanceOnList(numericRank, nullable) == false) return false;
         continue;
       }
-      ;
       if (mapIndex != null) {
         if (advanceOnMap(mapIndex) == false) return false;
         continue;
@@ -148,8 +161,8 @@ class jsonNode {
   ///
   /// progress of index in a List
   bool advanceOnList(int rank, bool nullable) {
-    /*print(
-        'advanceOnList before : $rank on the  ${currentNode.length} ${currentNode.runtimeType} ${beginningOf(currentNode)}');*/
+    print(
+        'advanceOnList before : $rank on the  ${currentNode.length} ${currentNode.runtimeType} ${beginningOf(currentNode)}');
     if ((rank >= 0) && (rank < currentNode.length)) {
       previousNode = currentNode;
       currentNode = currentNode[rank];
@@ -172,6 +185,7 @@ class jsonNode {
  */
 
   void specialWords(aScript) {
+    print('PLA specialWords : $aScript');
     advanceEdge = aScript;
     switch (aScript) {
       case 'length':
@@ -192,7 +206,14 @@ class jsonNode {
       case 'last':
         {
           previousNode = currentNode;
-          currentNode = currentNode.last;
+          if (previousNode is List) {
+            currentNode = currentNode.last;
+            advanceEdge = previousNode.length - 1;
+          } else {
+            log.warning(
+                'calling "last"  on a ${previousNode.runtimeType} . null returned');
+            currentNode = null;
+          }
         }
         break;
       default:
@@ -200,22 +221,6 @@ class jsonNode {
           log.warning('not yet implemented word : $aScript');
         }
     }
-  }
-  /*
-   add, addALL, remove, clear
-   */
-
-  void specialFunctions(String aFunction){
-    advanceEdge = aFunction;
-    if (reg_check_clear.firstMatch(aFunction) != null){
-      currentNode.clear();
-      return;
-    }
-    /* others that have parameters are let to caller
-    as parameter can involve others components not known here,
-    or functions outside the scope of remove, add, addAll
-   */
-    return;
   }
 
   ///

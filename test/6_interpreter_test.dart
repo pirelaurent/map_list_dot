@@ -188,14 +188,27 @@ print(squad);
     var root = MapList();
     root.exec('contacts = []');
     root.exec('contacts.add({"name":"polo"})');
-    print(root);
+
     assert(root.exec('contacts.length') == 1);
     // the following will fail on a wrong json
     root.exec(
         'contacts[last].addAll({"firstName" : "marco", "birthDate" = "15/09/1254"})');
+    // this one is correct
     root.exec(
         'contacts[last].addAll({"firstName" : "marco", "birthDate" : "15/09/1254"})');
     print(root);
-    assert(root.exec('contacts[last].length') == 3);
+    //assert(root.exec('contacts[last].length') == 3);
+    assert(root.exec('contacts.last.length') == 3);
   });
+
+  test ('combine .last and .length',(){
+    var root = MapList(["AA", "BB","CC", 12]);
+    assert(root.exec('last') ==12);
+    root = MapList(["AA", "BB","CC", [11,12,13]]);
+    assert(root.exec('last.length') ==3);
+
+
+
+  });
+
 }
