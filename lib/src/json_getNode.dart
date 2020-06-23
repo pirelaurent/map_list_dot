@@ -45,21 +45,23 @@ class jsonNode {
   static final reg_check_clear = RegExp(r"""^clear\s*?\((\s*)\)""");
 
   // constructor
-  jsonNode(this.currentNode, this.aScript);
+  jsonNode(this.currentNode, this.aScript,[this.originalScript]){
+    if (originalScript == null) originalScript = aScript;
+  }
 
-  String aScript;
+  String aScript, originalScript;
   dynamic currentNode, previousNode, advanceEdge;
 
   /// recursive
   dynamic evaluate() {
+    if (aScript ==''){return this;};//plaXX
     // separates around the dots
     var match = reg_scalp_relax.firstMatch(aScript)?.group(1);
     if (match != null) {
-      print('match: $match');
       if (advance(match) == false) return this;
       // clean this part and continue recursively
       aScript = aScript.replaceFirst(reg_scalp_relax, "");
-      return jsonNode(currentNode, aScript).evaluate();
+      return jsonNode(currentNode, aScript, originalScript).evaluate();
     }
     // no more match. could be a last part of any kind in script
     if (aScript == "") return this; // no more
@@ -79,7 +81,6 @@ class jsonNode {
       return this;
     }
     // else it is a normal last part of a path
-    print('last part : $aScript');
     advance(aScript);
     return this;
   }
@@ -88,6 +89,9 @@ class jsonNode {
   /// progress in a path
   /// separate name and [ ] then advance
   bool advance(String aMatch) {
+    if (aMatch.startsWith('"')){
+      log.warning ('Avoid to use quotes around notation : $aMatch in $originalScript');
+    }
     var dryName = reg_dry_name.firstMatch(aMatch)?.group(1);
     // first apply a map name key if any except .last
     if (dryName == 'last') {
@@ -161,8 +165,6 @@ class jsonNode {
   ///
   /// progress of index in a List
   bool advanceOnList(int rank, bool nullable) {
-    print(
-        'advanceOnList before : $rank on the  ${currentNode.length} ${currentNode.runtimeType} ${beginningOf(currentNode)}');
     if ((rank >= 0) && (rank < currentNode.length)) {
       previousNode = currentNode;
       currentNode = currentNode[rank];
@@ -185,11 +187,12 @@ class jsonNode {
  */
 
   void specialWords(aScript) {
-    print('PLA specialWords : $aScript');
     advanceEdge = aScript;
     switch (aScript) {
       case 'length':
         {
+          previousNode = currentNode;
+          // set result as an int
           currentNode = currentNode.length;
         }
         break;

@@ -19,7 +19,7 @@ void main() {
   });
   dynamic root;
 
-  test("assignement on first level with script", () {
+  test("assignement on first level created with script", () {
     dynamic squad;
     squad = MapList();
     squad.exec("homeTown = 'Metro City'");
@@ -27,7 +27,7 @@ void main() {
     squad.exec('formed = 2016');
     squad.exec('active = true');
     squad.exec('score = 38.5');
-    print(squad);
+
     assert(squad.homeTown == "Metro City");
     assert(squad.formed == 2016);
     assert(squad.active);

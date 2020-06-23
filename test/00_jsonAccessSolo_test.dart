@@ -92,4 +92,11 @@ void main() {
     var aJsonBis = {"A": "AA", "B": "BB"};
     assert(jsonNode(aJsonBis, 'last').value == null);
   });
+
+ test('json with length ',(){
+   var aJson = {"squad": {"members":  [1,2,3,4]}};
+   assert(jsonNode(aJson, 'squad.members.length').value == 4);
+ });
+
+
 }

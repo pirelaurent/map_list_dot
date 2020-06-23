@@ -25,7 +25,6 @@ void main() {
       11,
       12,
     ];
-    print (root);
     root.exec('name = [10,11,12,13,]');
     assert(root.name == null, '$root');
   });
@@ -121,34 +120,43 @@ void main() {
   });
 
   test('more trapped bad assignments ', () {
-    dynamic root = MapList({"squad": {"members":  [1,2,3,4]}});
+    dynamic root = MapList({
+      "squad": {
+        "members": [1, 2, 3, 4]
+      }
+    });
 
-    //print(root.exec('squad.members.length '));// this is ok
-     root.exec('squad.members.length = 2');
-     print('----1--------');
     root.exec(
-        'squad.length = 2'); //** trying to set length on a squad.length. which is not a List no action done.
-    print('-----2-------');
+        'squad.length = 2'); //unable to change length on a Map squad.length = 2 . no action done
+    //as map is not <String, dynamic> in original set up, this will fail:
     root.exec('car = 22');
-print('------------22---------');
-    root.exec(
-        'car = {"name":"Ford", "color":"white"}'); // create and set with json-like string.
+    /*
+    WARNING: 2020-06-23 14:35:10.643935: unable to assign car = 22. Think about <String,dynamic> Maps and <dynamic> Lists. No action done.
+    type 'int' is not a subtype of type 'Map<String, List<int>>' of 'value'
+    */
 
-
-    print('-----3-------');
+    // now recreate same with an interpreted String : will create a correct json
+    root = MapList('{"squad": {"members": [1, 2, 3, 4]}}');
+    root.exec('car = 22');
+    // now change the type of content
+    root.exec('car = {"name":"Ford", "color":"white"}');
+    // and extends
     root.exec(
         'car.addAll({ "price": 5000, "fuel":"diesel","hybrid":false})'); //add or merge with function addAll
-    print('-----4-------');
+
     root.exec(
-        'squad."name" = "Super hero squad"'); // cannot access a String with a key like
+        'squad."name" = "Super hero squad"');
+    assert(root.squad.name == "Super hero squad");
   });
 
-
-  test('very basic creation of data in an existing filled root', (){
-    dynamic root = MapList(<String,dynamic>{"squad": {"members":  [1,2,3,4]}});
+  test('very basic creation of data in an existing well typed ', () {
+    dynamic root = MapList(<String, dynamic>{
+      "squad": {
+        "members": [1, 2, 3, 4]
+      }
+    });
     root.exec('car = 12');
-    print(root);
-
+    assert(root.car == 12);
+    assert(root.exec('car') == 12);
   });
-
 }

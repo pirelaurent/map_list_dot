@@ -66,6 +66,29 @@ void main() {
     assert(root.exec('length') == 0);
   });
 
+  test('change length of a List ', () {
+    dynamic root = MapList({
+      "squad": {
+        "members": [1, 2, 3, 4]}});
+    assert(root.exec('squad.members.length') == 4);
+    root.exec('squad.members.length = 2');
+    assert(root.exec('squad.members.length') == 2);
+    root.exec('squad.members.length = 10');
+    assert(root.exec('squad.members.length') == 10);
+    assert(root.exec('squad.members[2]') ==null);
+    });
+
+  test('test clear on a List ', () {
+    dynamic root = MapList({
+      "squad": {
+        "members": [1, 2, 3, 4]}});
+    assert(root.exec('squad.members.length') == 4);
+    root.exec('squad.members.clear()');
+    assert(root.exec('squad.members.length') == 0);
+    root.exec('squad.members.length = 10');
+    assert(root.exec('squad.members.length') == 10);
+    assert(root.exec('squad.members[0]') ==null);
+  });
 
 
-}
+  }

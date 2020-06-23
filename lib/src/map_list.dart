@@ -174,35 +174,12 @@ class MapList {
     return false;
   }
 
-  /// ----------------------- Interpreter ----------------------
-  /// Some regex to help
-  /// scalp : group 1 : all terms like root.show[1].etc splitted by .
-  /// group2 : function signature someFunc( some parameter)
-  static final reg_scalp_relax = RegExp(
-      //r"""(add\s?\(.*\)|addAll\s?\(.*\)|[\w\d_ \?\s\[\]{}:,"']*)[\.=]""");
-      r"""(|[\w\d_ \?\s\[\]{}:,"']*)[\.=\s]|(.*\(.*\))""");
-
-  /// detect (several) index [123] ["abc"]
-  static final reg_brackets_relax = RegExp(r"""\[["']?[A-Za-z0-9]*["']?]\??""");
-
-  // extract from ["abcAZA"] or ['abcAZA'] or [  "abcAZA" ] etc.
-  static final reg_indexString =
-      RegExp(r"""\[\s*['"]?([a-zA-Z0-9\s]*)['"]?\]""");
-
-  /// extract num index [123] group(1) and [last] group(2) . space allowed @todo remove [last] will be .last
-  static final reg_index_List =
-      RegExp(r"""\[\s*?([(0-9]*\s*?)\]|\[\s?(last)\s?\]""");
-
   /// clean before searching = sign
   static final RegExp reg_clean_out_assignment =
-      RegExp(r"""[\("'{].*[\('"\)}]""");
-
-  /// isolate var name person[12] or name.  -> person
-  static final reg_dry_name = RegExp(r"""^"?([A-Za-z_][A-Za-z_0-9]*)"?""");
+      RegExp(r"""(\{.*\})|(['"][\w=\s\[\]\d]*["'])""");
 
   /// identify json candidates : begin and end by [ ] or { }
   static final reg_mapList = RegExp("^[\\[\\{].*[\\}\\]]");
-
 
   /// at the end of a script could be a function
   static final reg_find_function = RegExp(r"""(.*\(.*\))""");
@@ -223,18 +200,20 @@ class MapList {
   /// returns [lhs,rhs]
   List split_lhs_rhs(String aScript) {
     String lhs, rhs;
-
-    // first clean function parameters between ()
+    // first clean = sign out of main script.
     var aScriptCleaned = (aScript.replaceAll(reg_clean_out_assignment, ""));
-    // search =
+    // search = in the remaining
     var equalsPos = aScriptCleaned.indexOf('=');
-    if (equalsPos != -1) {
-      lhs = aScript.substring(0, equalsPos);
-      // rhs without = sign
-      rhs = aScript.substring(equalsPos + 1);
-    } else {
+    if (equalsPos == -1 ){
       rhs = null;
       lhs = aScript;
+    } else
+      // suppose that the remaining is the first = in script
+     {
+      var two = aScript.split('=');
+      lhs = two[0];
+      // rhs without = sign
+      rhs = two[1];
     }
     // print('PLA-lhs: $lhs   rhs: $rhs');
     return [lhs, rhs];
@@ -255,22 +234,24 @@ class MapList {
     /*
      split into parts ending by . or =
      if no = can leave a last name like boof.price
-     soo we add it a dot : boof.price. to facilitate split
+     soo we add it a dot : book.price. to facilitate split
      */
     var result = split_lhs_rhs(aScript);
     // prepare rhs data and indicate a setter with data
     setter = false;
     String rawDataToSet = result[1];
     if (rawDataToSet != null) {
-      print('setter : ${result[0]}  set to ${result[1]} ');
       setter = true;
       dataToSet = adjustParam(rawDataToSet.trim());
     }
     // now evaluate left hand side
-    dynamic node = jsonNode(wrapped_json, result[0].trim()).nodesAndEdge;
+    dynamic node = jsonNode(wrapped_json, result[0].trim(), originalScript).nodesAndEdge;
+    // advanceEdge is the last part execute
+    /*print(
+        ' once back form json: $node  ${node.currentNode is List} ${node.currentNode is Map} ${node.advanceEdge is String} $setter');*/
+    // @todo find case where 3 are null. If not the following test, we got a warning (with no consequence)
+     if((node.previousNode == null) && (node.advanceEdge == null) && (node.currentNode == null) ) return null; // PLAXX
 
-    print(
-        ' au retour $node ${node.currentNode is List} ${node.currentNode is Map}');
     /*
      is there some function call in the last edge ?
      last edge could be an int if [1] at the end
@@ -289,10 +270,18 @@ class MapList {
       return node.currentNode;
     } else {
       // else standard assignment
-      if((node.previousNode is Map)|| (node.previousNode is List)){
-      node.previousNode[node.advanceEdge] = dataToSet;
-      return true;} else {
-        log.warning(' try to apply [${node.advanceEdge}] to a ${node.previousNode.runtimeType}. null returned');
+      if ((node.previousNode is Map) || (node.previousNode is List)) {
+        if (node.advanceEdge == "length") return setLength(node);
+        try {
+          node.previousNode[node.advanceEdge] = dataToSet;
+        } catch (e){
+          log.warning('unable to assign $originalScript. Think about <String,dynamic> Maps and <dynamic> Lists. No action done.\n $e ');
+          return false;
+        }
+        return true;
+      } else {
+        log.warning(
+            ' try to apply [${node.advanceEdge}] to a ${node.previousNode.runtimeType} in $originalScript. null returned');
         node.currentNode = null;
         return false;
       }
@@ -341,7 +330,6 @@ class MapList {
   /// A function is to apply at the currentNode
   ///
   dynamic execFunction(dynamic node) {
-    print('exec $node');
     var aFunction = node.advanceEdge;
     // ----- function add(something) usable on List onl
     var foundAddParam = reg_check_add.firstMatch(aFunction)?.group(1);
@@ -363,7 +351,7 @@ class MapList {
     if (foundAddAllParam != null) {
       dynamic dataToSet = adjustParam(foundAddAllParam);
       // due to rigid type checking in standard addAll, use a loop on elements
-      if ((node.currentNode is List) &&( dataToSet is List)) {
+      if ((node.currentNode is List) && (dataToSet is List)) {
         dataToSet.forEach((value) {
           node.currentNode.add(value);
         });
@@ -387,10 +375,22 @@ class MapList {
     }
     // function clear has been done in json part
 
-
     log.warning('** unknown function : $aFunction . No action done ');
     return false;
   }
+
+  /// special case with length =
+  ///
+ bool setLength(node){
+
+   if (node.previousNode is List) {
+     node.previousNode.length = dataToSet;
+     return true;
+   } else {
+     log.warning ('unable to change length on a Map: $originalScript . no action done ');
+     return false;
+   }
+ }
 
   ///
   ///

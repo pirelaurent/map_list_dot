@@ -1,67 +1,35 @@
 
-void show(var reg, var aString){
-  Iterable foundAll = reg.allMatches(aString);
-  print('String: $aString');
-  for (var ff in foundAll ){
-    print(ff.group(1));
-  }
-}
+
+import 'package:test/test.dart';
+void main (){
+    test(' if necessary verify regexp ',()
+    {print(r"""
+    *************************************************************************************
+    to test regExp of MapList and Json_getNode use https://regex101.com/ (thanks to them).
+      You will find in this source within comments some strings to test on line.    
+    *************************************************************************************  
+    """
+    );});
+
+    /* to test = sign remaining with reg_clean_out_assignment
+squad."name" = "Super hero squad"
+squad.name = "super"
+squad["name"] = "super";
+members[0].powers[1] = "Turning weird"
+videos[1]["name"] = "japaneese fashion"
+videos[1]["name"] = "japaneese = fashion"
+squad["name"]["truc"] = "super [10] = 20";
+squad["name"]["truc"]
+members ["name"] = '{"firstName" : "marco", data[1]"birthDate" = "15/09/1254"}'
+squad."name" = "Super hero squad"
+     */
+
 /*
- with this regex,
- A match:
- group(1) : anything in quote
- group(2) : equal sign, out of quotes
 
  */
 
 
-final RegExp reg_clean_out_assignment = RegExp(r"""[\("'{].*[\('"\)}]""");
-final reg_check_add_addAll = RegExp(r"""((.add\(.*\)|.addAll\(.*\))""");
-
- List split_lhs_rhs (String aScript){
-  String lhs, rhs;
-
-  // first clean function parameters between
-  var aScriptCleaned= (aScript.replaceAll(reg_clean_out_assignment,""));
-  // search =
-  var equalsPos = aScriptCleaned.indexOf('=');
-  if (equalsPos != -1 ){
-    lhs = aScript.substring(0,equalsPos);
-    rhs = aScript.substring(equalsPos);
-  }
-  else {
-    rhs= null;
-    lhs = aScript;
-  }
-  print('lhs: $lhs   rhs: $rhs');
-  return [lhs,rhs];
-}
-
-
-void main() {
-   var s;
-   var result, rhs, lhs;
-  s= 'contacts[last].addAll({"firstName" : "marco", "birthDate" = "15/09/1254"})';
-  split_lhs_rhs(s);
-  lhs = result[0]; print(lhs);
-  rhs = result[0]; print(rhs);
-
-   s= 'members[0].powers[1] = "Turning heavy"';
-   split_lhs_rhs(s);
-  s='dico.FR[2] = "comment = va"';
-   split_lhs_rhs(s);
-    s='[1] = 33';
-   split_lhs_rhs(s);
-
-   s = '';
-
-
-
-
-
- return;
 
 
 
 }
-

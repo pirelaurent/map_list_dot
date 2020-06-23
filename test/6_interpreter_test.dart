@@ -150,15 +150,14 @@ print(squad);
     assertShow(store.bikes[1].color, "maroon");
   });
 
-  test(' try item in string with  error in interpreter ', () {
+  test(' try item in string with  warning or error in interpreter ', () {
     dynamic book = MapList('{"name":"zaza", "friends": [{"name": "lulu" }]}');
     assert(book.friends[0].name == "lulu");
     assert(book.exec('friends[0].name') == "lulu");
     assert(book.name == "zaza");
-    print(book.exec('"name"'));
-    print('this test will generate a warning : ("name" ="zorro" );');
+    print('this test will generate a warning : ("name" ="zorro" ) but do the job');
     book.exec('"name" ="zorro"');
-    assert((book.name == "zorro") == false);
+    assert((book.name == "zorro") == true);
   });
 
   test(' access to current with empty or index only  ', () {
@@ -166,19 +165,21 @@ print(squad);
     dynamic book = MapList(
         '{"name":"zaza", "friends": [{"name": "lulu" , "scores":[10,20,30]}]}');
     // use a relay
-    // Here var : return type will be a MapList, so interest becomes one
-    // (better to use dynamic as a rule of thumb)
+    // Here var : return type will be a MapListList, so interest becomes one
+
     var interest = book.exec('friends[0].scores');
     assert(interest.exec('[1]') == 20);
     interest.exec('[1]=33');
     assert(interest[1] == 33);
     // interest.exec() with no path returns itself
-    // Caution don't compare the wew result and a previous one :
+    // Caution don't compare the new result and a previous one :
     // They are two different Maplist, but with same pointers to json
+    print('----------- ${interest.exec()} ${interest.runtimeType}');
     assert((interest.exec() != interest));
     // verifying pointer
-    assert((interest.exec().runtimeType == interest.runtimeType));
     assert(interest.exec().json == interest.json);
+    assert((interest.exec().runtimeType == interest.runtimeType));
+
     // verify changes affects both
     interest.exec('[1]=33');
     assert(interest[1] == 33);
