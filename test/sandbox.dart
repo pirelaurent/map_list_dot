@@ -7,9 +7,12 @@ void main(){
   Logger.root.onRecord.listen((record) {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
+  dynamic edge = "addAll";
+
+  var residu = edge.trim();
 
 
- /* dynamic root = MapList();
+  /* dynamic root = MapList();
 
   root = MapList();
   root.exec('contacts= []');

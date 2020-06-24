@@ -34,16 +34,31 @@ void main() {
     assert(squad.score == 38.5);
   });
 
-
-
-
-
-
   test("assignment to add & replace data in Map & List", () {
-    root = MapList();
+    root = MapList({
+      "dico": {
+        "hello": {"US": "Hi", "FR": "bonjour"}
+      }
+    });
+    assert(root.dico.hello.US == "Hi");
+    root = MapList( {"dico":<String,dynamic>{"hello":{"US": "Hi", "FR": "bonjour"} }});
+    root.dico.numbers = {"US": ["one","two","three","four","five","sic","seven","eight","nine"]};
+
+    root = MapList('{"dico":{"hello":{"US": "Hi", "FR": "bonjour"} }}');
+    assert(root.dico.hello.US == "Hi");
+    root.dico.numbers = {"US": ["zero","one","two","three","four","five","sic","seven","eight","nine"]};
+    assert(root.dico.numbers.US[3] == "three");
+
+    var numbers = root.dico.numbers;
+    var USnumbers = numbers.US;
+    USnumbers.add("ten");
+    //print(USnumbers[3]);
+
+
     // check creation
     // as we plan to add heterogeneous data in that map we cast
-    root.dico = <String,dynamic> {"US": "hello", "FR": "bonjour"};
+    root = MapList();
+    root.dico = <String, dynamic>{"US": "hello", "FR": "bonjour"};
     root.dico.addAll({"JP": "こんにちは"});
     assert(root.dico.FR == 'bonjour');
     assert(root.dico.JP == 'こんにちは');
@@ -52,12 +67,12 @@ void main() {
     assert(root.dico.FR == 'salut');
     //check length
     assert(root.dico.length == 3);
-    assert(root.exec('dico.length')==3);
+    assert(root.exec('dico.length') == 3);
     // change type of an entry
     root.dico.FR = ["bonjour", "salut", "helloxx"];
     assert(root.dico.length == 3);
     assert(root.dico.FR.length == 3);
-    assert(root.exec('dico.FR.length')==3);
+    assert(root.exec('dico.FR.length') == 3);
     // change by code, verify by interpreter
     assert(root.dico.FR[0] == "bonjour");
     assert(root.exec('dico.FR[1]') == "salut");
@@ -68,7 +83,6 @@ void main() {
     root.exec('dico.FR[2] = "comment va"');
     assert(root.dico.FR[2] == "comment va");
   });
-
 
   test("deep changes mixed with interpreter and code from file ", () {
     var testFile = path.join(

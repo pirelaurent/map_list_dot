@@ -10,12 +10,16 @@ void assertShow(var what, var expected) {
   assert(what == expected, "\nexpected: $expected got: $what");
 }
 
-void main() {
-  // set a logger
+void setLog(){
   Logger.root.level = Level.ALL; // defaults to Level.INFO
   Logger.root.onRecord.listen((record) {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
+}
+
+void main() {
+
+  setLog();
 
   var testFile =
       path.join(Directory.current.path, 'test', 'models', 'json', 'store.json');
@@ -151,8 +155,10 @@ print(squad);
   });
 
   test(' try item in string with  warning or error in interpreter ', () {
-    dynamic book = MapList('{"name":"zaza", "friends": [{"name": "lulu" }]}');
-    assert(book.friends[0].name == "lulu");
+    setLog();
+    dynamic book = MapList();
+    book.exec('addAll({ "name":"zaza", "friends": [{"name": "lulu" }]})');
+    // book.exec('addAll({"name":"zaza", "friends": [{"name": "lulu" }]}'); // missing right parenthesis generate a log
     assert(book.exec('friends[0].name') == "lulu");
     assert(book.name == "zaza");
     print('this test will generate a warning : ("name" ="zorro" ) but do the job');
@@ -207,6 +213,16 @@ print(squad);
     assert(root.exec('last') ==12);
     root = MapList(["AA", "BB","CC", [11,12,13]]);
     assert(root.exec('last.length') ==3);
+  });
+
+  test('basic assignments', (){
+    dynamic squad = MapList();          // will create a default Map
+    squad.exec('name = "Super hero squad"');    // add a String data
+    squad.exec('homeTown = "Metro City"');      // another
+    squad.exec('formed = 2016');                // add an int
+    squad.exec('active = true');                // add a bool
+    squad.exec('score = 38.5');                 // add a double
+    squad.exec('overhauls = ["2008/04/10", "2102/05/01", "2016/04/17"]');
 
 
 

@@ -26,15 +26,18 @@ void main() {
   });
 
   test('classical query starting by a List', () {
-    var aJson = [
-      [1, 2, 3],
-      [11, 12],
-      {"A": "AA", "B": "BB"},
-      "andSoOn"
-    ];
+    var aJson = [ [1, 2, 3], [11, 12],  {"A": "AA", "B": "BB"},  "andSoOn" ];
+/*
+  print(jsonNode(aJson, '[0][1]'));
+  print(jsonNode(aJson, '[2]["B"]'));
+  print(jsonNode(aJson, '[2].length'));
+  print(jsonNode(aJson,'[0]'));
+  print(jsonNode(aJson,'[2]'));
+  print(jsonNode(aJson, '[2].newData'));
+  print(jsonNode(aJson, '[0]'));*/
 
     assert(jsonNode(aJson, '[0][1]').value == 2);
-    assert(jsonNode(aJson, '[2]["B"]').value == "BB");
+    assert(jsonNode(aJson, '[2].B').value == "BB");
     // wrong index with error message
     print('this test will generate a warning and returns null');
     assert(jsonNode(aJson, '[0][3]').value == null);
@@ -128,6 +131,6 @@ void main() {
       "andSoOn"
     ];
 
-    print(jsonNode(aJson, '[0][1]').toNode );
+    assert(jsonNode(aJson, '[0][1]').value ==2);
   });
 }

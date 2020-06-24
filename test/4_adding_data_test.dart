@@ -124,9 +124,7 @@ void main() {
     carInfo.tires = "slim";
     carInfo.color = ["blue","black","white"];
     car.addAll(carInfo);
-    print(car);//{name: Ford, color: [blue, black, white], price: 6000, fuel: diesel, hybrid: false, tires: slim}
-    print(car.color); // [blue, black, white]
-    print(car.color[2]); // white
+
   });
 
   test('create new data from scratch in several ways', () {
@@ -155,6 +153,17 @@ void main() {
     ];
     squad.members.add(aMember);
     assert(squad.members[1].powers[2] == "Superhuman reflexes");
+  });
+
+  test('sample in readme', (){
+    dynamic car = MapList();
+    car.brand = "Ford";
+    car.colors = ["blue","black","white"];
+    car.chosenColor = "white";
+    dynamic myStuff = MapList();
+    myStuff.myCar = car;
+    assert(myStuff.myCar.chosenColor == "white");
+
   });
 
 /* not available

@@ -185,10 +185,10 @@ class MapList {
   static final reg_find_function = RegExp(r"""(.*\(.*\))""");
 
   /// trap .add method in a part
-  static final reg_check_add = RegExp(r"""^add\((.*)\)""");
+  static final reg_check_add = RegExp(r"""^add\s*?\((.*)\)""");
 
   /// trap .addAll method in a script
-  static final reg_check_addAll = RegExp(r"""^addAll\((.*)\)""");
+  static final reg_check_addAll = RegExp(r"""^addAll\s*?\((.*)\)""");
 
   /// find remove with parameter
   static final reg_check_remove = RegExp(r"""^remove\s*?\((.*)\)""");
@@ -204,6 +204,7 @@ class MapList {
     var aScriptCleaned = (aScript.replaceAll(reg_clean_out_assignment, ""));
     // search = in the remaining
     var equalsPos = aScriptCleaned.indexOf('=');
+    // no = it's a get
     if (equalsPos == -1 ){
       rhs = null;
       lhs = aScript;
@@ -215,7 +216,6 @@ class MapList {
       // rhs without = sign
       rhs = two[1];
     }
-    // print('PLA-lhs: $lhs   rhs: $rhs');
     return [lhs, rhs];
   }
 
@@ -245,7 +245,7 @@ class MapList {
       dataToSet = adjustParam(rawDataToSet.trim());
     }
     // now evaluate left hand side
-    dynamic node = jsonNode(wrapped_json, result[0].trim(), originalScript).locate();
+    dynamic node = jsonNode(wrapped_json, result[0].trim(), originalScript);
 
     // advanceEdge is the last part execute
     /*print(
@@ -260,14 +260,25 @@ class MapList {
     }
     // get something
     if (!setter) {
-      if (node.toNode == null) return null;
+      if (node.toNode == null){
+        /*
+        as unknown name is a map is allowed,
+        malformed can arrive up to there as jsonNode.reg_dry_name
+        to be enhanced with a best test upstream
+         */
+        var residu = node.edge;
+        if (residu == "addAll") log.warning ('malformed addAll in $originalScript');
+        if (residu == "add") log.warning ('malformed add function in $originalScript');
+        if (residu == "remove") log.warning ('malformed remove in $originalScript');
+        return null;
+      } // could have malformed function
       if (node.toNode is List)
         return MapListList.json(node.toNode); //----> exit
       if (node.toNode is Map)
         return MapListMap.json(node.toNode); //----> exit
       return node.toNode;
     } else {
-      // else standard assignment
+      // else standard assignment in a setter
       if ((node.fromNode is Map) || (node.fromNode is List)) {
         if (node.edge == "length") return setLength(node);
         try {
@@ -279,7 +290,7 @@ class MapList {
         return true;
       } else {
         log.warning(
-            ' try to apply [${node.edge}] to a ${node.fromNode.runtimeType} in $originalScript. null returned');
+            ' try to apply [$originalScript] on a: ${node.fromNode.runtimeType} node. No action done');
         node.toNode = null;
         return false;
       }
@@ -361,8 +372,13 @@ class MapList {
         });
         return true;
       }
+      /*
+       type not compatible with map or list
+       could be because dataToset is null due to wrong json for example
+       ${node.edge} has the content.
+*/
       log.warning(
-          '${node.edge}: non compatible data : ${node.toNode.runtimeType}   ${dataToSet.runtimeType}');
+          'try to addAll(${dataToSet.runtimeType}) on  ${node.beginningOf(node.toNode,20)} ');
       return null;
     }
     //----- function remove(something)

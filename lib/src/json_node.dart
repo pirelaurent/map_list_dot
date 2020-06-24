@@ -44,10 +44,15 @@ class jsonNode {
   /// find clear  with no parameter
   static final reg_check_clear = RegExp(r"""^clear\s*?\((\s*)\)""");
 
-  // constructor
+  /// constructor
+  ///   call locate to recurse before returning values
   jsonNode(this.toNode, this.aScript, [this.originalScript]) {
     if (originalScript == null) originalScript = aScript;
-
+    // copy by hand as we cannot do a return jsn or a this=jsn
+    jsonNode jsn = locate();
+    toNode = jsn.toNode;
+    fromNode = jsn.fromNode;
+    edge = jsn.edge;
   }
 
   String aScript, originalScript;
@@ -58,20 +63,27 @@ class jsonNode {
     if (aScript == '') {
       return this;
     }
-    ; //plaXX
     // separates around the dots
     var match = reg_scalp_relax.firstMatch(aScript)?.group(1);
     if (match != null) {
-      if (advance(match) == false) return this;
+      if (advance(match) == false) {
+
+        return this;
+      }
       // clean this part and continue recursively
       aScript = aScript.replaceFirst(reg_scalp_relax, "");
-      return jsonNode(toNode, aScript, originalScript).locate();
+      return jsonNode(toNode, aScript, originalScript);
     }
-    // no more match. could be a last part of any kind in script
-    if (aScript == "") return this; // no more
-    // is that last part a classical, a specific or a function ?
+    /*
+     no more match.
+     will be the end of recursion.
+     the remaining part can be a path or special functions
+     */
+    if (aScript == "") return this;
+
     if (["last", "length", "isEmpty", "isNotEmpty"].contains(aScript)) {
       specialWords(aScript);
+      // end of recurse
       return this;
     }
     // .clear() only
@@ -79,7 +91,11 @@ class jsonNode {
       toNode.clear();
       return this;
     }
-    // other function call must be done at an upper level
+    /*
+     if other function call with parameter
+     must be done at an upper level
+     jsonNode is only a locator of data or subtree
+     */
     if (reg_find_function.firstMatch(aScript)?.group(1) != null) {
       edge = aScript;
       return this;
@@ -128,15 +144,17 @@ class jsonNode {
 
       // --- several cases
       if (numericRank != null) {
-        if (advanceOnList(numericRank, nullable) == false) return false;
+        if (advanceOnList(numericRank, nullable) == false) {return false;}
         continue;
       }
       if (mapIndex != null) {
-        if (advanceOnMap(mapIndex) == false) return false;
+        if (advanceOnMap(mapIndex) == false) {
+          return false;
+        }
         continue;
       }
       // wrong things in [ ]
-      print(' pas beau les crochets $anIndex');
+      print(' ugly brackets with $anIndex');
     }
     return true;
   }
@@ -144,7 +162,7 @@ class jsonNode {
   ///
   ///  progress one step in a Map
   bool advanceOnMap(String aKey) {
-    /*print('advanceOnMap $aKey');*/
+
     bool nullable = aKey.endsWith('?');
     if (nullable) aKey = aKey.substring(0, aKey.length - 1);
     if (toNode is Map == false) {
@@ -219,7 +237,7 @@ class jsonNode {
             edge = fromNode.length - 1;
           } else {
             log.warning(
-                'calling "last"  on a ${fromNode.runtimeType} . null returned');
+                'calling "last" must be on a List. Here is on a ${fromNode.runtimeType} . null returned');
             toNode = null;
           }
         }
@@ -235,8 +253,7 @@ class jsonNode {
   /// if sure to be on a get, do it in one shot
   /// otherwise use locate and check nodes
   dynamic get value {
-    var x = locate();
-    return x.toNode;
+    return toNode;
   }
 
   String beginningOf(var someInfo, [int len = 80]) {
@@ -250,11 +267,10 @@ class jsonNode {
 
   @override
   String toString() {
-    return ('** ${simplifiedType(fromNode)}${beginningOf(fromNode, 15)}  --- $edge -> ${simplifiedType(toNode)} ${beginningOf(toNode, 15)}  ');
+    return ('${simplifiedType(fromNode)}${beginningOf(fromNode, 15)}  --- $edge -> ${simplifiedType(toNode)} ${beginningOf(toNode, 15)}  ');
   }
 
   String simplifiedType(dynamic node) {
-    String s;
     if (node is Map) return "(map)";
     if (node is List) return "(list)";
     return ("(${node.runtimeType.toString()})");

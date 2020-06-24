@@ -103,20 +103,22 @@ void main() {
      then addAll the data : root.addAll([0, 1, 2, 3, 4])
    */
     dynamic root = MapList(<dynamic>[0, 1, 2, 3, 4]);
-    root.exec('root.video.name = "Max"');
-    root.exec('root.last');
+    root.exec('video.name = "Max"');
+/*    root.exec('root.last');
     // **  cannot search a key (root.last) in a List<dynamic>
     root.exec('last'); //ok
     root.exec('[last]');
-    //** warning : [11,12,13]. Calling set without = .Be sure it's not a get or an exec .no action done
+    // ** warning : [11,12,13]. Calling set without = .Be sure it's not a get or an exec .no action done
     root.exec('[11,12,13]');
-    //** warning : [11,12,13]. Calling set without = .Be sure it's not a get or an exec .no action done
+    // ** warning : [11,12,13]. Calling set without = .Be sure it's not a get or an exec .no action done
     root.exec('= [11,12,13]'); //
     root.exec('add({"name":"polo", "age":33})');
     dynamic x = root.exec('last');
     assert(x.age == 33);
     assert(root.exec('last').age == 33);
     assert(root.exec('last.age') == 33);
+    */
+
   });
 
   test('more trapped bad assignments ', () {
