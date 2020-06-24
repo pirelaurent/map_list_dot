@@ -61,7 +61,7 @@ void main() {
     dynamic root = MapList(jsonFromYaml);
     // check access on json only
     assert( jsonNode(root.json, '["show"]["name"]').value == 'quiz on video');
-    assert(jsonNode(root.json, 'show.name').evaluate().currentNode == 'quiz on video');
+    assert(jsonNode(root.json, 'show.name').locate().toNode == 'quiz on video');
     // now check access through MapList
     assert(root.exec("show.name") == "quiz on video");
     assertShow(root.exec("show.videos[1].name"), "japaneese fashion");

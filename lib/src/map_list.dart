@@ -245,35 +245,33 @@ class MapList {
       dataToSet = adjustParam(rawDataToSet.trim());
     }
     // now evaluate left hand side
-    dynamic node = jsonNode(wrapped_json, result[0].trim(), originalScript).nodesAndEdge;
+    dynamic node = jsonNode(wrapped_json, result[0].trim(), originalScript).locate();
+
     // advanceEdge is the last part execute
     /*print(
-        ' once back form json: $node  ${node.currentNode is List} ${node.currentNode is Map} ${node.advanceEdge is String} $setter');*/
-    // @todo find case where 3 are null. If not the following test, we got a warning (with no consequence)
-     if((node.previousNode == null) && (node.advanceEdge == null) && (node.currentNode == null) ) return null; // PLAXX
-
+        ' once back form json: $node  ${node.toNode is List} ${node.lastNode is Map} ${node.advanceEdge is String} $setter');*/
     /*
      is there some function call in the last edge ?
      last edge could be an int if [1] at the end
      */
-    if (node.advanceEdge is String) {
-      var foundFunc = reg_find_function.firstMatch(node.advanceEdge);
+    if (node.edge is String) {
+      var foundFunc = reg_find_function.firstMatch(node.edge);
       if (foundFunc != null) return execFunction(node);
     }
     // get something
     if (!setter) {
-      if (node.currentNode == null) return null;
-      if (node.currentNode is List)
-        return MapListList.json(node.currentNode); //----> exit
-      if (node.currentNode is Map)
-        return MapListMap.json(node.currentNode); //----> exit
-      return node.currentNode;
+      if (node.toNode == null) return null;
+      if (node.toNode is List)
+        return MapListList.json(node.toNode); //----> exit
+      if (node.toNode is Map)
+        return MapListMap.json(node.toNode); //----> exit
+      return node.toNode;
     } else {
       // else standard assignment
-      if ((node.previousNode is Map) || (node.previousNode is List)) {
-        if (node.advanceEdge == "length") return setLength(node);
+      if ((node.fromNode is Map) || (node.fromNode is List)) {
+        if (node.edge == "length") return setLength(node);
         try {
-          node.previousNode[node.advanceEdge] = dataToSet;
+          node.fromNode[node.edge] = dataToSet;
         } catch (e){
           log.warning('unable to assign $originalScript. Think about <String,dynamic> Maps and <dynamic> Lists. No action done.\n $e ');
           return false;
@@ -281,8 +279,8 @@ class MapList {
         return true;
       } else {
         log.warning(
-            ' try to apply [${node.advanceEdge}] to a ${node.previousNode.runtimeType} in $originalScript. null returned');
-        node.currentNode = null;
+            ' try to apply [${node.edge}] to a ${node.fromNode.runtimeType} in $originalScript. null returned');
+        node.toNode = null;
         return false;
       }
     }
@@ -327,16 +325,16 @@ class MapList {
 
   ///
   /// when found in script some func( ) , execute here
-  /// A function is to apply at the currentNode
+  /// A function is to apply at the lastNode
   ///
   dynamic execFunction(dynamic node) {
-    var aFunction = node.advanceEdge;
+    var aFunction = node.edge;
     // ----- function add(something) usable on List onl
     var foundAddParam = reg_check_add.firstMatch(aFunction)?.group(1);
     if (foundAddParam != null) {
       dynamic dataToSet = adjustParam(foundAddParam);
-      if (node.currentNode is List) {
-        node.currentNode.add(dataToSet);
+      if (node.toNode is List) {
+        node.toNode.add(dataToSet);
         return true;
       } else {
         stderr.write(
@@ -351,27 +349,27 @@ class MapList {
     if (foundAddAllParam != null) {
       dynamic dataToSet = adjustParam(foundAddAllParam);
       // due to rigid type checking in standard addAll, use a loop on elements
-      if ((node.currentNode is List) && (dataToSet is List)) {
+      if ((node.toNode is List) && (dataToSet is List)) {
         dataToSet.forEach((value) {
-          node.currentNode.add(value);
+          node.toNode.add(value);
         });
         return true;
       }
-      if ((node.currentNode is Map) && (dataToSet is Map)) {
+      if ((node.toNode is Map) && (dataToSet is Map)) {
         dataToSet.forEach((key, value) {
-          node.currentNode[key] = value;
+          node.toNode[key] = value;
         });
         return true;
       }
       log.warning(
-          '${node.advanceEdge}: non compatible data : ${node.currentNode.runtimeType}   ${dataToSet.runtimeType}');
+          '${node.edge}: non compatible data : ${node.toNode.runtimeType}   ${dataToSet.runtimeType}');
       return null;
     }
     //----- function remove(something)
     var foundRemoveParam = reg_check_remove.firstMatch(aFunction)?.group(1);
     if (foundRemoveParam != null) {
       dynamic dataToRemove = adjustParam(foundRemoveParam);
-      return node.currentNode.remove(dataToRemove);
+      return node.toNode.remove(dataToRemove);
     }
     // function clear has been done in json part
 
@@ -383,8 +381,8 @@ class MapList {
   ///
  bool setLength(node){
 
-   if (node.previousNode is List) {
-     node.previousNode.length = dataToSet;
+   if (node.fromNode is List) {
+     node.fromNode.length = dataToSet;
      return true;
    } else {
      log.warning ('unable to change length on a Map: $originalScript . no action done ');

@@ -15,6 +15,8 @@ void assertShow(var what, var expected) {
  basic tests on get .
  Notice that you can call directly exec
  but it doesn't verify if set or get,it just apply the script
+
+ if logger is in place, this will generate new "Stopped" tests with logs.
  */
 void main() {
   // set a logger
@@ -84,7 +86,12 @@ void main() {
   });
 
   test(' json interpreted last in a List ', () {
-    var aJson =[1,2,[11,12,13],4];
+    var aJson = [
+      1,
+      2,
+      [11, 12, 13],
+      4
+    ];
     assert(jsonNode(aJson, 'last').value == 4);
     assert(jsonNode(aJson, '[2].last').value == 13);
     // some errors
@@ -93,10 +100,34 @@ void main() {
     assert(jsonNode(aJsonBis, 'last').value == null);
   });
 
- test('json with length ',(){
-   var aJson = {"squad": {"members":  [1,2,3,4]}};
-   assert(jsonNode(aJson, 'squad.members.length').value == 4);
- });
+  test('json with length ', () {
+    var aJson = {
+      "squad": {
+        "members": [1, 2, 3, 4]
+      }
+    };
+    assert(jsonNode(aJson, 'squad.members.length').value == 4);
+  });
 
+  test('json with length on null ', () {
+    var aJson = {
+      "squad": {
+        "members": [1, 2, 3, 4]
+      }
+    };
+    //print(jsonNode(aJson, 'squad.wrongMembers.length').locate());
+    // ** (map){members: [1, 2...  --- wrongMembers -> (Null) null
+    assert(jsonNode(aJson, 'squad.wrongMembers.length').value == null);
+  });
 
+  test('automatic advance in jsonNode test ', () {
+    var aJson = [
+      [1, 2, 3],
+      [11, 12],
+      {"A": "AA", "B": "BB"},
+      "andSoOn"
+    ];
+
+    print(jsonNode(aJson, '[0][1]').toNode );
+  });
 }

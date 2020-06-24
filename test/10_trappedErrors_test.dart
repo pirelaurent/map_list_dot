@@ -65,7 +65,7 @@ void main() {
     root.exec(" '[255]' = 20");
   });
 
-  test('trapp out of range in exec', () {
+  test('trap out of range in exec', () {
     dynamic root = MapList([0, 1, 2, 3, 4]);
     // calling a key on a list
     //print(root.price);  ** Naming error: trying to get a key "price" in a List. Null returned

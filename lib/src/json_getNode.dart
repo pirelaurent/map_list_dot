@@ -45,23 +45,27 @@ class jsonNode {
   static final reg_check_clear = RegExp(r"""^clear\s*?\((\s*)\)""");
 
   // constructor
-  jsonNode(this.currentNode, this.aScript,[this.originalScript]){
+  jsonNode(this.toNode, this.aScript, [this.originalScript]) {
     if (originalScript == null) originalScript = aScript;
+
   }
 
   String aScript, originalScript;
-  dynamic currentNode, previousNode, advanceEdge;
+  dynamic fromNode, edge, toNode;
 
   /// recursive
-  dynamic evaluate() {
-    if (aScript ==''){return this;};//plaXX
+  dynamic locate() {
+    if (aScript == '') {
+      return this;
+    }
+    ; //plaXX
     // separates around the dots
     var match = reg_scalp_relax.firstMatch(aScript)?.group(1);
     if (match != null) {
       if (advance(match) == false) return this;
       // clean this part and continue recursively
       aScript = aScript.replaceFirst(reg_scalp_relax, "");
-      return jsonNode(currentNode, aScript, originalScript).evaluate();
+      return jsonNode(toNode, aScript, originalScript).locate();
     }
     // no more match. could be a last part of any kind in script
     if (aScript == "") return this; // no more
@@ -72,12 +76,12 @@ class jsonNode {
     }
     // .clear() only
     if (reg_check_clear.firstMatch(aScript)?.group(1) != null) {
-      currentNode.clear();
+      toNode.clear();
       return this;
     }
     // other function call must be done at an upper level
     if (reg_find_function.firstMatch(aScript)?.group(1) != null) {
-      advanceEdge = aScript;
+      edge = aScript;
       return this;
     }
     // else it is a normal last part of a path
@@ -89,8 +93,9 @@ class jsonNode {
   /// progress in a path
   /// separate name and [ ] then advance
   bool advance(String aMatch) {
-    if (aMatch.startsWith('"')){
-      log.warning ('Avoid to use quotes around notation : $aMatch in $originalScript');
+    if (aMatch.startsWith('"')) {
+      log.warning(
+          'Avoid to use quotes around notation : $aMatch in $originalScript');
     }
     var dryName = reg_dry_name.firstMatch(aMatch)?.group(1);
     // first apply a map name key if any except .last
@@ -116,8 +121,8 @@ class jsonNode {
       var numericRank = num.tryParse(dryIndex);
       // could also be [last] index in the middle of a chain
       if (dryIndex == 'last') {
-        if (currentNode is List) {
-          numericRank = currentNode.length - 1;
+        if (toNode is List) {
+          numericRank = toNode.length - 1;
         }
       }
 
@@ -142,22 +147,22 @@ class jsonNode {
     /*print('advanceOnMap $aKey');*/
     bool nullable = aKey.endsWith('?');
     if (nullable) aKey = aKey.substring(0, aKey.length - 1);
-    if (currentNode is Map == false) {
+    if (toNode is Map == false) {
       log.warning(
-          'try to access $currentNode as a Map with key $aKey. null returned');
-      currentNode = null;
-      advanceEdge = aKey;
+          'try to access $toNode as a Map with key $aKey. null returned');
+      toNode = null;
+      edge = aKey;
       return false;
     }
-    if (currentNode.containsKey(aKey)) {
-      previousNode = currentNode;
-      currentNode = currentNode[aKey];
-      advanceEdge = aKey;
+    if (toNode.containsKey(aKey)) {
+      fromNode = toNode;
+      toNode = toNode[aKey];
+      edge = aKey;
       return true;
     } else {
-      previousNode = currentNode; //ie the map
-      advanceEdge = aKey;
-      currentNode = null;
+      fromNode = toNode; //ie the map
+      edge = aKey;
+      toNode = null;
       return false;
     }
   }
@@ -165,19 +170,19 @@ class jsonNode {
   ///
   /// progress of index in a List
   bool advanceOnList(int rank, bool nullable) {
-    if ((rank >= 0) && (rank < currentNode.length)) {
-      previousNode = currentNode;
-      currentNode = currentNode[rank];
-      advanceEdge = rank;
+    fromNode = toNode;
+    if ((rank >= 0) && (rank < toNode.length)) {
+      toNode = toNode[rank];
+      edge = rank;
       /*print(
-          'advanceOnList after : $rank on the ${currentNode.runtimeType} ${beginningOf(currentNode)}');*/
+          'advanceOnList after : $rank on the ${lastNode.runtimeType} ${beginningOf(currentNode)}');*/
       return true;
     } else {
       // if null expected, no error message
       if (!nullable)
         log.warning(
-            'wrong index $rank on the  ${currentNode.length} ${currentNode.runtimeType} ${beginningOf(currentNode)}');
-      currentNode = null;
+            'wrong index $rank on the  ${toNode.length} ${toNode.runtimeType} ${beginningOf(toNode)}');
+      toNode = null;
       return false;
     }
   }
@@ -187,35 +192,35 @@ class jsonNode {
  */
 
   void specialWords(aScript) {
-    advanceEdge = aScript;
+    edge = aScript;
     switch (aScript) {
       case 'length':
         {
-          previousNode = currentNode;
+          fromNode = toNode;
           // set result as an int
-          currentNode = currentNode.length;
+          toNode = toNode.length;
         }
         break;
       case 'isEmpty':
         {
-          currentNode = currentNode.isEmpty;
+          toNode = toNode.isEmpty;
         }
         break;
       case 'isNotEmpty':
         {
-          currentNode = currentNode.isNotEmpty;
+          toNode = toNode.isNotEmpty;
         }
         break;
       case 'last':
         {
-          previousNode = currentNode;
-          if (previousNode is List) {
-            currentNode = currentNode.last;
-            advanceEdge = previousNode.length - 1;
+          fromNode = toNode;
+          if (fromNode is List) {
+            toNode = toNode.last;
+            edge = fromNode.length - 1;
           } else {
             log.warning(
-                'calling "last"  on a ${previousNode.runtimeType} . null returned');
-            currentNode = null;
+                'calling "last"  on a ${fromNode.runtimeType} . null returned');
+            toNode = null;
           }
         }
         break;
@@ -227,25 +232,31 @@ class jsonNode {
   }
 
   ///
-  /// for assignments, useful to get the node and the edge in one shot
-  dynamic get nodesAndEdge {
-    return evaluate();
-  }
-
-  ///
   /// if sure to be on a get, do it in one shot
+  /// otherwise use locate and check nodes
   dynamic get value {
-    var x = evaluate();
-    return x.currentNode;
+    var x = locate();
+    return x.toNode;
   }
 
   String beginningOf(var someInfo, [int len = 80]) {
-    if (someInfo.toString().length < len) len = someInfo.toString().length;
-    return someInfo.toString().substring(0, len) + '...';
+    var dot3 = '...';
+    if (someInfo.toString().length < len) {
+      len = someInfo.toString().length;
+      dot3 = '';
+    }
+    return someInfo.toString().substring(0, len) + dot3;
   }
 
   @override
   String toString() {
-    return ('**previousNode:"${beginningOf(previousNode, 15)}" **currentNode:"${beginningOf(currentNode, 15)}" advanceEdge: "$advanceEdge"');
+    return ('** ${simplifiedType(fromNode)}${beginningOf(fromNode, 15)}  --- $edge -> ${simplifiedType(toNode)} ${beginningOf(toNode, 15)}  ');
+  }
+
+  String simplifiedType(dynamic node) {
+    String s;
+    if (node is Map) return "(map)";
+    if (node is List) return "(list)";
+    return ("(${node.runtimeType.toString()})");
   }
 }
