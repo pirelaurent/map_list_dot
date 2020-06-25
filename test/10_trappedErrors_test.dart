@@ -18,14 +18,15 @@ void main() {
 
   test('wrong json in assignment  ', () {
     // to try to add a List in a Map of <String, String> we cast
-    dynamic root = MapList(<String,dynamic>{"name": "zaza"});
+    dynamic root = MapList(<String, dynamic>{"name": "zaza"});
+    // what is allowed in dart is not allowed in json
     root.name = [
       10,
       11,
       12,
     ];
-    root.exec('name = [10,11,12,]');
-    assert(root.name == null);
+    root.exec('name = [10,11,12,13,]');
+    assert(root.name == null, '$root');
   });
 
   test('applying spurious index on a map  ', () {
@@ -43,7 +44,6 @@ void main() {
     root.exec('name[0]="lulu"');
     //** name[0]="lulu": [0] must be applied to a List. null returned
     assert(root.name == "zaza");
-
   });
 
   test('applying spurious index on a map bis ', () {
@@ -65,7 +65,7 @@ void main() {
     root.exec(" '[255]' = 20");
   });
 
-  test('trapp out of range in exec', () {
+  test('trap out of range in exec', () {
     dynamic root = MapList([0, 1, 2, 3, 4]);
     // calling a key on a list
     //print(root.price);  ** Naming error: trying to get a key "price" in a List. Null returned
@@ -84,7 +84,7 @@ void main() {
     assert(book.exec('price[200]') == null);
   });
 
-  test(' wrong function calls on clear  ',(){
+  test(' wrong function calls on clear  ', () {
     dynamic root = MapList([0, 1, 2, 3, 4]);
     root.exec('clear()');
     //** warning : clear(). Calling set without = .Be sure it's not a get or an exec .no action done
@@ -96,27 +96,69 @@ void main() {
     assert(root.length == 0);
   });
 
-
-  test(' wrong function calls with last  ',(){
+  test(' wrong function calls with last  ', () {
     /* as we plan to add a map to a list<int> we cast it <dynamic>
      the other way could have been :
      1st create an instance of an empty List :root = MapList([]);
      then addAll the data : root.addAll([0, 1, 2, 3, 4])
    */
     dynamic root = MapList(<dynamic>[0, 1, 2, 3, 4]);
-    root.exec('root.video.name = "Max"');
-    root.exec('root.last');
+    root.exec('video.name = "Max"');
+/*    root.exec('root.last');
     // **  cannot search a key (root.last) in a List<dynamic>
     root.exec('last'); //ok
     root.exec('[last]');
-    //** warning : [11,12,13]. Calling set without = .Be sure it's not a get or an exec .no action done
+    // ** warning : [11,12,13]. Calling set without = .Be sure it's not a get or an exec .no action done
     root.exec('[11,12,13]');
-   //** warning : [11,12,13]. Calling set without = .Be sure it's not a get or an exec .no action done
-    root.exec('= [11,12,13]');//
+    // ** warning : [11,12,13]. Calling set without = .Be sure it's not a get or an exec .no action done
+    root.exec('= [11,12,13]'); //
     root.exec('add({"name":"polo", "age":33})');
     dynamic x = root.exec('last');
     assert(x.age == 33);
-    assert(root.exec('last').age  == 33);
-    assert(root.exec('last.age')  == 33);
+    assert(root.exec('last').age == 33);
+    assert(root.exec('last.age') == 33);
+    */
+
+  });
+
+  test('more trapped bad assignments ', () {
+    dynamic root = MapList({
+      "squad": {
+        "members": [1, 2, 3, 4]
+      }
+    });
+
+    root.exec(
+        'squad.length = 2'); //unable to change length on a Map squad.length = 2 . no action done
+    //as map is not <String, dynamic> in original set up, this will fail:
+    root.exec('car = 22');
+    /*
+    WARNING: 2020-06-23 14:35:10.643935: unable to assign car = 22. Think about <String,dynamic> Maps and <dynamic> Lists. No action done.
+    type 'int' is not a subtype of type 'Map<String, List<int>>' of 'value'
+    */
+
+    // now recreate same with an interpreted String : will create a correct json
+    root = MapList('{"squad": {"members": [1, 2, 3, 4]}}');
+    root.exec('car = 22');
+    // now change the type of content
+    root.exec('car = {"name":"Ford", "color":"white"}');
+    // and extends
+    root.exec(
+        'car.addAll({ "price": 5000, "fuel":"diesel","hybrid":false})'); //add or merge with function addAll
+
+    root.exec(
+        'squad."name" = "Super hero squad"');
+    assert(root.squad.name == "Super hero squad");
+  });
+
+  test('very basic creation of data in an existing well typed ', () {
+    dynamic root = MapList(<String, dynamic>{
+      "squad": {
+        "members": [1, 2, 3, 4]
+      }
+    });
+    root.exec('car = 12');
+    assert(root.car == 12);
+    assert(root.exec('car') == 12);
   });
 }

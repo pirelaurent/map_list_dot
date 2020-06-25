@@ -33,9 +33,10 @@ void main() {
   var file = File(testFile);
   var yamlString = file.readAsStringSync();
   var yamlStructure = loadYaml(yamlString);
+  var jsonFromYaml = json.decode(json.encode(yamlStructure));
   // warning : leaving in YamlMap & YamlList makes a read only structure
   // but getter still ok, not setters
-  dynamic root = MapList(yamlStructure);
+  dynamic root = MapList(jsonFromYaml);
 
   test("direct access with standard notation", () {
     // --- verify still working with standard notation
@@ -57,15 +58,19 @@ void main() {
   });
 
   test("access with dot notation in interpreter ", () {
-    dynamic root = MapList(yamlStructure);
-    assertShow(root.exec("show.name"), "quiz on video");
+    dynamic root = MapList(jsonFromYaml);
+    // check access on json only
+    assert( jsonNode(root.json, '["show"]["name"]').value == 'quiz on video');
+    assert(jsonNode(root.json, 'show.name').toNode == 'quiz on video');
+    // now check access through MapList
+    assert(root.exec("show.name") == "quiz on video");
     assertShow(root.exec("show.videos[1].name"), "japaneese fashion");
     assertShow(root.exec("show.videos[1].questions[1].name"), "games");
     assertShow(root.exec("show.videos[1].questions[1].options[2].answer"), "go");
   });
 
   test("access with standard notation in interpreter", () {
-    dynamic root = MapList(yamlStructure);
+    dynamic root = MapList(jsonFromYaml);
     assertShow(root.exec('["show"]["name"]'), "quiz on video");
     assertShow(root.exec('["show"]["videos"][1]["name"]'), "japaneese fashion");
     assertShow(
@@ -77,27 +82,17 @@ void main() {
   });
 
   test("access with a dumb mix of direct and interpreted notation", () {
-    dynamic root = MapList(yamlStructure);
+    /*
+     warning : cannot mix notation if staying in a yaml Structure.
+     Mandatory to convert first:
+     */
+    dynamic root = MapList(json.decode(json.encode(yamlStructure)));
     // --- now the same with a dot notation
+    //print(root.exec('show').runtimeType);
     assertShow(root.exec('show').name, "quiz on video");
     assertShow(root.show.exec('videos[1]["name"]'), "japaneese fashion");
-
-    //print(root.show.exec('["videos"][1]'));
-
     assertShow(root.show.exec('["videos"][1]').questions[1].name, "games");
+    assertShow(root.show.videos[1].exec('questions[1]').options[2].answer, "go");
     assertShow(root.show.videos[1].exec('questions[1].options[2]').answer, "go");
-  });
-
-  test(" Yaml loader generates read only data", () {
-    dynamic root = MapList(yamlStructure);
-    try {
-      root.show.name = "new video title";
-    } catch (e) {
-      assert(e.toString() ==
-          'Unsupported operation: Cannot modify an unmodifiable Map');
-    }
-    root = MapList(json.decode(json.encode(yamlStructure)));
-    root.show.name = "new video title";
-    assert(root.show.name == "new video title");
   });
 }

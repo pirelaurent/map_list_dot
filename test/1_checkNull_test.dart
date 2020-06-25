@@ -26,7 +26,7 @@ void main() {
 
   test("null test on path with code", () {
     assert(store.wrongName == null);
-    //assert(store.wrongName.someData==null);
+    // assert(store.wrongName.someData==null);
     //-> NoSuchMethodError: The getter 'someData' was called on null
     assert(store.wrongName?.someData == null);
     //ok

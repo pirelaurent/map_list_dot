@@ -1,52 +1,83 @@
 # MapList :
-## access any json or json-like maps & lists with a dot notation
-MapList is a wrapper around any kind of json-compatible data.  
-MapList offers dot notation in Dart code and an interpreter to access data via script  commands.
-### Constructors
-MapList uses a factory and allows several constructors :
+## access json (or any maps & lists) with a dot notation
+MapList is a wrapper that offers dot notation to be used in Dart code.  
+As a complement Maplist allows to get and set data with interpreted text scripts.
+
+#### sample of use in dart code and with interpreter
+``` dart
+  if (quiz.questions[2].options[1].answer == "white") print('you win'); 
+  // with interpreter 
+  sendMessage('questions[2].options.add({"code":"B4","answer":"purple"})')
+  onMessage (String message ) { quiz.exec(message) };
 ```
+
+### how to
+- create a MapList (see constructors)
+  - ```MapList root = MapList(someStructure);```
+- use dot notation , with full path :
+  - ``` print(root.videos[1].quiz.questions[2].options[1].answer); ```
+- or with relays:
+  - ```MapList quizBurger = root.videos[1].quiz.questions[2];```  
+        ``` print(quizBurger.options); ```
+### Constructors
+MapList uses a dynamic factory and allows several constructors :
+``` dart
  MapList();             // create a first empty node as a Map (default)
  MapList({});           // same as previous. More explicit.
  MapList([])            // create a first empty node as a List 
  MapList(jsonString);   // create a full structure with a valid json string
- MapList(someStructure);  // uses an already 'maps & list' structure or a Dart json object
+ MapList(someStructure);// uses an already 'maps & lists' set or a json
 ```
-# Part1 : dot notation access in Dart
-Only the first level needs to be a MapList. You can then add directly maps, lists and data , in line or as json.  
-In the following  examples, a MapList *root* has been loaded with a json.
+### several notations allowed
+Classical and dot notation are allowed.  
+The result is the last leaf which could be a simple data, a List, a Map or a null if not found.
 #### classical notation
-Classical notation is still available using a MapList ( which apply demands on the wrapped json)
+Available, but no more than without MapList.
 ``` dart
 root["show"]["name"]
 root["show"]["videos"][1]["name"]
 root["show"]["videos"][1]["questions"][1]["options"][2]["answer"]
 ```
-##### dot notation available with MapList
-Depending of the last leaf, will return a data or a pointer to the sub-structure
+#### dot notation
+
 ``` dart
 root.show.name
 root.show.videos
 root.show.videos[1].name
 root.show.videos[1].questions
-root.show.videos[1].questions[2].options
-root.show.videos[1].questions[2].options[1].answer
+root.show.videos[1].questions[1].options
+root.show.videos[1].questions[1].options[2].answer
 ```
-access a data or an intermediate structure: use name    ```path.name```  
-Accessing an element in a List :                        ```name[rank]```  
-Accessing an element in a List of List ... :            ```name[rank1][rank2] ...```  
-Accessing last element of a List :                      ```name.last```  ```name[rank1].last```
-
-### create & set data
-You can create data from scratch, or add and change value or structures to existing in a simple way.
+#### dumb mixed notation
+``` dart
+root["show"].videos[1]["questions"][1].options[2].answer
+```
+### special words
+Some words are identified as questions or actions.
+``` dart
+// on Lists
+root.show.videos.length 
+root.show.videos.clear()
+root.show.videos.isEmpty  
+root.show.videos.isNotEmpty 
+root.show.videos.last
+// on Maps
+root.show.length
+root.show.clear()
+root.show.isEmpty   
+root.show.isNotEmpty   
+```
+### create and set data with dot notation
 ##### create empty structures
 ``` dart
-dynamic squad = MapList(); // create an empty map as root   
-squad.members = [];        // add an empty list 'members' in the squad map
-squad.activities = {};     // add an empty map 'activities' in the squad map
+dynamic squad = MapList(); // create an empty map as squad. Default is a map   
+squad.members = [];        // add an empty list named 'members' 
+squad.activities = {};     // add also an empty map 'activities' at first level
 print(squad);              // {members: [], activities: {}}   
 ```
-##### sample : design and fill in a data object from scratch
-Any new name at a map level will create the data if it not exists ( or replace it if exists)
+
+##### create simple data
+Any new name at a map level will create the data if it not exists ( and replace it if it exists)
 ``` dart
 dynamic squad = MapList();          // will create a default Map
 squad.name = "Super hero squad";    // add a String data 
@@ -55,25 +86,38 @@ squad.formed = 2016;                // add an int
 squad.active = true;                // add a bool
 squad.score = 38.5;                 // add a double 
 ```
-##### add new elements
-To a MapList from another map or MapList : addAll
+Note : With dot notation, create unknown data one level at a time (or use json).
+##### create with more complex data
+  ``` dart
+  // creation with direct structure  
+   root = MapList({"dico":{"hello":{"US": "Hi", "FR": "bonjour"} }});
+  // If you plan to use heterogeneous data :
+    //  better to precise type: 
+   root = MapList( {"dico":<String,dynamic>{"hello":{"US": "Hi", "FR": "bonjour"} }});
+    //  or use json string message that do the job with internal types:
+    root = MapList(' {"dico":{"hello":{"US": "Hi", "FR": "bonjour"} }} ');
+    
+  ```
+#### use relay to simplify access
 ``` dart
-dynamic car = MapList();
-car.name = "Ford";
-// add an inline structure
-car.addAll({ "price": 5000, "fuel":"diesel","hybrid":false});
-print(car);     //{name: Ford, price: 5000, fuel: diesel, hybrid: false}
-// or add another prepared MapList here with adds and updates inside
-dynamic carInfo = MapList();
- carInfo.price = 6000;
- carInfo.tires = "slim";
- carInfo.color = ["blue","black","white"];
-car.addAll(carInfo);
-print(car); // {name: Ford, color: [blue, black, white], price: 6000, fuel: diesel, hybrid: false, tires: slim}
-print(car.color); // [blue, black, white]
-print(car.color[2]); // white
+// follow previous sample : create with more complex data 
+root.dico.numbers = {"US": ["zero","one","two","three","four","five","sic","seven","eight","nine"]};
+var numbers = root.dico.numbers; 
+var USnumbers = numbers.US;
+print(USnumbers[3]);
 ```
-Adding new elements to a List : add & addAll
+### add new elements to existing
+#### add a MapList object into another MapList
+``` dart
+dynamic car = MapList();  // use dynamic to allow dot notation on root
+car.brand = "Ford";
+car.colors = ["blue","black","white"];
+car.chosenColor = ["white"];
+// now add this car to a larger set 
+dynamic myStuff = MapList();
+myStuff.myCar = car;
+```
+#### Add new elements to an existing List : add & addAll
 ``` dart
 dynamic list = MapList([]);  
 list.add(15);
@@ -81,192 +125,267 @@ list.addAll([1, 2, 3]);
 list.add({"date":"october 16"}); 
 print(list); //[15, 1, 2, 3, {date: october 16}]
 ```
-### The hell of data types
-**get data** : There is no restriction to get data, as long as the structure is made of maps, lists and simple types.  
-Any inline structure of maps & lists, any json or any yaml structure can be accessed with dot notation.  
-**set data** : MapList rely on **\<String,dynamic> Maps** and **\<dynamic> Lists**, which are full compatible with json format :
-#### Json alignment
-Standard Dart json uses **Map\<dynamic,dynamic>** and **List\<dynamic>**  
-MapList  uses the subset **Map\<String,dynamic>** as it's mandatory to get data with a printable String name for dot notation.
-#### warning with inline coded structures
-If type is not indicated, Dart guess the type from the current data:  
-```[1,2,3,4]``` will be set as a ```List<int>```. From there, you can only add other ```<int>``` , nothing else.  
-if you try to add a *String* or a *Map* Dart will crash with error.
+##### add or change elements of a map with another map : addAll
+``` dart
+dynamic car = MapList();
+car.name = "Ford";
+// add to this map several key:value in one shot
+car.addAll({ "price": 5000, "fuel":"diesel","hybrid":false});
+```
+#### Check nullable while accessing data
+```
+store.wrongName.someData
+```
+To avoid the error **"NoSuchMethodError: The getter 'someData' was called on null"**,  
+Dart takes care of the nullable notation.  
+The following code will return null or the data, without throwing error.
+```
+store.wrongName?.someData
+```
+note: The interpreter takes care of the null notation.
+### MapList returns null on unknown data
+- unknown key in a Map
+- wrong index on a List
+- misused of types , like indexing a Map or using key on a List
+- for interpreter :
+  - wrong syntax
+  - malformed json  
 
-#### think about adding Types to the inline structures
-If you plan to have another data type than the guessed one by Dart, add type:  
-This code fails:
-``` dart
-root.results.add({"elapsed_time": 30, "temperature": 18}) // is ok but with an inferred  Map<String, int>  
-root.results[0].time = "12:58:00";        // will fail : type 'String' is not a subtype of type 'int' of 'value'
+In all cases, MapList will returns null and logs a Warning on the standard logger.
+
+##### Wrong index on a List : sample of log
+MapList logs a Warning with a reminder of the initial error :
+```dart
+print(store.book[400]);  // -> null 
+    // WARNING: unexisting book [400] : null returned .
+    // Original message : RangeError (index): Invalid value: Not in range 0..3, inclusive: 4 
 ```
-This code will not fail :
-``` dart
-root.results.add( <String,dynamic>{"elapsed_time": 60, "temperature": 40});
-root.results[0].time = "12:58:00"; // now ok ! 
+You can protect downstream errors with a nullable option :
+```dart
+store.book[400]?.author = "zaza" ;  
 ```
-Same with Lists. This code will fail:
+#### Non existing List
+ if the list doesn't exist at all, the nullable must be checked **before the index** to avoid error on operator [ ]:
+``` dart
+store.pocketBookList?[0].author = "zaza";
+```
+Dart allows this syntax recently **with Dart 9.2**.  
+Before 9.2 you cannot compile with a nullable before \[0\] in code.  
+The interpreter already allows this syntax.
+
+### The hell of data types and how to protect code
+MapList works on a basis of **Map\<String,dynamic>**  and **List\<dynamic>** .  
+Using and adding json data, which are *Map\<dynamic,dynamic>* and *List\<dynamic>*, is full compliant.
+#### warn with inline coded structure
+This codes with a List will fail:
 ```
 root.data = [11, 12, 13];   // will infer a List<int> 
 root.data.add(14);          // ok
 root.data.add("hello");     // will fail :type 'String' is not a subtype of type 'int'
 ```
-This code will not fail:
+If a type is not indicated, Dart infers the type from the current assignment:```[11,12,13]``` will be a ```List<int>```.  
+From there, you can only add other ```<int>``` without errors, nothing else like "hello" without a crash.  
+Similar things can happen with a map. This code  will fail :
+``` dart
+root.results = {"elapsed_time": 30, "temperature": 18} // is ok but result is a List of Map<String, int>  
+root.results.time = "12:58:00";        // will fail : type 'String' ("12:58:00") is not a subtype of type 'int' of 'value'
 ```
-root.data = <dynamic>[11, 12, 13];
-root.data.add("hello");   // ok 
+#### add \<dynamic\>
+Think about adding type <dynamic> to the inline structures :
+These new codes will not fail:
 ```
-**More samples in unit tests**
-#### Check nullable while accessing data
-To avoid a error **"NoSuchMethodError: The getter 'someData' was called
-on null"** while accessing data, MapList takes care of the nullable notation.  
-The following code will return null or the data, without throwing error if *wrongName* doesn't exist in the sample
+root.data = <dynamic> [11, 12, 13];  
+root.data.add(14);          // ok
+root.data.add("hello");     // ok
 ```
-store.wrongName?.someData
+``` dart
+root.results =  <String,dynamic>{"elapsed_time": 60, "temperature": 40};
+root.results.time = "12:58:00"; // now ok ! 
 ```
-##### Wrong index on a List will return null. Use nullable to protect downstream
-```dart
-store.book = ["A","B","C"];
-store.book[400]?.author = "zaza" ); // will do nothing as book[400] doesn't exist , otherwise got a " Dart error 'author was called on null" 
-```
-**About checking and errors** : MapList send warning and errors on standard **logging**. (Apps must set an effective logger to see messages).
-MapList try to avoid crash and returns null on a getter with message.
-```dart
-print(store.book[400]);             // -> null;
-    // WARNING: unexisting book [400] : null returned .
-    // Original message : RangeError (index): Invalid value: Not in range 0..3, inclusive: 4 
-store.book[400]?.author = "zaza";    // same message 
-   ```
-#### Non existing List & Dart restriction on nullable
- if the **List doesn't exists at all**, the nullable must be checked before
- the index to avoid error: *The method '[]' was called on null.*  :
-```
-assert(store.bookList?[0]==null); // good idea but won't compile before Dart 2.9
-```
-Dart allows this syntax **only with Dart 2.9** Cannot be used on lower. (as is this work)
-
 ### Logged errors
-MapList try to avoid runtime errors.  
-If something is wrong, it does'nt throw errors but logs Warning and continue.  
-On a wrong get, it logs message and  returns null .  
-On a wrong set : it logs message and do nothing else .  
--> Think about instantiate a real logging listener in your code to see these warning messages.
-#### most common warning :
-Use Map as List or List as Map
+MapList try to avoid runtime errors:  
+If something is wrong, it logs Warning but continue without errors:
+- On a wrong get, it logs message and  returns null .
+- On a wrong set : it logs message and do nothing else .  
+(To see the messages, you must set a logging listener in your code (@see standard logging package).)
+#### common warning : using List as Map or Map as List
 ```dart
-aList["toto"]="riri"    WARNING: index ["toto"] must be applied to a map. no action done.   
-aMap[0]="lulu":         WARNING:  [0] must be applied to a List. no action done.
-print(aList.price);      WARNING:  ** Naming error: trying to get a key "price" in a List. null returned    
+ aList["toto"]="riri";
+**WARNING** index ["toto"] must be applied to a map. no action done.
+```
+``` dart
+aMap[0]="lulu": 
+**WARNING**  [0] must be applied to a List. no action done.
+```
+```
+print(aList.price);      
+**WARNING** Naming error: trying to get a key "price" in a List. null returned    
 ```
 Wrong index in List
 ```dart
-print(root[200]);       WARNING:  unknown accessor: . [200] : null returned .(followed by original dart error 'Not in range..') 
+print(root[200]);       
+**WARNING**:  unknown accessor: . [200] : null returned .(followed by original dart error 'Not in range..') 
 ```
-Wrong json data in a String at runtime (if inline code, compiler will warn )
+Wrong json data in a String at runtime (if direct inline code, compiler will warn )
 ``` dart
-dynamic root = MapList('{"this": is not a[12] valid entry }'); ** wrong json data. null returned .(followed by original conversion error) 
+dynamic root = MapList('{"this": is not a valid entry }'); 
+**WARNING** wrong json data. null returned .
+(followed by original conversion error) 
 ```
 ##### remaining runtime that can throw errors
-Types errors :  if inline data are not correctly casted as explained previously.  
-My main oversight is about using Yaml directly and try to update:
+Mainly Type mismatch if inline data are not correctly casted .  
+Forgotten nullable in the evaluated path.
+#### some words about Yaml
+I do prefer coding in yaml rather in json, but this have some defaults :
 ``` dart
 var yamlStructure = loadYaml(yamlString);
 dynamic root = MapList(yamlStructure);
+print(root.show.name);  // ok 
 root.show.name = "new video title";
 -> 'runtime Error: Unsupported operation: Cannot modify an unmodifiable Map';
 ```
+If all get can work, no set are allowed because the standards yamlMap and yamlList are read only.
 #### tips for Yaml
 The most simple way to transform a read-only yaml in a full compliant json is the following :
 ``` dart
 root = MapList(json.decode(json.encode(yamlStructure)));
 ```
----------------------------------------------------------------------
+### Last details
+A MapList has a *.json* accessor to get the wrapped one if necessary.  
+MapList works with pointers, not copies :  
+  json data stay synchronised between :
+- direct access to json
+- use with MapList in code
+- or use of MapList interpreter.
+( More technical details in Readme_more.md on github. )
+
+
 ---
-# part 2 : MapList Interpreter
-This is a first step with a wider interpreter in mind.  
-It can get and set data through text scripts.  
-To execute demands in the main code, you just have to create a root *MapList*, starting with an empty or a large structure.
-### general syntax
-*someMapList*.**exec**(*'script command'*);  
-script command : **'dot location' |  'doc location = value'**  
-The first manner will return the data or null  
-The second manner will create or set a data, and do nothing if something wrong.
-#### scripts to get data
-Same as dot notation in code:  
-classical :     ```'["show"]["videos"][1]["questions"][1]["name"]'```  
-dot notation:   ```'show.videos[1].questions[1].options[2].answer'```  
-Mix (but why?): ```show["videos"][1].questions[1]["options"][2].name```
-Depending of the named leaf, get will return a data or a pointer to the sub-structure.
-(remember : scripts must be called at the root level : *root.exec(script) *
-``` dart
-Scripts : 
-'show.name'
-'show.videos'
-'show.videos[1].name'
-'show.videos[1].questions'
-'show.videos[1].questions[2].options'
-'show.videos[1].questions[2].options[1].answer '
-```
-#### reserved word in script to get data
- some special terms can be uses in a get script and returns special values :
+---
+# MapList access interpreter
+An interpreter have some well known use cases :
+- applying create or update messages on a data set
+- free interaction with data not known at compile time
+- using maps and lists as an open graph
+## underlying base : jsonNode
+You don't really need to use jsonNode as such, but MapList uses it to walk the graph.  
+JsonNode is a kind of canoe that navigates on the data graph with :
+- fromNode
+- edge
+- toNode
+- (ascript : the path or the remaining path)
 
-**.isEmpty**   : true/false  
-**.isNotEmpty**: true/false  
-**.length** : int  
-**.last**  : pointer on last element of a List . can be used in set too.
-##### about .length
-**MapList always return the length of a List or a Map on something.length**  
-if in your data has a property named *length*, it can be reached only with the standard notation :
+When you create a JsonNode with a path, it returns the last step of its journey.  
+The toString returns **(type) fromNode -- last edge in use---> (type) toNode**  
+(As a node could be a large thing, toString truncate... the data )
+#### returning a data leaf
+Below is shown the internal structure to see internal data.
+``` dart
+var aJson = [ [1, 2, 3], [11, 12],  {"A": "AA", "B": "BB"},  "andSoOn" ];
+print(jsonNode(aJson, '[0][1]')); // (list)[1, 2, 3]  --- 1 -> (int) 2
+print(jsonNode(aJson, '[2]["B"]')); // (map){A: AA, B: BB}  --- B -> (String) BB  
+print(jsonNode(aJson, '[2].length')); // (map){A: AA, B: BB}  --- length -> (int) 2  
 ```
-// {"category": "road", "model": "Propel advanced Disc ", "color": "grey",  "price": 2900, "length": 2.20 }
-assert(store.exec('bikes[1].length')== 5);       // size of the map bikes[1] 
-assert(store.exec ('bikes[1]["length"]')== 2.2); // property length of bikes[1]
-// free advice : avoid to name a property 'length'. Here we can have choosen 'lengthOfBike'
+#### returning a tree branch
+``` dart
+var aJson = [ [1, 2, 3], [11, 12],  {"A": "AA", "B": "BB"},  "andSoOn" ];
+print(jsonNode(aJson,'[0]')); // (list)[[1, 2, 3], [11...  --- 0 -> (list) [1, 2, 3]  
+print(jsonNode(aJson,'[2]')); //(list)[[1, 2, 3], [11...  --- 2 -> (map) {A: AA, B: BB} 
+```
+If you plan to use directly JsonNode, you can get the data by **.value**  
+(which is a convenient name to get the last toNode )  
+``` assert(jsonNode(aJson, '[2].B').value == "BB");```
+
+#### special words
+JsonNode recognize some keywords:
+- .length
+- .isEmpty
+- .isNotEmpty
+- .last  (on Lists )
+- .clear()
+
+Note about length  
+Always use *.length* to get the length of a List or a Map. If there is a key length in a map, you can reach it with notation *\["length"\]*  
+``` dart
+   dynamic store = MapList('{"bikes":[{"name":"Fonlupt", "length":2.1, "color" : "green" }]}');
+   assert(store.exec('bikes[0].length') == 3);
+   assert(store.exec('bikes[0]["length"]')== 2.1);
+```
+#### how a caller can create unknown new data
+When a path ends with an unknown name in a map, the last node is null :
+``` dart
+   print(jsonNode(aJson, 'questions.newData'));// (map){A: AA, B: BB}  --- newData -> (Null) null 
+```
+A caller, like MapList do, can check the results and set the data with *fromNode\[edge\]* .  
+(If the path starts at the very beginning, the fromNode is also null and the edge must be applied to the root )
+
+#### Same Hell of types in interpreter
+Same precautions has to be taken on datatype to avoid bad surprises.  
+Writing inline data with types could be cumbersome :  
+```var aJson = <dynamic>[ [1, 2, 3], <String,dynamic> {"A": "AA", "B": "BB"},  "andSoOn" ];```  
+Tip: Prefer using a json String and let MapList (or a *json.decode(string)* ) do the job.
+- type in your inline structure to see its correctness : ```[ [1, 2, 3], {"A": "AA", "B": "BB"},  "andSoOn" ]```
+- wrap it in quotes : ```'[ [1, 2, 3], {"A": "AA", "B": "BB"},  "andSoOn" ]'```
+- use it in MapList(someString)
+
+## MapList *exec(script)* method : get and set data by script
+MapList uses underline the previous JsonNode mechanism, get the value and allows to create and set data.
+#### get data
+You can use same notations than in code to access a data, classical or dot notation.  
+MapList will return directly the data:
+- for an end leaf, it returns the value,
+- for an intermediary node, it returns the json wrapped in a new MapList (returning a MapList allows to combine interpreter and direct code with dot notation in code.)
+
+Notice that the root is the executor and is not repeated in the path :  
+below the script returns a simple data :
+``` dart
+    dynamic book = MapList('{ "name":"zaza", "friends": [{"name": "lulu" }]}');
+    print(book.exec('friends[0].name')); // -->  lulu);
  ```
-#### scripts to create or set data
-The interpreter looks at some equal sign to spot a setter.  
-The syntax is  ***set('path = data')***  
-As data arrive in a text format , MapList recognize the following and convert it in the right type:
+All notation styles are allowed :
+```root.exec('["show"]["videos"][1]["questions"][1]["name"]') // classical notation```  
+```root.exec('show.videos[1].questions[1].options[2].answer') // dot notation ```
+Special word returns also direct values:
+```dart
+if (store.exec('store.bikes.isEmpty')) print ('what a disaster');
+ ```
 
-| Type                | samples                                    | comments                                                    |
-|:--------------------|:-------------------------------------------|:------------------------------------------------------------|
-| string              | ```"hello", 'hello'```                     | with the other quote wrapper than the one at exec( ) level. |
-| bool                | ```true, false    ```                      | lower case text without quotes  becomes booleans            |
-| int                 | ```15 , -1 , 0   ```                       | simple number without quotes becomes an integer             |
-| double              | ``` 2.899, -0.125 ```                      | more usually any valid response to *num.tryParse*           |
-| map                 | ``` { }   ```                              | an empty map                                                |
-| list                | ```[ ] ```                                 | an empty list                                               |
-| any valid structure | ```{"name":"toto", "score": [11,15,8]} ``` | more usually any valid json equivalent string.              |
-##### full sample
-
+### scripts to set data
+#### assignment with equal symbol
+MapList interpreter takes care of an assignment in the script.  
+The Left Hand Side of a script with assignment is get by MapList using path.  
+The Right Hand Side is evaluated as a simple type data or as a json structure.
 ``` dart
-dynamic root = MapList();
-root.exec('squad = {}'); // create a new map entry at root 
-root.exec('squad.name = "Super hero squad"'); // String with '" "'
-root.exec("squad.homeTown = 'Metro City'");   // String with "' '"
-root.exec('squad.formed = 2016');             // int
-root.exec('squad.active = true');             // bool
-root.exec('squad.score = 38.5');              // double 
-root.exec('squad.members = []');              // add an empty list 
-// adding another set of data at root  
-root.exec('car = {"name":"Ford", "color":"white"}'); // create and set with json-like string. 
-root.exec('car.addAll({ "price": 5000, "fuel":"diesel","hybrid":false})'); //add or merge with function addAll
+    dynamic squad = MapList();          // will create a default Map
+    squad.exec('name = "Super hero squad"');    // add a String data
+    squad.exec('homeTown = "Metro City"');      // another
+    squad.exec('formed = 2016');                // add an int
+    squad.exec('active = true');                // add a bool
+    squad.exec('score = 38.5');                 // add a double
+    squad.exec('overhauls = ["2008/04/10", "2102/05/01", "2016/04/17"]'); // add structured data 
 ```
-#### reserved word in script to set or change data
- some special functions can be used in script to set data :  
-**.clear()**  
-**.add(something)**  
-**.addAll(several something)**  
-**.remove(something)**  
-**.length = \<int>**  :force the length of a List
 
-#### logs on wrong script
-don't forget the () for the function
+#### special functions to create or update data
+- add(something)
+  - Only for Lists : add a new element
+- addAll(several something)
+  - add all elements of a map to a map
+  - all elements of a list to a list.
+- remove(something)
+  - Remove an entry of a map
+  - Remove an element in a list
+- length = \<int>
+  - force the length of a List
+
+### errors and logs
+See the previous chapter on errors and logs for common access errors.  
+Some errors normally detected by compiler can happen in interpreted string.  
+As an example below is a missing parenthesis around functions.
 ```dart
 root.exec('clear'); // WARNING cannot search a key (clear) in a List<dynamic> 
 root.exec('clear()'); // ok 
  ```
-## Nullable capacities
+### Nullable capacities
 Interpreter takes care of nullable notations at all levels  :
 ```
 store.exec('wrongName?.someData')
@@ -274,4 +393,6 @@ store.exec("book[4]?.author
 store.exec("bookList?[0]")   // Even if Dart is not in 9.2, the interpreter allows this nullable.    
 store.exec("bookList?[0]?.date")
 ```
-
+#### what else
+Probably some weakness in the analysis of syntax in interpreter : in case of trouble verify deeply your strings.  
+( I found late that a missing right parenthesis in a addAll do nothing at all. It's now fixed with a log warning).

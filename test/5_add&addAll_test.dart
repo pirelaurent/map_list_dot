@@ -22,7 +22,7 @@ void main() {
     list.add(15);
     list.addAll([1, 2, 3]);
     list.add({"date":"october 16"});
-    print(list); //[15, 1, 2, 3, {date: october 16}]
+    //print(list); //[15, 1, 2, 3, {date: october 16}]
     assert(list.length == 5);
     assert(list[2] == 2);
     list.add(16);
@@ -67,19 +67,16 @@ void main() {
      */
     map = MapList({"name": "toto"});
     map.exec('addAll({"A": "aa", "B": "bb"})');
+    assert(map.length == 3);
     assert(map.exec("length") == 3);
     assert(map.exec("A") == "aa");
 
     // caution must be dynamic, var won't work as addAll is not defined in MapList
 
     map.exec('name = "toto"');
-    print(map);
     map.exec('addAll({"A": "aa", "B": "bb"})');
-    print(map);
     assert(map.exec("length") == 3);
     assert(map.exec("A") == "aa");
-
-
   });
 
   test('add a MapList to a MapList ', () {
@@ -89,11 +86,11 @@ void main() {
     // print(aGuy.name); will not work as it is not a MapList
     map.friends.add(aGuy);
     aGuy = MapList({"name": "zaza", "age": 44});
-    print(aGuy.name); // will return zaza as it is a MapList
+    assert(aGuy.name =='zaza'); // will return zaza as it is a MapList
     map.friends.add(aGuy);
     aGuy = MapList({"name": "lulu", "age": 66});
     map.friends.add(aGuy);
-    print(map);
+
     assert(map.friends.length == 3);
     assert(map.friends[1].age == 44);
     // remember pointer aGuy is still linked to the internal json
