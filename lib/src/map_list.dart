@@ -109,7 +109,6 @@ class MapList {
     String name;
     if (member is Symbol) {
       name = MirrorSystem.getName(member);
-
       // ------------------ getters if no equals sign
       if (name.endsWith('=') == false) {
         // detect function calls that have arguments
@@ -425,6 +424,7 @@ class MapList {
       return null;
     }
   }
+
 
   String exitMessage(bool setter) {
     if (setter == null) return 'null returned';

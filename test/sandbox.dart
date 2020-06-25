@@ -7,9 +7,9 @@ void main(){
   Logger.root.onRecord.listen((record) {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
-  dynamic edge = "addAll";
 
-  var residu = edge.trim();
+  Map map ={"A":"AA","B":"BB"};
+  map.forEach((key, value) {  print('$key $value');});
 
 
   /* dynamic root = MapList();

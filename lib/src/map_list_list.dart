@@ -1,13 +1,19 @@
-
 import 'package:map_list_dot/map_list_dot.dart';
-
+import 'dart:collection';
 
 /// extends MapList to wrap List methods
 ///
-class MapListList extends MapList {
-  MapListList.json(dynamic json) : super.json(json);
+class MapListList extends MapList with IterableMixin {
+  MapListList.json(dynamic json) : super.json(json) {}
 
   get length => json.length;
+
+  /// change type to allow . downstream
+  get last {
+    var next = wrapped_json.last;
+    if ((next is List) || (next is Map)) next = MapList(next);
+    return next;
+  }
 
   ///
   /// setter on a MapListList , set the wrapped data
@@ -15,10 +21,17 @@ class MapListList extends MapList {
     try {
       json[key] = value;
     } catch (e) {
-      MapList.log.warning("** on List : \"${MapList.lastInvocation} [$key] = \" : $e \n");
+      MapList.log.warning(
+          "** on List : \"${MapList.lastInvocation} [$key] = \" : $e \n");
       return null;
     }
   }
+
+  /// as an iterator will call the overriden [ ] method
+  /// we can use the json iterator of underlying wrapped list
+  /// it will goes from 0 to length -1 on json but the [ ] will return a MapList
+
+  get iterator => MapListListIterator(wrapped_json);
 
   ///
   /// remove an entry by value in a list
@@ -33,16 +46,16 @@ class MapListList extends MapList {
   operator [](Object keyIndex) {
     try {
       var next = wrapped_json[keyIndex];
-      MapList.lastInvocation=""; // as ok, forget
+      MapList.lastInvocation = ""; // as ok, forget
       // wrap result in a MapList to allow next dot notation
-      if (next is List || next is Map)
-        return MapList(next); //, false
+      if ((next is List) || (next is Map)) next = MapList(next);
+
       // if a leaf, return a simple value
-      else
-        return next;
+      return next;
     } catch (e) {
       var from = MapList.lastInvocation ?? "at root: ";
-      MapList.log.warning("unknown accessor: .$from [$keyIndex] : null returned .\n Original message : $e ");
+      MapList.log.warning(
+          "unknown accessor: .$from [$keyIndex] : null returned .\n Original message : $e ");
       return null;
     }
   }
@@ -50,9 +63,9 @@ class MapListList extends MapList {
   ///
   ///  Add a new element in a List
   dynamic add(dynamic something) {
-      var toAdd = MapList.normaliseByJson(something);
-      this.json.add(toAdd);
-      return true;
+    var toAdd = MapList.normaliseByJson(something);
+    this.json.add(toAdd);
+    return true;
   }
 
   /// method used whe a call by code
@@ -66,6 +79,23 @@ class MapListList extends MapList {
     });
     return true;
   }
+}
+///
+///  override Iterator to return MapList that allows .notation downstream
+class MapListListIterator implements Iterator {
+  var internal;
 
+  MapListListIterator(var json) {
+    internal = json.iterator;
+  }
 
+  get current {
+    var result = internal.current;
+    if ((result is List) || (result is Map)) result = MapList(result);
+    return result;
+  }
+
+  bool moveNext() {
+    return internal.moveNext();
+  }
 }

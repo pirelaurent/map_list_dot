@@ -8,7 +8,6 @@
 
  */
 
-
 import 'package:map_list_dot/map_list_dot.dart';
 
 import 'resources/personInDart.dart';
@@ -29,7 +28,7 @@ void main() {
 
   print(
       '\nSample 1: --------------- create some data by hand and loop on list ----- ');
-  /*
+/*
    create some data by hand (more easy to read a json, but for demonstration purpose)
    */
   dynamic root = MapList();
@@ -62,31 +61,41 @@ void main() {
  */
   for (int i = 0; i < root.contacts.length; i++) {
     dynamic someone = root.contacts[i];
-    if (someone.interest != null){
+    if (someone.interest != null) {
       print('\t ${someone.name} loves :');
-      /*type 'MapListList' is not a subtype of type 'Iterable<dynamic>'
       for (var anInterest in someone.interest) print('\t\t $anInterest');
-      */
-      print('\t\t ${someone.interest}');
     }
     if (someone.color != null)
       print('\t${someone.name} prefers the ${someone.color} color');
   }
 
-  print('\nSample 2: --------------- read a json string and walk into  ----- ');
+  print(
+      '\nSample 2: --------------- read a json string and walk into through dot notation ----- ');
   // uses a long json string in Dart. See unit tests to read a file
   dynamic persons = MapList(personInDart);
+  // loop using .lenght on a MapListList
   for (int i = 0; i < persons.length; i++) {
-    // using a dynamic, the return data will be another MapList that allows dot notation
-    dynamic aContact = persons[i];
-    print('Person: ${aContact.firstName} ${aContact.name}');
-    // iterate on a map
-    for (var key in aContact.keys) {
-      dynamic leaf = aContact[key];
-      print('\t$key: $leaf');
+    print('Person:');
+    var aPerson = persons[i];
+    // aPerson is a MapListMap : can iterate with in keys
+    for (var key in aPerson.keys) {
+      var result = aPerson[key];
+      // result is changing : either a simple data, either a MapListList for contacts key
+      if (key == "contacts") {
+        print('\t$key elements:');
+        // iterate in a MapListList made of several MapListMap
+        for (var aContact in result) {
+          // iterate on a MapListMap
+          aContact.forEach((key, value) {
+            print('\t\t\t $key: $value');
+          });
+          print('\t\t\t---');
+        }
+      } else
+        // other key than contacts
+        print('\t$key : $result ');
     }
   }
-  // and so on
 
   print('\nSample 3: --------------- same as 1 with interpreter  ----- ');
   var script = <String>[
@@ -102,10 +111,9 @@ void main() {
     'contacts[last].color = "blue"',
   ];
 
-
   dynamic root_i = MapList();
-  // execute previous script
-  for (var aStep in script){
+  // execute previous script to set the data
+  for (var aStep in script) {
     root_i.exec(aStep);
   }
 
@@ -113,20 +121,21 @@ void main() {
  verifying data
  Better to do that in code, but try to use interpreter too.
  */
-  print('We already have ${root_i.exec('contacts.length')} friends');
+  print('We already have ${root_i.exec('contacts.length')} friends :');
 /*
   loop on a MapList is restricted to indices
  */
   for (int i = 0; i < root_i.exec('contacts.length'); i++) {
     // 'i' is not known by interpreter, so must convert before call :
     dynamic someone = root_i.exec('contacts[$i]');
-    // 'someone' is not known by interpreter :
-    // cannot do root_i.exec('someone.interest');
-    // either use full chain 'root_i.exec('contacts[$i].interest');
-    // either change origin of intepreter in code :
-    if (someone.exec('interest') != null)
-      print('${someone.name} loves \n\t${someone.interest}');
+    // cannot do root_i.exec('someone.interest'); as someOne is in code.
+    // either use full chain 'like below,
+    // either change origin of intepreter in code : someone.exec('interest');
+    if (root_i.exec('contacts[$i].interest') != null) {
+      print('\t${someone.name} loves:');
+      for (var anInterest in someone.interest) print('\t\t${anInterest}');
+    }
     if (someone.color != null)
-      print('${someone.name} prefers the ${someone.color} color');
+      print('\t${someone.name} prefers the ${someone.color} color');
   }
 }

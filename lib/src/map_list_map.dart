@@ -1,4 +1,5 @@
 import 'package:map_list_dot/map_list_dot.dart';
+import 'dart:collection';
 
 /// extends MapList to offer Map methods
 
@@ -13,16 +14,25 @@ class MapListMap extends MapList {
   operator []=(dynamic key, dynamic value) {
     json[key] = value;
   }
+///
+  /// Allows to iterate on keys on a MapListMap
+  /// f is injected by caller
+  void forEach(void f(dynamic key, dynamic value)) {
+    for (var key in this.wrapped_json.keys) {
+      var value =wrapped_json[key];
+      if ((value is Map )|| (value is List)) value =MapList(value);
+      f (key, value);
+    }
+  }
 
 /*
  next is a json part
  */
   operator [](Object key) {
     var next = json[key];
-    if (next is List || next is Map)
-      return MapList(next); //, false
-    else
-      return next;
+    if ((next is List) || (next is Map))
+      next = MapList(next);
+    return next;
   }
 
   void clear() {
@@ -54,7 +64,7 @@ class MapListMap extends MapList {
   ///
   dynamic addAll(dynamic something) {
     // add new entries to the current map
-  if (something is MapListMap) something = something.json;
+    if (something is MapListMap) something = something.json;
     if (something is Map) {
       something.forEach((key, value) {
         wrapped_json[key] = value;

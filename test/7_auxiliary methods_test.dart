@@ -24,7 +24,7 @@ void main() {
     // access the end by special name last
     root.scores.last = 100;
     assert(root.scores[1] == 100);
-    assert(root.scores.last == 100);
+    assert(root.scores.last == 100, '${root.scores.last}');
 
     // clear data, not holder
     root.scores.clear();

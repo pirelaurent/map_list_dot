@@ -1,4 +1,8 @@
-
+/*
+ this is a copy in a large string of the json file content.
+ just to avoid to read a file in example.
+ To an aexample that reads a file, see unit tests
+ */
 var personInDart = r"""
     [
   {
