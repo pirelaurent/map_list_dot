@@ -19,9 +19,16 @@ void main() {
   Logger.root.onRecord.listen((record) {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
+  print("""
+  *********************************************************
+  *** invite you to have a look on unit tests in github ***
+  *********************************************************
+      Some short examples here to start understanding 
+                        ******
+  """);
 
   print(
-      'Sample 1: --------------- create some data by hand and loop on list ----- ');
+      '\nSample 1: --------------- create some data by hand and loop on list ----- ');
   /*
    create some data by hand (more easy to read a json, but for demonstration purpose)
    */
@@ -34,14 +41,14 @@ void main() {
   // can create inline maps & lists
   person.interest = ["litterature", "sport", "video games"];
   root.contacts.add(person);
-  // reuse of the same to verify isolation
-  person.clear();
+  // dont reuse the same as it is pointers, create a new one
+  person = MapList();
   person.name = 'Lily';
   person.age = 35;
   person.interest = ["nature", "maths", "golf"];
   root.contacts.add(person);
   // can have different keys
-  person.clear();
+  person = MapList();
   person.name = 'Jimmy';
   person.age = 20;
   person.color = 'blue';
@@ -49,34 +56,39 @@ void main() {
 /*
  verifying data
  */
-  print('We already have ${root.contacts.length} friends');
+  print('We already have ${root.contacts.length} friends:');
 /*
   loop on a MapList is restricted to indices
  */
   for (int i = 0; i < root.contacts.length; i++) {
     dynamic someone = root.contacts[i];
-    if (someone.interest != null)
-      print('${someone.name} loves ${someone.interest}');
+    if (someone.interest != null){
+      print('\t ${someone.name} loves :');
+      /*type 'MapListList' is not a subtype of type 'Iterable<dynamic>'
+      for (var anInterest in someone.interest) print('\t\t $anInterest');
+      */
+      print('\t\t ${someone.interest}');
+    }
     if (someone.color != null)
-      print('${someone.name} prefers the ${someone.color} color');
+      print('\t${someone.name} prefers the ${someone.color} color');
   }
 
-  print('Sample 2: --------------- read a json string and explore ----- ');
+  print('\nSample 2: --------------- read a json string and walk into  ----- ');
   // uses a long json string in Dart. See unit tests to read a file
   dynamic persons = MapList(personInDart);
   for (int i = 0; i < persons.length; i++) {
     // using a dynamic, the return data will be another MapList that allows dot notation
     dynamic aContact = persons[i];
-    print('${aContact.firstName} ${aContact.name}');
+    print('Person: ${aContact.firstName} ${aContact.name}');
     // iterate on a map
     for (var key in aContact.keys) {
       dynamic leaf = aContact[key];
-      print('$key: $leaf');
+      print('\t$key: $leaf');
     }
   }
   // and so on
 
-  print('Sample 3: --------------- same as 1 with interpreter  ----- ');
+  print('\nSample 3: --------------- same as 1 with interpreter  ----- ');
   var script = <String>[
     'contacts = []',
     // a large json compatible string
@@ -99,16 +111,21 @@ void main() {
 
 /*
  verifying data
+ Better to do that in code, but try to use interpreter too.
  */
-  print('We already have ${root_i.contacts.length} friends');
+  print('We already have ${root_i.exec('contacts.length')} friends');
 /*
   loop on a MapList is restricted to indices
  */
-  for (int i = 0; i < root_i.get('contacts.length'); i++) {
-    // remember scripted with strin; So [$i]
-    dynamic someone = root_i.get('contacts[$i]');
-    if (root_i.get('someone.interest') != null)
-      print('${someone.name} loves ${someone.interest}');
+  for (int i = 0; i < root_i.exec('contacts.length'); i++) {
+    // 'i' is not known by interpreter, so must convert before call :
+    dynamic someone = root_i.exec('contacts[$i]');
+    // 'someone' is not known by interpreter :
+    // cannot do root_i.exec('someone.interest');
+    // either use full chain 'root_i.exec('contacts[$i].interest');
+    // either change origin of intepreter in code :
+    if (someone.exec('interest') != null)
+      print('${someone.name} loves \n\t${someone.interest}');
     if (someone.color != null)
       print('${someone.name} prefers the ${someone.color} color');
   }
