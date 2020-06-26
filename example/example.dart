@@ -3,7 +3,7 @@
 
  It creates by code a full json structure, and verify some entries by code.
 
- Then a list of commands are executer from a text file.
+ Then a list of commands are executed from a text file.
  Final verifications are done.
 
  */
@@ -26,7 +26,7 @@ void main() {
   """);
 //------------------------
   print(
-      '\nSample 1: --------------- create some data by hand and loop on list ----- ');
+      '\nSample 1: --------------- create some data by hand and loop on  ----- ');
 /*
    create some data by hand (more easy to read a json, but for demonstration purpose)
    */

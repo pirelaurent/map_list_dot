@@ -6,34 +6,38 @@ class MapListMap extends MapList {
   //with MapMixin {
   MapListMap.json(dynamic json) : super.json(json);
 
-  get length => json.length;
+  int get length => json.length;
 
-  get keys => json.keys;
+  Iterable get keys => json.keys;
 
   operator []=(dynamic key, dynamic value) {
     json[key] = value;
   }
-///
+
+  ///
   /// Allows to iterate on keys on a MapListMap
   /// f is injected by caller
-  void forEach(void f(dynamic key, dynamic value)) {
-    for (var key in this.wrapped_json.keys) {
-      var value =wrapped_json[key];
-      if ((value is Map )|| (value is List)) value =MapList(value);
-      f (key, value);
+
+  void forEach(dynamic Function(String key, dynamic value) f) {
+    for (var key in wrapped_json.keys) {
+      var value = wrapped_json[key];
+      if ((value is Map) || (value is List)) value = MapList(value);
+      f(key, value);
     }
   }
 
 /*
  next is a json part
  */
-  operator [](Object key) {
+  dynamic operator [](Object key) {
     var next = json[key];
-    if ((next is List) || (next is Map))
+    if ((next is List) || (next is Map)) {
       next = MapList(next);
+    }
     return next;
   }
 
+  @override
   void clear() {
     json.clear();
   }
@@ -45,16 +49,17 @@ class MapListMap extends MapList {
 
   @override
   bool get isEmpty {
-    return (keys.length == 0);
+    return (keys.isEmpty);
+  }
+
+  @override
+  bool get isNotEmpty {
+    return (keys.isNotEmpty);
   }
 
   @override
   bool containsKey(String aKey) {
     return wrapped_json.containsKey(aKey);
-  }
-
-  dynamic addict(dynamic something) {
-    MapList.log.warning('** add not implemented on maps');
   }
 
   /// method used whe a call by code

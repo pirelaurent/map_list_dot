@@ -24,11 +24,11 @@ class jsonNode {
   /// group(1) without .
   ///
   static final reg_scalp_relax =
-      RegExp(r"""(|[\w\d_ \?\s\[\]{}:,"']*)[\.=\s]|(.*\(.*\))""");
+      RegExp(r'''(|[\w\d_ \?\s\[\]{}:,"']*)[\.=\s]|(.*\(.*\))''');
 
   ///
   /// at the end of a script could be a function
-  static final reg_find_function = RegExp(r"""(.*\(.*\))""");
+  static final reg_find_function = RegExp(r'''(.*\(.*\))''');
 
   /// detect (several) all index [123] ["abc"] [xxx]?
   ///  group(0) : [xxx]?
@@ -36,18 +36,18 @@ class jsonNode {
   ///  group(2) : 123  abc  xxx   // used to get dry name of map entry
   /// to distinguish [last] from ["last"] group1 != group2
   static final reg_all_brackets =
-      RegExp(r"""\[\s?(["']?([A-Za-z0-9]*)["']?)\s?]\??""");
+      RegExp(r'''\[\s?(["']?([A-Za-z0-9]*)["']?)\s?]\??''');
 
   /// isolate var name person[12] or name.  -> person
-  static final reg_dry_name = RegExp(r"""^"?([A-Za-z_][A-Za-z_0-9]*)"?""");
+  static final reg_dry_name = RegExp(r'''^"?([A-Za-z_][A-Za-z_0-9]*)"?''');
 
   /// find clear  with no parameter
-  static final reg_check_clear = RegExp(r"""^clear\s*?\((\s*)\)""");
+  static final reg_check_clear = RegExp(r'''^clear\s*?\((\s*)\)''');
 
   /// constructor
   ///   call locate to recurse before returning values
   jsonNode(this.toNode, this.aScript, [this.originalScript]) {
-    if (originalScript == null) originalScript = aScript;
+    originalScript ??= aScript;
     // copy by hand as we cannot do a return jsn or a this=jsn
     jsonNode jsn = locate();
     toNode = jsn.toNode;
@@ -67,11 +67,10 @@ class jsonNode {
     var match = reg_scalp_relax.firstMatch(aScript)?.group(1);
     if (match != null) {
       if (advance(match) == false) {
-
         return this;
       }
       // clean this part and continue recursively
-      aScript = aScript.replaceFirst(reg_scalp_relax, "");
+      aScript = aScript.replaceFirst(reg_scalp_relax, '');
       return jsonNode(toNode, aScript, originalScript);
     }
     /*
@@ -79,9 +78,9 @@ class jsonNode {
      will be the end of recursion.
      the remaining part can be a path or special functions
      */
-    if (aScript == "") return this;
+    if (aScript == '') return this;
 
-    if (["last", "length", "isEmpty", "isNotEmpty"].contains(aScript)) {
+    if (['last', 'length', 'isEmpty', 'isNotEmpty'].contains(aScript)) {
       specialWords(aScript);
       // end of recurse
       return this;
@@ -131,7 +130,7 @@ class jsonNode {
       var anIndex = block.group(0);
       var dryIndex = block.group(1); // with quotes
       var mapIndex = block.group(2); // without
-      bool nullable = anIndex.endsWith('?');
+      var nullable = anIndex.endsWith('?');
       // what is between [ ]
 
       var numericRank = num.tryParse(dryIndex);
@@ -144,7 +143,9 @@ class jsonNode {
 
       // --- several cases
       if (numericRank != null) {
-        if (advanceOnList(numericRank, nullable) == false) {return false;}
+        if (advanceOnList(numericRank, nullable) == false) {
+          return false;
+        }
         continue;
       }
       if (mapIndex != null) {
@@ -162,8 +163,7 @@ class jsonNode {
   ///
   ///  progress one step in a Map
   bool advanceOnMap(String aKey) {
-
-    bool nullable = aKey.endsWith('?');
+    var nullable = aKey.endsWith('?');
     if (nullable) aKey = aKey.substring(0, aKey.length - 1);
     if (toNode is Map == false) {
       log.warning(
@@ -197,9 +197,10 @@ class jsonNode {
       return true;
     } else {
       // if null expected, no error message
-      if (!nullable)
+      if (!nullable) {
         log.warning(
             'wrong index $rank on the ${toNode.runtimeType} ${beginningOf(toNode)}');
+      }
       toNode = null;
       return false;
     }
@@ -271,8 +272,8 @@ class jsonNode {
   }
 
   String simplifiedType(dynamic node) {
-    if (node is Map) return "(map)";
-    if (node is List) return "(list)";
-    return ("(${node.runtimeType.toString()})");
+    if (node is Map) return '(map)';
+    if (node is List) return '(list)';
+    return ('(${node.runtimeType.toString()})');
   }
 }

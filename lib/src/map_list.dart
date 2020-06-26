@@ -1,7 +1,4 @@
-import 'dart:mirrors';
 import 'dart:convert' as convert;
-import 'dart:io';
-
 import 'package:map_list_dot/map_list_dot.dart';
 
 /// MapList storage is a simple Wrapper on any structure made of
@@ -15,7 +12,7 @@ class MapList {
   dynamic wrapped_json;
 
   /// better to use this getter outside
-  get json => wrapped_json;
+  dynamic get json => wrapped_json;
 
   set json(dynamic someJson) {
     wrapped_json = someJson;
@@ -61,13 +58,13 @@ class MapList {
   }
 
   /// common methods for map ad list in front of the json data
-  get isEmpty => json.isEmpty;
+  bool get isEmpty => json.isEmpty;
 
-  get isNotEmpty => json.isNotEmpty;
+  bool get isNotEmpty => json.isNotEmpty;
 
-  clear() => json.clear();
+  void clear() => json.clear();
 
-  remove(var someEntry);
+  void remove(var someEntry);
 
   // overriden by MapListMap only
   bool containsKey(String aKey) {
@@ -89,6 +86,12 @@ class MapList {
   // what is to set in interpreter
   dynamic dataToSet;
 
+  /// decouple from mirrors to keep the name from toString
+  /// symbol("name")
+  String getSymbolName(Symbol symbol) {
+    return (symbol.toString().split('"')[1]);
+  }
+
   /// Trap all calls on this class, allowed by dart:mirrors
   /// aa.bb.cc comes first with a call to aa
   /// if aa is found this returns another MapList with the same json but shifted
@@ -108,12 +111,12 @@ class MapList {
     var member = invocation.memberName;
     String name;
     if (member is Symbol) {
-      name = MirrorSystem.getName(member);
+      name = getSymbolName(member);
       // ------------------ getters if no equals sign
       if (name.endsWith('=') == false) {
         // detect function calls that have arguments
         var next;
-        if (invocation.positionalArguments.length > 0) {
+        if (invocation.positionalArguments.isNotEmpty) {
           return checkFunctionCall(invocation);
         }
 
@@ -134,8 +137,9 @@ class MapList {
         }
         if ((next is Map) || (next is List)) {
           return MapList(next); //,false
-        } else
-          return next; //wrapped_json[name];
+        } else {
+          return next;
+        } //wrapped_json[name];
       }
       /*
       else this is a setter
@@ -143,7 +147,7 @@ class MapList {
       else
       // setters with equal sign
       {
-        name = name.replaceAll("=", "");
+        name = name.replaceAll('=', '');
         dynamic param = invocation.positionalArguments[0];
 
         // special case : '.last =  and .length = '
@@ -175,32 +179,32 @@ class MapList {
 
   /// clean before searching = sign
   static final RegExp reg_clean_out_assignment =
-      RegExp(r"""(\{.*\})|(['"][\w=\s\[\]\d]*["'])""");
+      RegExp(r'''(\{.*\})|(['"][\w=\s\[\]\d]*["'])''');
 
   /// identify json candidates : begin and end by [ ] or { }
-  static final reg_mapList = RegExp("^[\\[\\{].*[\\}\\]]");
+  static final reg_mapList = RegExp('''^[\\[\\{].*[\\}\\]]''');
 
   /// at the end of a script could be a function
-  static final reg_find_function = RegExp(r"""(.*\(.*\))""");
+  static final reg_find_function = RegExp(r'''(.*\(.*\))''');
 
   /// trap .add method in a part
-  static final reg_check_add = RegExp(r"""^add\s*?\((.*)\)""");
+  static final reg_check_add = RegExp(r'''^add\s*?\((.*)\)''');
 
   /// trap .addAll method in a script
-  static final reg_check_addAll = RegExp(r"""^addAll\s*?\((.*)\)""");
+  static final reg_check_addAll = RegExp(r'''^addAll\s*?\((.*)\)''');
 
   /// find remove with parameter
-  static final reg_check_remove = RegExp(r"""^remove\s*?\((.*)\)""");
+  static final reg_check_remove = RegExp(r'''^remove\s*?\((.*)\)''');
 
   /// find clear  with no parameter
-  static final reg_check_clear = RegExp(r"""^clear\s*?\((\s*)\)""");
+  static final reg_check_clear = RegExp(r'''^clear\s*?\((\s*)\)''');
 
   /// trap equal sign = out of quotes
   /// returns [lhs,rhs]
   List split_lhs_rhs(String aScript) {
     String lhs, rhs;
     // first clean = sign out of main script.
-    var aScriptCleaned = (aScript.replaceAll(reg_clean_out_assignment, ""));
+    var aScriptCleaned = (aScript.replaceAll(reg_clean_out_assignment, ''));
     // search = in the remaining
     var equalsPos = aScriptCleaned.indexOf('=');
     // no = it's a get
@@ -225,9 +229,9 @@ class MapList {
   /// Empty exec script will return current position
   /// solo index '[1]' will return the [1] of current (if list)
   ///
-  dynamic exec([String aScript = ""]) {
+  dynamic exec([String aScript = '']) {
     // if a call with empty parenthesis
-    if (aScript == null) aScript = '';
+    aScript ??= '';
     aScript = aScript.trim();
     originalScript = aScript;
     /*
@@ -250,8 +254,8 @@ class MapList {
     /*print(
         ' once back form json: $node  ${node.toNode is List} ${node.toNode is Map} ${node.edge is String} $setter');*/
 
-    if((node.edge == null )&&(originalScript != "")){
-      log.warning ('unable to use path  $originalScript. null returned');
+    if ((node.edge == null) && (originalScript != '')) {
+      log.warning('unable to use path  $originalScript. null returned');
       return null;
     }
     /*
@@ -271,22 +275,26 @@ class MapList {
         to be enhanced with a best test upstream
          */
         var residu = node.edge;
-        if (residu == "addAll")
+        if (residu == 'addAll') {
           log.warning('malformed addAll in $originalScript');
-        if (residu == "add")
+        }
+        if (residu == 'add') {
           log.warning('malformed add function in $originalScript');
-        if (residu == "remove")
+        }
+        if (residu == 'remove') {
           log.warning('malformed remove in $originalScript');
+        }
         return null;
       } // could have malformed function
-      if (node.toNode is List)
-        return MapListList.json(node.toNode); //----> exit
+      if (node.toNode is List) {
+        return MapListList.json(node.toNode);
+      } //----> exit
       if (node.toNode is Map) return MapListMap.json(node.toNode); //----> exit
       return node.toNode;
     } else {
       // else standard assignment in a setter
       if ((node.fromNode is Map) || (node.fromNode is List)) {
-        if (node.edge == "length") return setLength(node);
+        if (node.edge == 'length') return setLength(node);
         try {
           node.fromNode[node.edge] = dataToSet;
         } catch (e) {
@@ -322,8 +330,8 @@ class MapList {
     if ((param[0] == "'") && param.endsWith("'")) {
       return param.substring(1, param.length - 1);
     }
-    if (param == "true") return true;
-    if (param == "false") return false;
+    if (param == 'true') return true;
+    if (param == 'false') return false;
 
     if (param == 'null') return null;
 
@@ -357,7 +365,7 @@ class MapList {
         node.toNode.add(dataToSet);
         return true;
       } else {
-        stderr.write(
+        log.warning(
             '** $aFunction:  method add is not valid outside a List . data not added\n');
         return false;
       }
@@ -367,9 +375,9 @@ class MapList {
     var foundAddAllParam = reg_check_addAll.firstMatch(aFunction)?.group(1);
     if (foundAddAllParam != null) {
       dynamic dataToSet = adjustParam(foundAddAllParam);
-      if (dataToSet == null)
+      if (dataToSet == null) {
         return false;
-      else {
+      } else {
         // due to rigid type checking in standard addAll, use a loop on elements
         if ((node.toNode is List) && (dataToSet is List)) {
           dataToSet.forEach((value) {
@@ -419,17 +427,21 @@ class MapList {
   }
 
   ///
-  ///
+  /// can happens with an inline structure or a MapList to add
+  /// so return the json part to be added to the other json part
   static dynamic normaliseByJson(dynamic something) {
     // can assign or add a Maplist
-    if (something is MapList)
-      return something.wrapped_json; //something = something.wrapped_json;
-    if ((something is List) || (something is Map)) return something;
+    if (something is MapList) {
+      return something.wrapped_json;
+    }
+    if ((something is List) || (something is Map)) {
+      return something;
+    }
     return something;
   }
 
   /// choose to return null rather to crash
-  static trappedJsonDecode(String something) {
+  static dynamic trappedJsonDecode(String something) {
     try {
       return convert.json.decode(something);
     } catch (e) {
