@@ -1,6 +1,6 @@
 name: map_list_dot
 description:  'access json or maps & lists with a dot notation for getting or setting data, in code or string interpreter'
-
+# first release
 version: 0.0.1
 homepage: https://github.com/pirelaurent/map_list_dot
 

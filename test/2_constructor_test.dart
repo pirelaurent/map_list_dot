@@ -17,37 +17,38 @@ void main() {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
 
-
-
-  test('constructor empty ', () {
+  test('MapList() or MapList({}) will create an empty root map refillable', () {
     dynamic root = MapList();
     assert(root is MapListMap, true);
     assert(root.isEmpty, true);
     root.name = "toto";
     assert(root.name == "toto");
-    // add is not a real map syntax but we tolerate this , as long this is a list of key:values
     root.addAll({"age": 15, "weight": 65});
     assert(root.name == "toto");
   });
 
-  test('constructor empty but List ', () {
+  test('constructor with an empty List ', () {
     dynamic rootList = MapList([]);
     assert(rootList is MapListList, true);
     assert(rootList.isEmpty, true);
+    int k = 10;
+    rootList.add(k);
     var x = {"name": "toto", "age": 15, "weight": 65};
     rootList.add(x);
-    assert(rootList[0].name == "toto");
+    assert(rootList[0] == 10);
+    assert(rootList[1].name == "toto");
+    var lot = [11, 12, 13, 14];
+    rootList.addAll(lot);
+    assert(rootList.last == 14);
   });
 
-  test('constructor with json String (not compiled) ', () {
+  test('constructor with a json String (not compiled) ', () {
     String sJsonString = r""" {"name": "toto", "age": 15, "weight": 65} """;
     dynamic rootMap = MapList(sJsonString);
-
     assert(rootMap is MapListMap, true);
     assert(rootMap.name == "toto");
     assert(rootMap.age == 15);
   });
-
 
   test('constructor with an already established json ', () {
     String sJson =
@@ -56,6 +57,7 @@ void main() {
     // now give the result to constructor
     dynamic root = MapList(jj);
     assert(root is MapListList, true);
+    assert(root.length == 2);
     assert(root[1].name == "zaza");
   });
 }

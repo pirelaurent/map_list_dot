@@ -76,22 +76,21 @@ void main() {
 
     assert(root[200] == null);
     assert(root.exec('[200]') == null);
-
+   // wrong index 200 on the List<int> [0, 1, 2, 3, 4]
     dynamic book = MapList({
       "name": "test",
       "price": [0, 1, 2, 3, 4]
     });
     assert(book.exec('price[200]') == null);
+    // wrong index 200 on the List<int> [0, 1, 2, 3, 4]
   });
 
   test(' wrong function calls on clear  ', () {
     dynamic root = MapList([0, 1, 2, 3, 4]);
-    root.exec('clear()');
-    //** warning : clear(). Calling set without = .Be sure it's not a get or an exec .no action done
     root.exec('clearAll()');
     //** unknown function : clearAll() . No action done
     root.exec('clear');
-    //**  cannot search a key (clear) in a List<dynamic>
+    //try to access [] as a Map with key clear. null returned
     root.exec('clear()'); // ok
     assert(root.length == 0);
   });
@@ -103,21 +102,28 @@ void main() {
      then addAll the data : root.addAll([0, 1, 2, 3, 4])
    */
     dynamic root = MapList(<dynamic>[0, 1, 2, 3, 4]);
-    root.exec('video.name = "Max"');
-/*    root.exec('root.last');
-    // **  cannot search a key (root.last) in a List<dynamic>
-    root.exec('last'); //ok
-    root.exec('[last]');
-    // ** warning : [11,12,13]. Calling set without = .Be sure it's not a get or an exec .no action done
     root.exec('[11,12,13]');
+    print(root);
+
+
+    root.exec('video.name = "Max"');
+    //try to access [0, 1, 2, 3, 4] as a Map with key video. null returned
+    //try to apply [video.name = "Max"] on a: Null node. No action done
+    root.exec('root.last');
+    // try to access [0, 1, 2, 3, 4] as a Map with key root. null returned
+    root.exec('last'); //ok
+    root.exec('[last]'); // allowed
+
     // ** warning : [11,12,13]. Calling set without = .Be sure it's not a get or an exec .no action done
-    root.exec('= [11,12,13]'); //
+
+    root.exec('= [11,12,13]');
+    //try to apply [= [11,12,13]] on a: Null node. No action done
+
     root.exec('add({"name":"polo", "age":33})');
     dynamic x = root.exec('last');
     assert(x.age == 33);
     assert(root.exec('last').age == 33);
     assert(root.exec('last.age') == 33);
-    */
 
   });
 
@@ -128,12 +134,12 @@ void main() {
       }
     });
 
-    root.exec(
-        'squad.length = 2'); //unable to change length on a Map squad.length = 2 . no action done
+    root.exec('squad.length = 2');
+    //unable to change length on a Map squad.length = 2 . no action done
     //as map is not <String, dynamic> in original set up, this will fail:
     root.exec('car = 22');
     /*
-    WARNING: 2020-06-23 14:35:10.643935: unable to assign car = 22. Think about <String,dynamic> Maps and <dynamic> Lists. No action done.
+    unable to assign car = 22. Think about <String,dynamic> Maps and <dynamic> Lists. No action done.
     type 'int' is not a subtype of type 'Map<String, List<int>>' of 'value'
     */
 
@@ -146,8 +152,8 @@ void main() {
     root.exec(
         'car.addAll({ "price": 5000, "fuel":"diesel","hybrid":false})'); //add or merge with function addAll
 
-    root.exec(
-        'squad."name" = "Super hero squad"');
+    root.exec('squad."name" = "Super hero squad"');
+    // Avoid to use quotes around notation : "name" in squad."name" = "Super hero squad"
     assert(root.squad.name == "Super hero squad");
   });
 

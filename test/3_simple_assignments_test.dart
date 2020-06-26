@@ -18,6 +18,18 @@ void main() {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
   dynamic root;
+  var numbersName = [
+    "zero",
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine"
+  ];
 
   test("assignement on first level created with script", () {
     dynamic squad;
@@ -34,27 +46,31 @@ void main() {
     assert(squad.score == 38.5);
   });
 
-  test("assignment to add & replace data in Map & List", () {
+  test("assignment to add & replace data in MapList", () {
+    // as we plan to have heterogeneous data, we specify dynamic for dico
     root = MapList({
-      "dico": {
+      "dico": <String, dynamic>{
         "hello": {"US": "Hi", "FR": "bonjour"}
       }
     });
     assert(root.dico.hello.US == "Hi");
-    root = MapList( {"dico":<String,dynamic>{"hello":{"US": "Hi", "FR": "bonjour"} }});
-    root.dico.numbers = {"US": ["one","two","three","four","five","sic","seven","eight","nine"]};
-
-    root = MapList('{"dico":{"hello":{"US": "Hi", "FR": "bonjour"} }}');
-    assert(root.dico.hello.US == "Hi");
-    root.dico.numbers = {"US": ["zero","one","two","three","four","five","sic","seven","eight","nine"]};
+    // we can add an entry  List as we have precise dynamic
+    root.dico.numbers = {"US": numbersName};
     assert(root.dico.numbers.US[3] == "three");
 
+    // if we create the MapList with a String, dynamic in ensured
+    root = MapList('{"dico":{"hello":{"US": "Hi", "FR": "bonjour"} }}');
+    assert(root.dico.hello.US == "Hi");
+    root.dico.numbers = {"US": numbersName};
+    assert(root.dico.numbers.US[3] == "three");
+    // we can use relays
     var numbers = root.dico.numbers;
-    var USnumbers = numbers.US;
-    USnumbers.add("ten");
-    //print(USnumbers[3]);
+    var US_numbers = numbers.US;
+    US_numbers.add("ten");
+    assert(root.dico.numbers.US[10] == 'ten');
+  });
 
-
+  test(" to add & replace UTF8 data in MapList ", () {
     // check creation
     // as we plan to add heterogeneous data in that map we cast
     root = MapList();
@@ -69,7 +85,7 @@ void main() {
     assert(root.dico.length == 3);
     assert(root.exec('dico.length') == 3);
     // change type of an entry
-    root.dico.FR = ["bonjour", "salut", "helloxx"];
+    root.dico.FR = ["bonjour", "salut", "hello"];
     assert(root.dico.length == 3);
     assert(root.dico.FR.length == 3);
     assert(root.exec('dico.FR.length') == 3);

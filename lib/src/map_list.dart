@@ -144,17 +144,17 @@ class MapList {
       // setters with equal sign
       {
         name = name.replaceAll("=", "");
-
         dynamic param = invocation.positionalArguments[0];
 
-        // special case : '.last = '
-        if (name == 'last') {
-          if (this is MapListList) {
+        // special case : '.last =  and .length = '
+        if (this is MapListList) {
+          if (name == 'last') {
             wrapped_json[wrapped_json.length - 1] = param;
             return true;
-          } else {
-            log.warning(
-                '** calling .last is allowed only on a List $lastInvocation');
+          }
+          if (name == 'length') {
+            wrapped_json.length = param;
+            return true;
           }
         }
 
@@ -204,12 +204,12 @@ class MapList {
     // search = in the remaining
     var equalsPos = aScriptCleaned.indexOf('=');
     // no = it's a get
-    if (equalsPos == -1 ){
+    if (equalsPos == -1) {
       rhs = null;
       lhs = aScript;
     } else
-      // suppose that the remaining is the first = in script
-     {
+    // suppose that the remaining is the first = in script
+    {
       var two = aScript.split('=');
       lhs = two[0];
       // rhs without = sign
@@ -248,7 +248,12 @@ class MapList {
 
     // advanceEdge is the last part execute
     /*print(
-        ' once back form json: $node  ${node.toNode is List} ${node.lastNode is Map} ${node.advanceEdge is String} $setter');*/
+        ' once back form json: $node  ${node.toNode is List} ${node.toNode is Map} ${node.edge is String} $setter');*/
+
+    if((node.edge == null )&&(originalScript != "")){
+      log.warning ('unable to use path  $originalScript. null returned');
+      return null;
+    }
     /*
      is there some function call in the last edge ?
      last edge could be an int if [1] at the end
@@ -259,22 +264,24 @@ class MapList {
     }
     // get something
     if (!setter) {
-      if (node.toNode == null){
+      if (node.toNode == null) {
         /*
         as unknown name is a map is allowed,
         malformed can arrive up to there as jsonNode.reg_dry_name
         to be enhanced with a best test upstream
          */
         var residu = node.edge;
-        if (residu == "addAll") log.warning ('malformed addAll in $originalScript');
-        if (residu == "add") log.warning ('malformed add function in $originalScript');
-        if (residu == "remove") log.warning ('malformed remove in $originalScript');
+        if (residu == "addAll")
+          log.warning('malformed addAll in $originalScript');
+        if (residu == "add")
+          log.warning('malformed add function in $originalScript');
+        if (residu == "remove")
+          log.warning('malformed remove in $originalScript');
         return null;
       } // could have malformed function
       if (node.toNode is List)
         return MapListList.json(node.toNode); //----> exit
-      if (node.toNode is Map)
-        return MapListMap.json(node.toNode); //----> exit
+      if (node.toNode is Map) return MapListMap.json(node.toNode); //----> exit
       return node.toNode;
     } else {
       // else standard assignment in a setter
@@ -282,8 +289,9 @@ class MapList {
         if (node.edge == "length") return setLength(node);
         try {
           node.fromNode[node.edge] = dataToSet;
-        } catch (e){
-          log.warning('unable to assign $originalScript. Think about <String,dynamic> Maps and <dynamic> Lists. No action done.\n $e ');
+        } catch (e) {
+          log.warning(
+              'unable to assign $originalScript. Think about <String,dynamic> Maps and <dynamic> Lists. No action done.\n $e ');
           return false;
         }
         return true;
@@ -306,6 +314,7 @@ class MapList {
   /// if the json is not valid, returns a null and log a warning error
   ///
   dynamic adjustParam(var param) {
+    if (param == null) return null;
     // if between ' or between " extract and leaves as String
     if ((param[0] == '"') && param.endsWith('"')) {
       return param.substring(1, param.length - 1);
@@ -343,6 +352,7 @@ class MapList {
     var foundAddParam = reg_check_add.firstMatch(aFunction)?.group(1);
     if (foundAddParam != null) {
       dynamic dataToSet = adjustParam(foundAddParam);
+      if (dataToSet == null) return false;
       if (node.toNode is List) {
         node.toNode.add(dataToSet);
         return true;
@@ -355,30 +365,33 @@ class MapList {
 
     // ----  function addAll usable on List and Map
     var foundAddAllParam = reg_check_addAll.firstMatch(aFunction)?.group(1);
-
     if (foundAddAllParam != null) {
       dynamic dataToSet = adjustParam(foundAddAllParam);
-      // due to rigid type checking in standard addAll, use a loop on elements
-      if ((node.toNode is List) && (dataToSet is List)) {
-        dataToSet.forEach((value) {
-          node.toNode.add(value);
-        });
-        return true;
-      }
-      if ((node.toNode is Map) && (dataToSet is Map)) {
-        dataToSet.forEach((key, value) {
-          node.toNode[key] = value;
-        });
-        return true;
-      }
-      /*
+      if (dataToSet == null)
+        return false;
+      else {
+        // due to rigid type checking in standard addAll, use a loop on elements
+        if ((node.toNode is List) && (dataToSet is List)) {
+          dataToSet.forEach((value) {
+            node.toNode.add(value);
+          });
+          return true;
+        }
+        if ((node.toNode is Map) && (dataToSet is Map)) {
+          dataToSet.forEach((key, value) {
+            node.toNode[key] = value;
+          });
+          return true;
+        }
+        /*
        type not compatible with map or list
        could be because dataToset is null due to wrong json for example
        ${node.edge} has the content.
-*/
-      log.warning(
-          'try to addAll(${dataToSet.runtimeType}) on  ${node.beginningOf(node.toNode,20)} ');
-      return null;
+   */
+        log.warning(
+            'trying to addAll(${dataToSet.runtimeType}) on  ${node.beginningOf(node.toNode, 20)} ');
+        return null;
+      }
     }
     //----- function remove(something)
     var foundRemoveParam = reg_check_remove.firstMatch(aFunction)?.group(1);
@@ -394,16 +407,16 @@ class MapList {
 
   /// special case with length =
   ///
- bool setLength(node){
-
-   if (node.fromNode is List) {
-     node.fromNode.length = dataToSet;
-     return true;
-   } else {
-     log.warning ('unable to change length on a Map: $originalScript . no action done ');
-     return false;
-   }
- }
+  bool setLength(node) {
+    if (node.fromNode is List) {
+      node.fromNode.length = dataToSet;
+      return true;
+    } else {
+      log.warning(
+          'unable to change length on a Map: $originalScript . no action done ');
+      return false;
+    }
+  }
 
   ///
   ///
@@ -424,7 +437,6 @@ class MapList {
       return null;
     }
   }
-
 
   String exitMessage(bool setter) {
     if (setter == null) return 'null returned';

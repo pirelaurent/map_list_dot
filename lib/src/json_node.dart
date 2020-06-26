@@ -154,7 +154,7 @@ class jsonNode {
         continue;
       }
       // wrong things in [ ]
-      print(' ugly brackets with $anIndex');
+      print('**** ugly brackets within $anIndex ****');
     }
     return true;
   }
@@ -199,7 +199,7 @@ class jsonNode {
       // if null expected, no error message
       if (!nullable)
         log.warning(
-            'wrong index $rank on the  ${toNode.length} ${toNode.runtimeType} ${beginningOf(toNode)}');
+            'wrong index $rank on the ${toNode.runtimeType} ${beginningOf(toNode)}');
       toNode = null;
       return false;
     }
@@ -256,7 +256,7 @@ class jsonNode {
     return toNode;
   }
 
-  String beginningOf(var someInfo, [int len = 80]) {
+  static String beginningOf(var someInfo, [int len = 80]) {
     var dot3 = '...';
     if (someInfo.toString().length < len) {
       len = someInfo.toString().length;

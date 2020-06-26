@@ -94,11 +94,11 @@ void main() {
   });
 
   test('overlap of .length method and data ', () {
-   dynamic store = MapList('{"bikes":[{"name":"Fonlupt", "length":2.1, "color" : "green" }]}');
-   assert(store.exec('bikes[0].length') == 3);
-   assert(store.exec('bikes[0]["length"]')== 2.1);
-   assert(store.bikes[0].length == 3);
-   assert (store.bikes[0]["length"] == 2.1);
-
+    dynamic store = MapList(
+        '{"bikes":[{"name":"Fonlupt", "length":2.1, "color" : "green" }]}');
+    assert(store.exec('bikes[0].length') == 3);
+    assert(store.exec('bikes[0]["length"]') == 2.1);
+    assert(store.bikes[0].length == 3);
+    assert(store.bikes[0]["length"] == 2.1);
   });
 }

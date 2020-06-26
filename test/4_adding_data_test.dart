@@ -16,12 +16,9 @@ void main() {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
 
-
   dynamic root;
 
-  test("add raw data int in a List", () {
-    // reset
-
+  test("add raw data int in a List and check pointers", () {
     dynamic root = MapList();
     var hash1 = root.json.hashCode;
     root.data = [11, 12, 13];
@@ -40,14 +37,19 @@ void main() {
     assert(hash3 == hash333, '$hash3 $hash333');
   });
 
-  test("add a List to a List", () {
+  test("add data to a List", () {
     // reset
     root = MapList();
     root.data = [11, 12, 13];
     assert(root.data[2] == 13);
-    // cannot write like this :
     root.exec('data.add(31)');
     assert(root.data[3] == 31);
+    // enlarge a List : create nulls
+    root.data.length = 10;
+    assert(root.data[4] == null);
+    assert(root.data[9] == null);
+    root.data.addAll([20, 21, 22]);
+    assert(root.data[10] == 20);
   });
 
   test("add raw heterogeneous data in a List", () {
@@ -57,9 +59,9 @@ void main() {
     assert(root.data[2] == 13);
     /* by default a [11,12,13] is a List<int> can't add a string
     root.data.add("hello");
-    type 'String' is not a subtype of type 'int' of 'value'
-    */
-    // so better to do like following :
+      type 'String' is not a subtype of type 'int' of 'value'
+    so it's better to do like following :
+     */
     root.data = []; // will create a List<dynamic>
     root.data.addAll([11, 12, 13]); // addAll for initialising with <int>
     assert(root.data[2] == 13);
@@ -68,13 +70,13 @@ void main() {
     root.exec('data.add(15.5)');
     assert(root.data[4] == 15.5);
     // now add a map
-    root.data.add({"name": "polo", "age":27});
+    root.data.add({"name": "polo", "age": 27});
     assert(root.data[5] is MapListMap);
     // interpreter
     root.exec('data.add({"name": "pili", "age":20})');
     assert(root.data[6] is MapListMap);
-    assert(root.data[5].name == "polo" );
-
+    assert(root.data[5].name == "polo");
+    assert(root.data[6].name == "pili");
   });
 
   test(" add json to a List , direct and interpreted  ", () {
@@ -89,8 +91,6 @@ void main() {
     assert(root.results[2].temperature == 58);
   });
 
-
-
   test("Adding new entries on an existing map ", () {
     // code
     root = MapList();
@@ -99,32 +99,32 @@ void main() {
     root.results.add({"elapsed_time": 30, "temperature": 18});
     //root.results[0].time = "12:58:00"; //type 'String' is not a subtype of type 'int' of 'value'
     // as we plan to add a <String,String> in this results[1] : we cast
-    root.results.add( <String,dynamic>{"elapsed_time": 60, "temperature": 40});
+    root.results.add(<String, dynamic>{"elapsed_time": 60, "temperature": 40});
     root.results[1].time = "12:58:00";
     assert(root.results[1].time is String, '${root.results[1].time}');
     // script
     root.exec('results[1].duration = "01:00:00"');
     assert(root.results[1].duration is String, '${root.results[1].duration}');
-
   });
 
-  // seems that add and addAll are the same
-  test("extends a map to a map in code  with add", () {
+  test("extends and fusion a map with a map with addALL", () {
     // reset
     dynamic car = MapList();
     car.name = "Ford";
     car.color = "blue";
+    // be sure to use addAll, not add on a map. here with an inline structure
+    car.addAll(
+        <String, dynamic>{"price": 5001, "fuel": "diesel", "hybrid": false});
+    assert(car.price == 5001);
     assert(car.color == "blue");
-    // be sure to use addAll, not add on a map
-    //** Symbol("add") {price: 5000, fuel: diesel, hybrid: false} is invalid. No action done
-    car.addAll(<String,dynamic>{"price": 5001, "fuel": "diesel", "hybrid": false}); // with an inline structure
-    // or with another prepared MapList :
+    // or with another prepared MapList and mutate entry color:
     dynamic carInfo = MapList();
     carInfo.price = 6000;
     carInfo.tires = "slim";
-    carInfo.color = ["blue","black","white"];
+    carInfo.color = ["blue", "black", "white"];
     car.addAll(carInfo);
-
+    assert(car.price == 6000);
+    assert(car.color[1] == "black");
   });
 
   test('create new data from scratch in several ways', () {
@@ -155,15 +155,14 @@ void main() {
     assert(squad.members[1].powers[2] == "Superhuman reflexes");
   });
 
-  test('sample in readme', (){
+  test('sample in readme', () {
     dynamic car = MapList();
     car.brand = "Ford";
-    car.colors = ["blue","black","white"];
+    car.colors = ["blue", "black", "white"];
     car.chosenColor = "white";
     dynamic myStuff = MapList();
     myStuff.myCar = car;
     assert(myStuff.myCar.chosenColor == "white");
-
   });
 
 /* not available
@@ -179,6 +178,4 @@ void main() {
     print(Bb);
   });
 */
-
-
 }

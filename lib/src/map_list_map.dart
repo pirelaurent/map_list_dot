@@ -1,5 +1,4 @@
 import 'package:map_list_dot/map_list_dot.dart';
-import 'dart:collection';
 
 /// extends MapList to offer Map methods
 
@@ -75,6 +74,8 @@ class MapListMap extends MapList {
 
       return true;
     }
+    // could be an error in rhs
+    if (something == null) return true;
     MapList.log.warning(
         '** trying to addAll to a Map something else than another map \n $something');
     return false;

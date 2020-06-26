@@ -9,7 +9,6 @@
  */
 
 import 'package:map_list_dot/map_list_dot.dart';
-
 import 'resources/personInDart.dart';
 
 void main() {
@@ -25,7 +24,7 @@ void main() {
       Some short examples here to start understanding 
                         ******
   """);
-
+//------------------------
   print(
       '\nSample 1: --------------- create some data by hand and loop on list ----- ');
 /*
@@ -53,22 +52,25 @@ void main() {
   person.color = 'blue';
   root.contacts.add(person);
 /*
- verifying data
+ verifying data.
+ use length
  */
   print('We already have ${root.contacts.length} friends:');
 /*
-  loop on a MapList is restricted to indices
+  loop on a MapListList with indices
  */
   for (int i = 0; i < root.contacts.length; i++) {
     dynamic someone = root.contacts[i];
     if (someone.interest != null) {
       print('\t ${someone.name} loves :');
+      // loop on a MapListList with iterator
       for (var anInterest in someone.interest) print('\t\t $anInterest');
     }
     if (someone.color != null)
       print('\t${someone.name} prefers the ${someone.color} color');
   }
 
+//------------------------
   print(
       '\nSample 2: --------------- read a json string and walk into through dot notation ----- ');
   // uses a long json string in Dart. See unit tests to read a file
@@ -76,14 +78,15 @@ void main() {
   // loop using .lenght on a MapListList
   for (int i = 0; i < persons.length; i++) {
     print('Person:');
+    // using indices
     var aPerson = persons[i];
-    // aPerson is a MapListMap : can iterate with in keys
+    // aPerson is a MapListMap : can iterate with 'in' keys
     for (var key in aPerson.keys) {
       var result = aPerson[key];
       // result is changing : either a simple data, either a MapListList for contacts key
       if (key == "contacts") {
         print('\t$key elements:');
-        // iterate in a MapListList made of several MapListMap
+        // iterate in a MapListList (made of several MapListMap)
         for (var aContact in result) {
           // iterate on a MapListMap
           aContact.forEach((key, value) {
@@ -96,9 +99,17 @@ void main() {
         print('\t$key : $result ');
     }
   }
+  print('---------- some dot notation samples in dart code ----------');
+  print('persons -> \n\t${persons}');
+  print('persons[1]]->\n\t${persons[1]}');
+  print('persons[1].contacts -> \t\t\t${persons[1].contacts}');
+  print('persons[1].contacts[0] -> \t\t${persons[1].contacts[0]}');
+  print('persons[1].contacts[0].mail -> \t${persons[1].contacts[0].mail}');
 
-  print('\nSample 3: --------------- same as 1 with interpreter  ----- ');
-  var script = <String>[
+
+//------------------------
+  print('\nSample 3: -create data with script   ----- ');
+  var scriptList = <String>[
     'contacts = []',
     // a large json compatible string
     'contacts.add({"name": "peter", "age": 44, "interest":["litterature", "sport", "video games"]   })',
@@ -111,27 +122,41 @@ void main() {
     'contacts[last].color = "blue"',
   ];
 
-  dynamic root_i = MapList();
+  root = MapList();
   // execute previous script to set the data
-  for (var aStep in script) {
-    root_i.exec(aStep);
+  for (var aStep in scriptList) {
+    root.exec(aStep);
   }
+
+  print('---------- some dot notation samples in script----------');
+  String script;
+  script='';
+  print("root.exec('$script') -> \n\t${root.exec(script)}");
+  script='contacts';
+  print("root.exec('$script') -> \n\t  ${root.exec(script)}");
+  script='contacts[0]';
+  print("root.exec('$script') -> ${root.exec(script)}");
+  script='contacts[0].interest';
+  print("root.exec('$script') -> ${root.exec(script)}");
+  script='contacts[0].interest[1]';
+  print("root.exec('$script') -> ${root.exec(script)}");
+  print('-------------------------------------------------');
 
 /*
  verifying data
  Better to do that in code, but try to use interpreter too.
  */
-  print('We already have ${root_i.exec('contacts.length')} friends :');
+  print('We already have ${root.exec('contacts.length')} friends :');
 /*
   loop on a MapList is restricted to indices
  */
-  for (int i = 0; i < root_i.exec('contacts.length'); i++) {
+  for (int i = 0; i < root.exec('contacts.length'); i++) {
     // 'i' is not known by interpreter, so must convert before call :
-    dynamic someone = root_i.exec('contacts[$i]');
+    dynamic someone = root.exec('contacts[$i]');
     // cannot do root_i.exec('someone.interest'); as someOne is in code.
     // either use full chain 'like below,
     // either change origin of intepreter in code : someone.exec('interest');
-    if (root_i.exec('contacts[$i].interest') != null) {
+    if (root.exec('contacts[$i].interest') != null) {
       print('\t${someone.name} loves:');
       for (var anInterest in someone.interest) print('\t\t${anInterest}');
     }

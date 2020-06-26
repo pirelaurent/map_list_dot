@@ -79,6 +79,12 @@ class MapListList extends MapList with IterableMixin {
     });
     return true;
   }
+
+///toString is not inherited from MapList, maybe due to mixin
+@override
+  String toString(){
+  return json.toString();
+  }
 }
 ///
 ///  override Iterator to return MapList that allows .notation downstream
@@ -98,4 +104,5 @@ class MapListListIterator implements Iterator {
   bool moveNext() {
     return internal.moveNext();
   }
+
 }

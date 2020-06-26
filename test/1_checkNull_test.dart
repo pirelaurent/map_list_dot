@@ -21,8 +21,8 @@ void main() {
   dynamic root = MapList(jsonString);
   dynamic store = root.store;
 
-  print('------- these tests will generate normal Warnings for demonstration purpose ----');
-
+  print(
+      '------- these tests will generate normal Warnings for demonstration purpose ----');
 
   test("null test on path with code", () {
     assert(store.wrongName == null);
