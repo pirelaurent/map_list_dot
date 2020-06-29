@@ -8,18 +8,6 @@ void main(){
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
 
- List list =<dynamic>[10,11,12,"a"];
- print(list);
- dynamic x = MapList(list);
- print(x.runtimeType);
- print(x);
- print(x.wrapped_json);
 
- Map map = {"A":"AA", "B":"BB"};
- print(map);
- dynamic y = MapList(map);
- print(y.runtimeType);
- print(y);
- print (y.json);
 
 }

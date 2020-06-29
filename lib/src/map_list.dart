@@ -53,8 +53,8 @@ class MapList {
   /// real common constructor behind the factory
   /// we enforce json dynamic types to avoid later error
   MapList.json(dynamic jsonInput) {
+    if (jsonInput is String) json = convert.json.decode(convert.json.encode(jsonInput));
     json = jsonInput;
-    //json = convert.json.decode(convert.json.encode(jsonInput));
   }
 
   /// common methods for map ad list in front of the json data
@@ -70,7 +70,8 @@ class MapList {
   bool containsKey(String aKey) {
     return false;
   }
-
+  /// as we want to use the dot notation in code, we need a dynamic
+  dynamic get  me => this;
   // notice early if we are on set or a get
   bool setter;
 
@@ -233,7 +234,12 @@ class MapList {
     // if a call with empty parenthesis
     aScript ??= '';
     aScript = aScript.trim();
+
     originalScript = aScript;
+    // some inLine '''xxx''' reformated by dart
+    // can leave CR or LF harmful for regex
+    aScript= aScript.replaceAll('\n','');
+    aScript= aScript.replaceAll('\r','');
     /*
      split into parts ending by . or =
      if no = can leave a last name like boof.price
@@ -248,8 +254,8 @@ class MapList {
       dataToSet = adjustParam(rawDataToSet.trim());
     }
     // now evaluate left hand side
-    dynamic node = jsonNode(wrapped_json, result[0].trim(), originalScript);
-
+    var lhs = result[0].trim();
+    dynamic node = jsonNode(wrapped_json, lhs, originalScript);
     // advanceEdge is the last part execute
     /*print(
         ' once back form json: $node  ${node.toNode is List} ${node.toNode is Map} ${node.edge is String} $setter');*/

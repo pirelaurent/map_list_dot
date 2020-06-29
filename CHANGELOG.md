@@ -7,3 +7,8 @@ To test package publishing
 Pana analysis recommendations applied
 Remove dependency to mirrors by coding getName(Symbol symbol) by hand
 All unit tests ok
+## 0.1.1
+Add examples with class on the fly  
+Review read.me  
+Remove CRLF in inline String with several lines between ''' in dart
+privilege MapListMap and MapListList constructors to be more controlled

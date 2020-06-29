@@ -4,7 +4,7 @@ import 'dart:collection';
 /// extends MapList to wrap List methods
 ///
 class MapListList extends MapList with IterableMixin {
-  MapListList.json(dynamic json) : super.json(json);
+  MapListList.json([dynamic json]) : super.json(json??=[]);
 
   @override
   int get length => json.length;
@@ -76,9 +76,7 @@ class MapListList extends MapList with IterableMixin {
 
   dynamic addAll(dynamic something) {
     if (something is MapListList) something = something.json;
-    something.forEach((value) {
-      wrapped_json.add(value);
-    });
+   wrapped_json.addAll(something);
     return true;
   }
 
