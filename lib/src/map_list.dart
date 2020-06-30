@@ -53,8 +53,8 @@ class MapList {
   /// real common constructor behind the factory
   /// we enforce json dynamic types to avoid later error
   MapList.json(dynamic jsonInput) {
+    if (jsonInput is String) json = convert.json.decode(convert.json.encode(jsonInput));
     json = jsonInput;
-    //json = convert.json.decode(convert.json.encode(jsonInput));
   }
 
   /// common methods for map ad list in front of the json data
@@ -70,7 +70,8 @@ class MapList {
   bool containsKey(String aKey) {
     return false;
   }
-
+  /// as we want to use the dot notation in code, we need a dynamic
+  dynamic get  me => this;
   // notice early if we are on set or a get
   bool setter;
 
@@ -104,7 +105,7 @@ class MapList {
   ///   the last step returns a data (ie getter)
   /// else the last step set the data (ie setter) and return nothing.
   ///
-  /// see later that exec reuses this internal mechanism to share code.
+  /// see later that eval reuses this internal mechanism to share code.
 
   @override
   dynamic noSuchMethod(Invocation invocation) {
@@ -222,18 +223,23 @@ class MapList {
     return [lhs, rhs];
   }
 
-  /// exec demands arrives here in one big string
+  /// eval demands arrives here in one big string
   /// A front part is isolated and code walk through to find position
   /// Once found, depending of an equal sign, returns a data or set a data
   ///
-  /// Empty exec script will return current position
+  /// Empty eval script will return current position
   /// solo index '[1]' will return the [1] of current (if list)
   ///
-  dynamic exec([String aScript = '']) {
+  dynamic eval([String aScript = '']) {
     // if a call with empty parenthesis
     aScript ??= '';
     aScript = aScript.trim();
+
     originalScript = aScript;
+    // some inLine '''xxx''' reformated by dart
+    // can leave CR or LF harmful for regex
+    aScript= aScript.replaceAll('\n','');
+    aScript= aScript.replaceAll('\r','');
     /*
      split into parts ending by . or =
      if no = can leave a last name like boof.price
@@ -248,8 +254,8 @@ class MapList {
       dataToSet = adjustParam(rawDataToSet.trim());
     }
     // now evaluate left hand side
-    dynamic node = jsonNode(wrapped_json, result[0].trim(), originalScript);
-
+    var lhs = result[0].trim();
+    dynamic node = jsonNode(wrapped_json, lhs, originalScript);
     // advanceEdge is the last part execute
     /*print(
         ' once back form json: $node  ${node.toNode is List} ${node.toNode is Map} ${node.edge is String} $setter');*/

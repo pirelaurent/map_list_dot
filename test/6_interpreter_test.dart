@@ -29,12 +29,12 @@ void main() {
   //
   test('basic assignments sample for readme', () {
     dynamic squad = MapList(); // will create a default Map
-    squad.exec('name = "Super hero squad"'); // add a String data
-    squad.exec('homeTown = "Metro City"'); // another
-    squad.exec('formed = 2016'); // add an int
-    squad.exec('active = true'); // add a bool
-    squad.exec('score = 38.5'); // add a double
-    squad.exec('overhauls = ["2008/04/10", "2102/05/01", "2016/04/17"]');
+    squad.eval('name = "Super hero squad"'); // add a String data
+    squad.eval('homeTown = "Metro City"'); // another
+    squad.eval('formed = 2016'); // add an int
+    squad.eval('active = true'); // add a bool
+    squad.eval('score = 38.5'); // add a double
+    squad.eval('overhauls = ["2008/04/10", "2102/05/01", "2016/04/17"]');
     assert(squad.homeTown == "Metro City");
     assert(squad.formed == 2016);
     assert(squad.active);
@@ -44,20 +44,20 @@ void main() {
   test("extends a map to a map with interpreter ", () {
     // reset
     dynamic car = MapList();
-    car.exec('name = "Ford"');
-    car.exec('color = "blue"');
+    car.eval('name = "Ford"');
+    car.eval('color = "blue"');
     assert(car.color == "blue");
-    car.exec('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
+    car.eval('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
     assert(car.length == 5);
   });
 
   test('Access to a root List with only the index ', () {
     dynamic list = MapList([]);
     list.add(15);
-    list.exec('addAll([1, 2, 3])');
-    assert(list.exec('length') == 4);
+    list.eval('addAll([1, 2, 3])');
+    assert(list.eval('length') == 4);
     assert(list[2] == 2);
-    assert(list.exec('[2]') == 2);
+    assert(list.eval('[2]') == 2);
   });
 
   test('create new data from scratch in several ways', () {
@@ -92,10 +92,10 @@ void main() {
     dynamic root = MapList(jsonStringStore);
     // get a lower entry point direclty on store
     dynamic store = root.store;
-    assertShow(store.exec("book[1].isbn"), null);
-    assertShow(store.exec("bikes[1].color"), "grey");
-    assertShow(store.exec("book[0].isbn"), "978-1-78899-879-6");
-    assertShow(store.exec("book[1].isbn"), null);
+    assertShow(store.eval("book[1].isbn"), null);
+    assertShow(store.eval("bikes[1].color"), "grey");
+    assertShow(store.eval("book[0].isbn"), "978-1-78899-879-6");
+    assertShow(store.eval("book[1].isbn"), null);
   });
 
   test('using length property and length key in a map ', () {
@@ -103,52 +103,52 @@ void main() {
     // get a lower entry point direclty on store
     dynamic store = root.store;
     // check interpreted property length
-    assertShow(store.exec("book.length"), 4);
-    assertShow(store.exec("bikes.length"), 2);
+    assertShow(store.eval("book.length"), 4);
+    assertShow(store.eval("bikes.length"), 2);
     // size of the list
-    assert(store.exec('bikes[1].length') == 5);
+    assert(store.eval('bikes[1].length') == 5);
     //  the only way to get a property 'length' it is to use classical notation
-    assert(store.exec('bikes[1]["length"]') == 2.2);
-    assertShow(store.exec("bikes[1]['length']"), 2.2);
+    assert(store.eval('bikes[1]["length"]') == 2.2);
+    assertShow(store.eval("bikes[1]['length']"), 2.2);
   });
 
   test('try assignments to change data', () {
     dynamic root = MapList(jsonStringStore);
     // get a lower entry point direclty on store
     dynamic store = root.store;
-    assertShow(store.exec("bikes[0].color"), "black");
+    assertShow(store.eval("bikes[0].color"), "black");
     store.bikes[0].color = "green";
-    assertShow(store.exec("bikes[0].color"), "green");
-    assertShow(store.exec("book[3].price"), 23.42);
-    store.exec("book[3].price = 20.00 ");
-    assertShow(store.exec("book[3].price"), 20.00);
+    assertShow(store.eval("bikes[0].color"), "green");
+    assertShow(store.eval("book[3].price"), 23.42);
+    store.eval("book[3].price = 20.00 ");
+    assertShow(store.eval("book[3].price"), 20.00);
   });
 
   test('try new values non existing', () {
     dynamic root = MapList(jsonStringStore);
     // get a lower entry point direclty on store
     dynamic store = root.store;
-    store.exec("bikes[0].battery = true ");
-    assertShow(store.exec("bikes[0].battery"), true);
+    store.eval("bikes[0].battery = true ");
+    assertShow(store.eval("bikes[0].battery"), true);
     // not yet created for bikes 1
-    assert(store.exec("bikes[1].battery") == null);
+    assert(store.eval("bikes[1].battery") == null);
     // create the entry
-    store.exec("bikes[1].battery = false ");
-    assertShow(store.exec("bikes[1].battery"), false);
-    store.exec("book").add({"category": "children", "name": "sleeping beauty"});
-    assertShow(store.exec("book[4].category"), "children");
+    store.eval("bikes[1].battery = false ");
+    assertShow(store.eval("bikes[1].battery"), false);
+    store.eval("book").add({"category": "children", "name": "sleeping beauty"});
+    assertShow(store.eval("book[4].category"), "children");
   });
 
   test(' try item in string with warning or error in interpreter ', () {
     setLog();
     dynamic book = MapList();
-    book.exec('addAll({ "name":"zaza", "friends": [{"name": "lulu" }]})');
-    // book.exec('addAll({"name":"zaza", "friends": [{"name": "lulu" }]}'); // missing right parenthesis generate a log
-    assert(book.exec('friends[0].name') == "lulu");
+    book.eval('addAll({ "name":"zaza", "friends": [{"name": "lulu" }]})');
+    // book.eval('addAll({"name":"zaza", "friends": [{"name": "lulu" }]}'); // missing right parenthesis generate a log
+    assert(book.eval('friends[0].name') == "lulu");
     assert(book.name == "zaza");
     print(
         '----- this test will generate a warning : ("name" ="zorro" ) but do the job ----- ');
-    book.exec('"name" = "zorro"');
+    book.eval('"name" = "zorro"');
     assert((book.name == "zorro") == true);
   });
 
@@ -157,48 +157,48 @@ void main() {
     dynamic book = MapList(
         '{"name":"zaza", "friends": [{"name": "lulu" , "scores":[10,20,30]}]}');
     // use a relay
-    var interest = book.exec('friends[0].scores');
-    assert(interest.exec('[1]') == 20);
+    var interest = book.eval('friends[0].scores');
+    assert(interest.eval('[1]') == 20);
     // verify that a change affects both
-    interest.exec('[1]=33');
+    interest.eval('[1]=33');
     assert(interest[1] == 33);
     /*
-    interest.exec() with no path returns a Maplist with same root.
+    interest.eval() with no path returns a Maplist with same root.
     It is a different Maplist, but with same pointers to json
     */
-    assert((interest.exec() != interest));
+    assert((interest.eval() != interest));
     // verifying pointers and types
-    assert(interest.exec().json == interest.json);
-    assert((interest.exec().runtimeType == interest.runtimeType));
+    assert(interest.eval().json == interest.json);
+    assert((interest.eval().runtimeType == interest.runtimeType));
   });
 
   test('add and adAll in interpreter', () {
     dynamic root = MapList();
-    root.exec('contacts = []');
-    root.exec('contacts.add({"name":"polo"})');
+    root.eval('contacts = []');
+    root.eval('contacts.add({"name":"polo"})');
 
-    assert(root.exec('contacts.length') == 1);
+    assert(root.eval('contacts.length') == 1);
     // the following will fail on a wrong json
     print('----- this test will generate a warning about json ----');
     root.contacts.last.addAll(null);
-    root.exec(
+    root.eval(
         'contacts.last.addAll({"firstName" : "marco", "birthDate" = "15/09/1254"})');
     // this one is correct
-    root.exec(
+    root.eval(
         'contacts.last.addAll({"firstName" : "marco", "birthDate" : "15/09/1254"})');
-    //assert(root.exec('contacts[last].length') == 3);
-    assert(root.exec('contacts.last.length') == 3);
+    //assert(root.eval('contacts[last].length') == 3);
+    assert(root.eval('contacts.last.length') == 3);
   });
 
   test('combine .last and .length', () {
     dynamic root = MapList(["AA", "BB", "CC", 12]);
-    assert(root.exec('last') == 12);
+    assert(root.eval('last') == 12);
     root = MapList([
       "AA",
       "BB",
       "CC",
       [11, 12, 13]
     ]);
-    assert(root.exec('last.length') == 3);
+    assert(root.eval('last.length') == 3);
   });
 }

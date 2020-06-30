@@ -67,7 +67,7 @@ void main() {
     // test access with dot notation
     assert(root.people[0].name == 'polo');
     // and with interpreter
-    assert(root.exec('people[0].name') == 'polo');
+    assert(root.eval('people[0].name') == 'polo');
     // now if we change in MapList, will we chane in p1 ?
     // use last which is equivalent to [0] for this example
 

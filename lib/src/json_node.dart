@@ -48,7 +48,7 @@ class jsonNode {
   ///   call locate to recurse before returning values
   jsonNode(this.toNode, this.aScript, [this.originalScript]) {
     originalScript ??= aScript;
-    // copy by hand as we cannot do a return jsn or a this=jsn
+    // copy by hand as we cannot do a return jsn or a this=json
     jsonNode jsn = locate();
     toNode = jsn.toNode;
     fromNode = jsn.fromNode;
@@ -63,6 +63,7 @@ class jsonNode {
     if (aScript == '') {
       return this;
     }
+
     // separates around the dots
     var match = reg_scalp_relax.firstMatch(aScript)?.group(1);
     if (match != null) {

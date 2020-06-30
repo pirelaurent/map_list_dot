@@ -38,13 +38,13 @@ void main() {
     assert(root.data[3] == 14);
   });
 
-  test("extends a map to a map by addAll in exec ", () {
+  test("extends a map to a map by addAll in eval ", () {
     // reset
     dynamic car = MapList();
     car.name = "Ford";
     car.color = "blue";
     assert(car.color == "blue");
-    car.exec('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
+    car.eval('addAll({ "price": 5000, "fuel":"diesel","hybrid":false})');
     assert(car.length == 5);
   });
 
@@ -66,17 +66,17 @@ void main() {
      internal map addAll check compatibility
      */
     map = MapList({"name": "toto"});
-    map.exec('addAll({"A": "aa", "B": "bb"})');
+    map.eval('addAll({"A": "aa", "B": "bb"})');
     assert(map.length == 3);
-    assert(map.exec("length") == 3);
-    assert(map.exec("A") == "aa");
+    assert(map.eval("length") == 3);
+    assert(map.eval("A") == "aa");
 
     // caution must be dynamic, var won't work as addAll is not defined in MapList
 
-    map.exec('name = "toto"');
-    map.exec('addAll({"A": "aa", "B": "bb"})');
-    assert(map.exec("length") == 3);
-    assert(map.exec("A") == "aa");
+    map.eval('name = "toto"');
+    map.eval('addAll({"A": "aa", "B": "bb"})');
+    assert(map.eval("length") == 3);
+    assert(map.eval("A") == "aa");
   });
 
   test('add a MapList to a MapList ', () {

@@ -25,7 +25,7 @@ void main() {
       11,
       12,
     ];
-    root.exec('name = [10,11,12,13,]');
+    root.eval('name = [10,11,12,13,]');
     assert(root.name == null, '$root');
   });
 
@@ -33,15 +33,15 @@ void main() {
     dynamic root = MapList({"name": "zaza", "age": 12});
     //root.name[toto]="riri"; // syntax error
     //root.name[0] = "lulu";  // syntax error
-    root.exec('name["toto"]="riri"');
+    root.eval('name["toto"]="riri"');
     //** name["toto"]="riri": index ["toto"] must be applied to a map. null returned
     // and name uncheanged:
     assert(root.name == "zaza");
     //** name[toto]="riri": index [toto] must be applied to a map. null returned
-    root.exec('name[toto]="riri"');
+    root.eval('name[toto]="riri"');
     assert(root.name == "zaza");
     // root.name[0] = "lulu"; cannot be done in code
-    root.exec('name[0]="lulu"');
+    root.eval('name[0]="lulu"');
     //** name[0]="lulu": [0] must be applied to a List. null returned
     assert(root.name == "zaza");
   });
@@ -50,48 +50,48 @@ void main() {
     dynamic root = MapList({"name": "zaza", "age": 12});
     assert(root.name == "zaza");
     //** [255] = 20: [255] must be applied to a List. null returned
-    root.exec(" [255] = 20"); //
+    root.eval(" [255] = 20"); //
 //** '[255]' = 20: [255] must be applied to a List. null returned
-    root.exec(" '[255]' = 20");
-    root.exec('value =666');
-    assert(root.exec('valeur') == null);
+    root.eval(" '[255]' = 20");
+    root.eval('value =666');
+    assert(root.eval('valeur') == null);
     // same with trying to change a value
     // root.name[0] = "lulu"; cannot be done in code
     assert(root.name == "zaza");
     // now with a MapList
     root = MapList([1, 2, 3, 4]);
-    root.exec(" [255] = 20");
+    root.eval(" [255] = 20");
     //'[255]' = 20: wrong index [255]. null returned
-    root.exec(" '[255]' = 20");
+    root.eval(" '[255]' = 20");
   });
 
   test('trap out of range in exec', () {
     dynamic root = MapList([0, 1, 2, 3, 4]);
     // calling a key on a list
     //print(root.price);  ** Naming error: trying to get a key "price" in a List. Null returned
-    assert(root.exec('price[200]') == null);
+    assert(root.eval('price[200]') == null);
 
-    assert(root.exec('[2]') == 2);
+    assert(root.eval('[2]') == 2);
     assert(root[2] == 2);
 
     assert(root[200] == null);
-    assert(root.exec('[200]') == null);
+    assert(root.eval('[200]') == null);
    // wrong index 200 on the List<int> [0, 1, 2, 3, 4]
     dynamic book = MapList({
       "name": "test",
       "price": [0, 1, 2, 3, 4]
     });
-    assert(book.exec('price[200]') == null);
+    assert(book.eval('price[200]') == null);
     // wrong index 200 on the List<int> [0, 1, 2, 3, 4]
   });
 
   test(' wrong function calls on clear  ', () {
     dynamic root = MapList([0, 1, 2, 3, 4]);
-    root.exec('clearAll()');
+    root.eval('clearAll()');
     //** unknown function : clearAll() . No action done
-    root.exec('clear');
+    root.eval('clear');
     //try to access [] as a Map with key clear. null returned
-    root.exec('clear()'); // ok
+    root.eval('clear()'); // ok
     assert(root.length == 0);
   });
 
@@ -102,28 +102,28 @@ void main() {
      then addAll the data : root.addAll([0, 1, 2, 3, 4])
    */
     dynamic root = MapList(<dynamic>[0, 1, 2, 3, 4]);
-    root.exec('[11,12,13]');
+    root.eval('[11,12,13]');
     print(root);
 
 
-    root.exec('video.name = "Max"');
+    root.eval('video.name = "Max"');
     //try to access [0, 1, 2, 3, 4] as a Map with key video. null returned
     //try to apply [video.name = "Max"] on a: Null node. No action done
-    root.exec('root.last');
+    root.eval('root.last');
     // try to access [0, 1, 2, 3, 4] as a Map with key root. null returned
-    root.exec('last'); //ok
-    root.exec('[last]'); // allowed
+    root.eval('last'); //ok
+    root.eval('[last]'); // allowed
 
-    // ** warning : [11,12,13]. Calling set without = .Be sure it's not a get or an exec .no action done
+    // ** warning : [11,12,13]. Calling set without = .Be sure it's not a get or an eval .no action done
 
-    root.exec('= [11,12,13]');
+    root.eval('= [11,12,13]');
     //try to apply [= [11,12,13]] on a: Null node. No action done
 
-    root.exec('add({"name":"polo", "age":33})');
-    dynamic x = root.exec('last');
+    root.eval('add({"name":"polo", "age":33})');
+    dynamic x = root.eval('last');
     assert(x.age == 33);
-    assert(root.exec('last').age == 33);
-    assert(root.exec('last.age') == 33);
+    assert(root.eval('last').age == 33);
+    assert(root.eval('last.age') == 33);
 
   });
 
@@ -134,10 +134,10 @@ void main() {
       }
     });
 
-    root.exec('squad.length = 2');
+    root.eval('squad.length = 2');
     //unable to change length on a Map squad.length = 2 . no action done
     //as map is not <String, dynamic> in original set up, this will fail:
-    root.exec('car = 22');
+    root.eval('car = 22');
     /*
     unable to assign car = 22. Think about <String,dynamic> Maps and <dynamic> Lists. No action done.
     type 'int' is not a subtype of type 'Map<String, List<int>>' of 'value'
@@ -145,14 +145,14 @@ void main() {
 
     // now recreate same with an interpreted String : will create a correct json
     root = MapList('{"squad": {"members": [1, 2, 3, 4]}}');
-    root.exec('car = 22');
+    root.eval('car = 22');
     // now change the type of content
-    root.exec('car = {"name":"Ford", "color":"white"}');
+    root.eval('car = {"name":"Ford", "color":"white"}');
     // and extends
-    root.exec(
+    root.eval(
         'car.addAll({ "price": 5000, "fuel":"diesel","hybrid":false})'); //add or merge with function addAll
 
-    root.exec('squad."name" = "Super hero squad"');
+    root.eval('squad."name" = "Super hero squad"');
     // Avoid to use quotes around notation : "name" in squad."name" = "Super hero squad"
     assert(root.squad.name == "Super hero squad");
   });
@@ -163,8 +163,8 @@ void main() {
         "members": [1, 2, 3, 4]
       }
     });
-    root.exec('car = 12');
+    root.eval('car = 12');
     assert(root.car == 12);
-    assert(root.exec('car') == 12);
+    assert(root.eval('car') == 12);
   });
 }

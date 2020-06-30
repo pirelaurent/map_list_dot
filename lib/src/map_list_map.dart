@@ -3,8 +3,10 @@ import 'package:map_list_dot/map_list_dot.dart';
 /// extends MapList to offer Map methods
 
 class MapListMap extends MapList {
-  //with MapMixin {
+
   MapListMap.json(dynamic json) : super.json(json);
+  // default constructor
+  MapListMap([dynamic json]):super.json(json??={});
 
   int get length => json.length;
 
@@ -13,6 +15,8 @@ class MapListMap extends MapList {
   operator []=(dynamic key, dynamic value) {
     json[key] = value;
   }
+
+
 
   ///
   /// Allows to iterate on keys on a MapListMap
@@ -64,7 +68,7 @@ class MapListMap extends MapList {
 
   /// method used whe a call by code
   /// similar exists at MapList level for interpreter
-  /// done by hand to enforce type compatibility
+  /// done by hand as json could be dyn,dyn and we are String,dyn
   ///
   dynamic addAll(dynamic something) {
     // add new entries to the current map
@@ -73,9 +77,6 @@ class MapListMap extends MapList {
       something.forEach((key, value) {
         wrapped_json[key] = value;
       });
-      // we don't use addAll standard
-      // as it check that the new entries are exactly the same type as the current
-      //this.json.addAll(something);
 
       return true;
     }

@@ -62,20 +62,20 @@ void main() {
     assert( jsonNode(root.json,'["show"]["name"]').value == 'quiz on video');
     assert(jsonNode(root.json,'show.name').toNode == 'quiz on video');
     // now check access through MapList
-    assert(root.exec('show.name') == "quiz on video");
-    assert(root.exec('show.videos[1].name')=='japanese fashion');
-    assert(root.exec('show.videos[1].questions[1].name')=='games');
-    assert(root.exec('show.videos[1].questions[1].options[2].answer')=='go');
+    assert(root.eval('show.name') == "quiz on video");
+    assert(root.eval('show.videos[1].name')=='japanese fashion');
+    assert(root.eval('show.videos[1].questions[1].name')=='games');
+    assert(root.eval('show.videos[1].questions[1].options[2].answer')=='go');
   });
 
   test("access with standard notation in interpreter", () {
     dynamic root = MapList(jsonFromYaml);
-    assert(root.exec('["show"]["name"]') == "quiz on video");
-    assert(root.exec('["show"]["videos"][1]["name"]') == "japanese fashion");
+    assert(root.eval('["show"]["name"]') == "quiz on video");
+    assert(root.eval('["show"]["videos"][1]["name"]') == "japanese fashion");
     assert(
-        root.exec('["show"]["videos"][1]["questions"][1]["name"]') == "games");
+        root.eval('["show"]["videos"][1]["questions"][1]["name"]') == "games");
     assert(
-        root.exec(
+        root.eval(
             '["show"]["videos"][1]["questions"][1]["options"][2]["answer"]') ==
         "go");
   });
@@ -87,11 +87,11 @@ void main() {
      */
     dynamic root = MapList(json.decode(json.encode(yamlStructure)));
     // --- now the same with a dot notation
-    //print(root.exec('show').runtimeType);
-    assert(root.exec('show').name =="quiz on video");
-    assert(root.show.exec('videos[1]["name"]')== "japanese fashion");
-    assert(root.show.exec('["videos"][1]').questions[1].name == "games");
-    assert(root.show.videos[1].exec('questions[1]').options[2].answer == "go");
-    assert(root.show.videos[1].exec('questions[1].options[2]').answer == "go");
+    //print(root.eval('show').runtimeType);
+    assert(root.eval('show').name =="quiz on video");
+    assert(root.show.eval('videos[1]["name"]')== "japanese fashion");
+    assert(root.show.eval('["videos"][1]').questions[1].name == "games");
+    assert(root.show.videos[1].eval('questions[1]').options[2].answer == "go");
+    assert(root.show.videos[1].eval('questions[1].options[2]').answer == "go");
   });
 }

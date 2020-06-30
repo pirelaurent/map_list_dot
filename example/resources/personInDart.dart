@@ -8,7 +8,7 @@ var personInDart = r"""
   {
     "name": "Polo",
     "firstName": "marco",
-    "birth_Date": {
+    "birthDate": {
       "day": 15,
       "month": 9,
       "year": 1254
@@ -27,7 +27,7 @@ var personInDart = r"""
   {
     "name": "Magellan",
     "firstName": "Fernando",
-    "birth_Date": {
+    "birthDate": {
       "day": 15,
       "month": 3,
       "year": 1480
