@@ -42,7 +42,7 @@ void main() {
     root = MapList();
     root.data = [11, 12, 13];
     assert(root.data[2] == 13);
-    root.exec('data.add(31)');
+    root.eval('data.add(31)');
     assert(root.data[3] == 31);
     // enlarge a List : create nulls
     root.data.length = 10;
@@ -67,13 +67,13 @@ void main() {
     assert(root.data[2] == 13);
     root.data.add("hello");
     assert(root.data[3] == "hello");
-    root.exec('data.add(15.5)');
+    root.eval('data.add(15.5)');
     assert(root.data[4] == 15.5);
     // now add a map
     root.data.add({"name": "polo", "age": 27});
     assert(root.data[5] is MapListMap);
     // interpreter
-    root.exec('data.add({"name": "pili", "age":20})');
+    root.eval('data.add({"name": "pili", "age":20})');
     assert(root.data[6] is MapListMap);
     assert(root.data[5].name == "polo");
     assert(root.data[6].name == "pili");
@@ -87,7 +87,7 @@ void main() {
     root.results.add({"elapsed_time": 60, "temperature": 40});
     assert(root.results[1].temperature == 40);
     // script
-    root.exec('results.add({"elapsed_time": 120, "temperature": 58  })');
+    root.eval('results.add({"elapsed_time": 120, "temperature": 58  })');
     assert(root.results[2].temperature == 58);
   });
 
@@ -103,7 +103,7 @@ void main() {
     root.results[1].time = "12:58:00";
     assert(root.results[1].time is String, '${root.results[1].time}');
     // script
-    root.exec('results[1].duration = "01:00:00"');
+    root.eval('results[1].duration = "01:00:00"');
     assert(root.results[1].duration is String, '${root.results[1].duration}');
   });
 
@@ -174,7 +174,7 @@ void main() {
 // a creation of data is done with an equal at the right level. Cannot anticipate.
   test('multi-level data creation in script',(){
     dynamic Bb = MapList();
-    Bb.exec("car.color.option = 'metal'");
+    Bb.eval("car.color.option = 'metal'");
     print(Bb);
   });
 */

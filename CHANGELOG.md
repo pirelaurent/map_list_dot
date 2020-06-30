@@ -12,3 +12,4 @@ Add examples with class on the fly
 Review read.me  
 Remove CRLF in inline String with several lines between ''' in dart
 privilege MapListMap and MapListList constructors to be more controlled
+replace exec by eval

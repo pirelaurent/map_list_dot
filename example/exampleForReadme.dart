@@ -1,5 +1,4 @@
 import 'package:map_list_dot/map_list_dot.dart';
-import './example3Messages.dart';
 
 /// In this example, we work a level higher with a knowledge base as root
 /// In this base, we add new collections, one is myFriends
@@ -28,10 +27,10 @@ void main() {
    */
   dynamic myKB = MapListMap();
   // execute the scripts
-  for (String line in script) myKB.exec(line);
+  for (String line in script) myKB.eval(line);
   print( myKB.persons.last.cards.phone);
   // or still in script
-  print(myKB.exec('persons.last.cards.phone'));
+  print(myKB.eval('persons.last.cards.phone'));
 
 
 

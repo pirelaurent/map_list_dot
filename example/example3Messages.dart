@@ -1,11 +1,15 @@
-// don't leave comment in the message
+///
+/// Only a bunch of pseudo text messages
+/// Traps already practised :
+///   leaving // comments in the message
+///   leaving dart continuation symbol , at the end of a collection
 
 String fakeMessage1() {
   return
   '''
   persons.add({
   "name": "Polo",
-  "firstName": "marco",
+  "firstName": "Marco",
   "birthDate": {
   "day": 15,
   "month": 9,

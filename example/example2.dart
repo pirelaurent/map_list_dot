@@ -1,26 +1,31 @@
 
 import 'package:map_list_dot/map_list_dot.dart';
 
-
-/// quick prototype with an intermediary class Person with methods
-/// Choose a first level as ancestor : either a MapListList either a MapListMap
-/// the two default constructors are similar : just wrap a json
+/// This new example defines an intermediary class Person to allow methods
+/// But the properties of Person are still laying in a dynamic json
+/// And accessed in dot notation as classical properties
+/// The class just extends a MapListMap to profit of dot notation
+///
 class Person extends MapListMap{
   Person(some):super(some);
   /*
     the difference with example1 is that
     we replace the instance new data age by a method in the class Person.
-    'me' is 'this' declared as dynamic in order to allow dot notation.
+    'me' is 'this' declared as dynamic in order to allow dot notation inside the class .
    */
   int get age {
     return (DateTime.now().year - me.birthDate.year);
   }
+
   // of course any other method can be designed
   bool isImportant(int threshold){
     return (me.cards.length > threshold);
   }
 }
 
+/// create persons  .
+/// Think about using dynamic to allow compiler to accept unknown properties
+///
 void main(){
   // set a logger
   Logger.root.level = Level.ALL; // defaults to Level.INFO
@@ -45,7 +50,10 @@ void main(){
 
 
  print('${p1.firstName} ${p1.name} will have now ${p1.age} years');
- // now add some contacts without creating new class
+ /*
+   now add some contacts with direct inline structure
+   without creating a specific class for that
+  */
   p1.cards.add({
     "mail": "ma.po.lo@china.com",
     "phone": "+99 01 02 03 04 05"
@@ -58,6 +66,9 @@ void main(){
   p1.cards.add( {
     "mail": "polo@water.com",
      });
+  /*
+   same as example 1 : use dot notation and loops
+   */
 
   print('${p1.firstName} ${p1.name} can be contacted by ${p1.cards.length} ways:');
   for (var aCard in p1.cards ){

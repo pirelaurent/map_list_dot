@@ -125,38 +125,38 @@ void main() {
   root = MapList();
   // execute previous script to set the data
   for (var aStep in scriptList) {
-    root.exec(aStep);
+    root.eval(aStep);
   }
 
   print('---------- some dot notation samples in script----------');
   String script;
   script='';
-  print("root.exec('$script') -> \n\t${root.exec(script)}");
+  print("root.eval('$script') -> \n\t${root.eval(script)}");
   script='contacts';
-  print("root.exec('$script') -> \n\t  ${root.exec(script)}");
+  print("root.eval('$script') -> \n\t  ${root.eval(script)}");
   script='contacts[0]';
-  print("root.exec('$script') -> ${root.exec(script)}");
+  print("root.eval('$script') -> ${root.eval(script)}");
   script='contacts[0].interest';
-  print("root.exec('$script') -> ${root.exec(script)}");
+  print("root.eval('$script') -> ${root.eval(script)}");
   script='contacts[0].interest[1]';
-  print("root.exec('$script') -> ${root.exec(script)}");
+  print("root.eval('$script') -> ${root.eval(script)}");
   print('-------------------------------------------------');
 
 /*
  verifying data
  Better to do that in code, but try to use interpreter too.
  */
-  print('We already have ${root.exec('contacts.length')} friends :');
+  print('We already have ${root.eval('contacts.length')} friends :');
 /*
   loop on a MapList is restricted to indices
  */
-  for (int i = 0; i < root.exec('contacts.length'); i++) {
+  for (int i = 0; i < root.eval('contacts.length'); i++) {
     // 'i' is not known by interpreter, so must convert before call :
-    dynamic someone = root.exec('contacts[$i]');
-    // cannot do root_i.exec('someone.interest'); as someOne is in code.
+    dynamic someone = root.eval('contacts[$i]');
+    // cannot do root_i.eval('someone.interest'); as someOne is in code.
     // either use full chain 'like below,
-    // either change origin of intepreter in code : someone.exec('interest');
-    if (root.exec('contacts[$i].interest') != null) {
+    // either change origin of intepreter in code : someone.eval('interest');
+    if (root.eval('contacts[$i].interest') != null) {
       print('\t${someone.name} loves:');
       for (var anInterest in someone.interest) print('\t\t${anInterest}');
     }

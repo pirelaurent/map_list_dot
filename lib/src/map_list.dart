@@ -105,7 +105,7 @@ class MapList {
   ///   the last step returns a data (ie getter)
   /// else the last step set the data (ie setter) and return nothing.
   ///
-  /// see later that exec reuses this internal mechanism to share code.
+  /// see later that eval reuses this internal mechanism to share code.
 
   @override
   dynamic noSuchMethod(Invocation invocation) {
@@ -223,14 +223,14 @@ class MapList {
     return [lhs, rhs];
   }
 
-  /// exec demands arrives here in one big string
+  /// eval demands arrives here in one big string
   /// A front part is isolated and code walk through to find position
   /// Once found, depending of an equal sign, returns a data or set a data
   ///
-  /// Empty exec script will return current position
+  /// Empty eval script will return current position
   /// solo index '[1]' will return the [1] of current (if list)
   ///
-  dynamic exec([String aScript = '']) {
+  dynamic eval([String aScript = '']) {
     // if a call with empty parenthesis
     aScript ??= '';
     aScript = aScript.trim();

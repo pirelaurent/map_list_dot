@@ -36,7 +36,7 @@ root.a.b.c[2].d = 33
 ### how dot notation works in interpreter
 First MapList analyse the string with some regex to separate Left Hand Side and (optionally) the Right Hand Side around an  = .
 ```
-root.exec('a.b.c[2].d["price"] = 33'); // LHS = 'a.b.c[2].d["price"]', RHS = '33'
+root.eval('a.b.c[2].d["price"] = 33'); // LHS = 'a.b.c[2].d["price"]', RHS = '33'
 ```
 #### JsonNode
 The access in interpreted don't reuse the noSuchMethod of MapList, but use a specific JsonNode class.  
@@ -45,7 +45,7 @@ A JsonNode instance is constructed with an initial json (the wrapped one of the 
 A JsonNode acts as a graph segment :  ***fromNode ---edge---> toNode***.  
 When it is constructed, if recursively constructs successors that peels the path one step each, up to an empty one.  
 As it is a constructor call, it returns itself and each caller set its segment as the received one. The final node pop up from the recursion.  
-So, when the construction is done, the final segment is already in place and MapList, the initial caller, have its result.  
+So, when the construction is done, the final segment is already in place and MapList, the initial caller, is at result.  
 If something is wrong on the road trip in path, the JsonNode stops to chain and returns its current segment with a toNode null.  
 An error in interpreter logs a Warning but don't throw an error.  
 This can be changed looking for log.warning in the code.
@@ -74,9 +74,9 @@ book.name = "zaza"
 book.set('name = "zaza"');   // not 'book.name...
 ```
 Don't confuse json key:value with a lhs = rhs  
-*book.exec('"name":"zaza"')* will fail.  
-Use **dart book.exec('name = "zaza"');**  
-or *book.exec('addAll({"name":"zaza"})')*
+*book.eval('"name":"zaza"')* will fail.  
+Use **dart book.eval('name = "zaza"');** is ok  
+or *book.eval('addAll({"name":"zaza"})')*  ok too.
 
 ### Blackboard usage
 A blackboard is a shared place where you can pin any kind of information to share with others.  
@@ -87,11 +87,13 @@ dynamic blackboard = MapList();
 You can then fill in this blackboard with code or with string messages in a free way.
 Every query on data will rely on the unique blackboard entry point:
 ``` dart
-print(blackboard.exec('store.book[1].isbn'));
-if (blackboard.exec('squad.members[2].powers.Radiation resistance') != null)...
+print(blackboard.eval('store.book[1].isbn'));
+if (blackboard.eval('squad.members[2].powers.Radiation resistance') != null)...
 ```
 ####  Further work
 This interpreter is limited to get and set data on structures made of maps, lists and native data.  
 It's not a DSL with variables, it has no operators, no functions and so one. Be modest.
 #### Planned enhancements
 Enhance the grammar to help to discover early wrong syntax.
+Will add comparison to prepare some rule engine.
+
