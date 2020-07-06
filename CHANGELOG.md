@@ -10,6 +10,7 @@ All unit tests ok
 ## 0.1.1
 Add examples with class on the fly  
 Review read.me  
-Remove CRLF in inline String with several lines between ''' in dart
-privilege MapListMap and MapListList constructors to be more controlled
-replace exec by eval
+Remove CRLF in inline String with several lines between ''' in dart.  
+privilege MapListMap and MapListList constructors to be more controlled.  
+replace exec by eval.
+## 0.1.2

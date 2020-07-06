@@ -4,7 +4,7 @@ import 'dart:collection';
 /// extends MapList to wrap List methods
 ///
 class MapListList extends MapList with IterableMixin {
-  MapListList.json([dynamic json]) : super.json(json??=[]);
+  MapListList.json([dynamic json]) : super.json(json ??= []);
 
   @override
   int get length => json.length;
@@ -76,10 +76,13 @@ class MapListList extends MapList with IterableMixin {
 
   dynamic addAll(dynamic something) {
     if (something is MapListList) something = something.json;
-   wrapped_json.addAll(something);
+    wrapped_json.addAll(something);
     return true;
   }
-
+  /// relay for contains in a List
+  bool contains(var searched){
+    return (wrapped_json.contains(searched));
+  }
   ///toString is not inherited from MapList, maybe due to mixin
   @override
   String toString() {
@@ -107,4 +110,5 @@ class MapListListIterator implements Iterator {
   bool moveNext() {
     return internal.moveNext();
   }
+
 }

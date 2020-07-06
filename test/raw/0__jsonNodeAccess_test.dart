@@ -1,4 +1,4 @@
-//import 'package:map_lib_dot/src/map_list.dart';
+
 import 'package:map_list_dot/map_list_dot.dart';
 import 'package:test/test.dart';
 
@@ -41,7 +41,6 @@ void main() {
   print(jsonNode(aJson, '[2].newData'));
   print(jsonNode(aJson, '[0]'));
   */
-
 
     assert(jsonNode(aJson, '[0][1]').value == 2);
     assert(jsonNode(aJson, '[2].B').value == "BB");
@@ -139,5 +138,4 @@ void main() {
     // if not possible to progress, jsonNode cuts asap like above
     assert(jsonNode(aJson, 'squad.wrongMembers.length').value == null);
   });
-
 }

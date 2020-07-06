@@ -76,7 +76,7 @@ void main() {
 
     assert(root[200] == null);
     assert(root.eval('[200]') == null);
-   // wrong index 200 on the List<int> [0, 1, 2, 3, 4]
+    // wrong index 200 on the List<int> [0, 1, 2, 3, 4]
     dynamic book = MapList({
       "name": "test",
       "price": [0, 1, 2, 3, 4]
@@ -105,7 +105,6 @@ void main() {
     root.eval('[11,12,13]');
     print(root);
 
-
     root.eval('video.name = "Max"');
     //try to access [0, 1, 2, 3, 4] as a Map with key video. null returned
     //try to apply [video.name = "Max"] on a: Null node. No action done
@@ -124,7 +123,6 @@ void main() {
     assert(x.age == 33);
     assert(root.eval('last').age == 33);
     assert(root.eval('last.age') == 33);
-
   });
 
   test('more trapped bad assignments ', () {

@@ -3,10 +3,9 @@ import 'package:map_list_dot/map_list_dot.dart';
 /// extends MapList to offer Map methods
 
 class MapListMap extends MapList {
-
   MapListMap.json(dynamic json) : super.json(json);
   // default constructor
-  MapListMap([dynamic json]):super.json(json??={});
+  MapListMap([dynamic json]) : super.json(json ??= {});
 
   int get length => json.length;
 
@@ -15,8 +14,6 @@ class MapListMap extends MapList {
   operator []=(dynamic key, dynamic value) {
     json[key] = value;
   }
-
-
 
   ///
   /// Allows to iterate on keys on a MapListMap

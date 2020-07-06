@@ -1,17 +1,16 @@
-
-
 import 'package:test/test.dart';
-void main (){
-    test(' if necessary verify regexp ',()
-    {print(r"""
+
+void main() {
+  test(' if necessary verify regexp ', () {
+    print(r"""
     *************************************************************************************
     to test regExp of MapList and Json_getNode use https://regex101.com/ (thanks to them).
       You will find in this source within comments some strings to test on line.    
     *************************************************************************************  
-    """
-    );});
+    """);
+  });
 
-    /* to test = sign remaining with reg_clean_out_assignment
+  /* to test = sign remaining with reg_clean_out_assignment
 squad."name" = "Super hero squad"
 squad.name = "super"
 squad["name"] = "super";
@@ -27,9 +26,4 @@ squad."name" = "Super hero squad"
 /*
 
  */
-
-
-
-
-
 }

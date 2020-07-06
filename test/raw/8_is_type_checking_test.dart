@@ -11,7 +11,6 @@ void assertShow(var what, var expected) {
 }
 
 void main() {
-
   // set a logger
   Logger.root.level = Level.ALL; // defaults to Level.INFO
   Logger.root.onRecord.listen((record) {
@@ -52,10 +51,8 @@ void main() {
     //root = MapList({"members": [ { "name": "Bourne", "age": 33 }]});
 
     assert((root is MapListMap) && (root.json is Map));
-    assert(
-        (root.members is MapListList) && (root.members.json is List));
-    assert((root.members[0] is MapListMap) &&
-        (root.members[0].json is Map));
+    assert((root.members is MapListList) && (root.members.json is List));
+    assert((root.members[0] is MapListMap) && (root.members[0].json is Map));
     // check using pointers, not copies
     dynamic firstMember = root.members[0];
     assert(firstMember.json == root.eval("members[0]").json);

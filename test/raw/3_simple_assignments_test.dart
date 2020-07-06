@@ -39,7 +39,7 @@ void main() {
     squad.eval('formed = 2016');
     squad.eval('active = true');
     squad.eval('score = 38.5');
-
+print(squad);
     assert(squad.homeTown == "Metro City");
     assert(squad.formed == 2016);
     assert(squad.active);

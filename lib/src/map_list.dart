@@ -53,7 +53,8 @@ class MapList {
   /// real common constructor behind the factory
   /// we enforce json dynamic types to avoid later error
   MapList.json(dynamic jsonInput) {
-    if (jsonInput is String) json = convert.json.decode(convert.json.encode(jsonInput));
+    if (jsonInput is String)
+      json = convert.json.decode(convert.json.encode(jsonInput));
     json = jsonInput;
   }
 
@@ -70,8 +71,10 @@ class MapList {
   bool containsKey(String aKey) {
     return false;
   }
+
   /// as we want to use the dot notation in code, we need a dynamic
-  dynamic get  me => this;
+  dynamic get me => this;
+
   // notice early if we are on set or a get
   bool setter;
 
@@ -183,7 +186,8 @@ class MapList {
       RegExp(r'''(\{.*\})|(['"][\w=\s\[\]\d]*["'])''');
 
   /// identify json candidates : begin and end by [ ] or { }
-  static final reg_mapList = RegExp('''^[\\[\\{].*[\\}\\]]''');
+  static final reg_mapList = RegExp('''^[{\\[].*[}\\]]''');
+    //('''[\[\{](.*)[\}\]]''');
 
   /// at the end of a script could be a function
   static final reg_find_function = RegExp(r'''(.*\(.*\))''');
@@ -196,6 +200,9 @@ class MapList {
 
   /// find remove with parameter
   static final reg_check_remove = RegExp(r'''^remove\s*?\((.*)\)''');
+
+  /// find contains with parameter
+  static final reg_check_contains = RegExp(r'''^contains\s*?\((.*)\)''');
 
   /// find clear  with no parameter
   static final reg_check_clear = RegExp(r'''^clear\s*?\((\s*)\)''');
@@ -238,8 +245,8 @@ class MapList {
     originalScript = aScript;
     // some inLine '''xxx''' reformated by dart
     // can leave CR or LF harmful for regex
-    aScript= aScript.replaceAll('\n','');
-    aScript= aScript.replaceAll('\r','');
+    aScript = aScript.replaceAll('\n', '');
+    aScript = aScript.replaceAll('\r', '');
     /*
      split into parts ending by . or =
      if no = can leave a last name like boof.price
@@ -255,15 +262,26 @@ class MapList {
     }
     // now evaluate left hand side
     var lhs = result[0].trim();
+
+    // name of last node  without "
+    var lastNode = lhs.split('.').last.replaceAll('"','');
     dynamic node = jsonNode(wrapped_json, lhs, originalScript);
     // advanceEdge is the last part execute
     /*print(
-        ' once back form json: $node  ${node.toNode is List} ${node.toNode is Map} ${node.edge is String} $setter');*/
-
+        'PLA267 once back form json: $node  ${node.toNode is List} ${node.toNode is Map} ${node.edge is String} $setter');*/
     if ((node.edge == null) && (originalScript != '')) {
       log.warning('unable to use path  $originalScript. null returned');
       return null;
     }
+    /*
+     if destination is null, could be an assignment ,
+     but this is authorized only at the end of composite name.
+     */
+    if((node.toNode == null)  && (node.edge != lastNode )){
+      log.warning('unknown path in  $originalScript. null returned');
+      return null;
+    }
+
     /*
      is there some function call in the last edge ?
      last edge could be an int if [1] at the end
@@ -272,7 +290,7 @@ class MapList {
       var foundFunc = reg_find_function.firstMatch(node.edge);
       if (foundFunc != null) return execFunction(node);
     }
-    // get something
+    // getter
     if (!setter) {
       if (node.toNode == null) {
         /*
@@ -290,11 +308,15 @@ class MapList {
         if (residu == 'remove') {
           log.warning('malformed remove in $originalScript');
         }
+
+        log.warning('unable to use path  $originalScript. null returned');
         return null;
-      } // could have malformed function
+      }
+
       if (node.toNode is List) {
         return MapListList.json(node.toNode);
       } //----> exit
+
       if (node.toNode is Map) return MapListMap.json(node.toNode); //----> exit
       return node.toNode;
     } else {
@@ -328,6 +350,7 @@ class MapList {
   /// if the json is not valid, returns a null and log a warning error
   ///
   dynamic adjustParam(var param) {
+    print('PLA353 adjustParam : $param');
     if (param == null) return null;
     // if between ' or between " extract and leaves as String
     if ((param[0] == '"') && param.endsWith('"')) {
@@ -346,15 +369,40 @@ class MapList {
     /*
    if enclosed by  [ ] or { } consider it's a json string to try
    */
-    var found = reg_mapList.firstMatch(param);
-    if (found != null) {
-      var result = trappedJsonDecode(found.group(0));
 
+    var found = reg_mapList.firstMatch(param);
+    /*
+     must substitute dot notation by result before calling json
+     */
+    if (found != null) {
+      var collect = found.group(0);
+      collect = adjustVar(collect);
+      var result = trappedJsonDecode(collect);
+      print('PLA380----- $result');
       return result;
     }
-    // nothing special returns original
-    return param;
+    print('PLA384 reste $param to eval');
+    var result = eval(param);
+
+    return result;
   }
+ ///
+  /// replace named variables by their result
+  static final reg_compositeVar = RegExp('''(["'].*["'])|(\\w[\\w]*(([.]\\w*)|(\\[\\d*\\]))*)''');
+  // les "xx"  are group1 , only composite names are group2
+  String adjustVar(var someCollect){
+    var found = reg_compositeVar.allMatches(someCollect);
+
+    for (var aMatch in found){
+      var variable = aMatch.group(2);
+      if (variable != null) {
+        var result = eval(variable);
+        someCollect = someCollect.replaceAll(variable, result.toString());
+      }
+    }
+    return someCollect;
+  }
+
 
   ///
   /// when found in script some func( ) , execute here
@@ -381,6 +429,7 @@ class MapList {
     var foundAddAllParam = reg_check_addAll.firstMatch(aFunction)?.group(1);
     if (foundAddAllParam != null) {
       dynamic dataToSet = adjustParam(foundAddAllParam);
+      //print('PLA408 datatoset:$aFunction \n$dataToSet \n $foundAddAllParam');
       if (dataToSet == null) {
         return false;
       } else {
@@ -413,11 +462,23 @@ class MapList {
       dynamic dataToRemove = adjustParam(foundRemoveParam);
       return node.toNode.remove(dataToRemove);
     }
+
+    //----- function contains(something)
+    var foundContainsParam = reg_check_contains.firstMatch(aFunction)?.group(1);
+    if (foundContainsParam != null) {
+      print('PLA426 in contains : $foundContainsParam');
+      dynamic dataToContains = adjustParam(foundContainsParam);
+      return node.toNode.contains(dataToContains);
+    }
     // function clear has been done in json part
 
     log.warning('** unknown function : $aFunction . No action done ');
     return false;
   }
+
+
+
+
 
   /// special case with length =
   ///

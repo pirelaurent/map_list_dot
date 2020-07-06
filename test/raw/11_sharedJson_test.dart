@@ -1,9 +1,8 @@
 import 'package:map_list_dot/map_list_dot.dart';
 import 'package:test/test.dart';
 
-
 class Person {
-  Map<String, dynamic> json_data ={};
+  Map<String, dynamic> json_data = {};
 
   get name => json_data["name"];
 
@@ -16,7 +15,7 @@ class Person {
     json_data["age"] = anAge;
   }
   @override
-  String toString(){
+  String toString() {
     return json_data.toString();
   }
 }
@@ -53,9 +52,6 @@ void main() {
 
 
    */
-
-
-
 
   test('constructor with a json entry shared with program', () {
     var p1 = Person('polo', 33);
