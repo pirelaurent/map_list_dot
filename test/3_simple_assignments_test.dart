@@ -102,7 +102,7 @@ void main() {
 
   test("deep changes mixed with interpreter and code from file ", () {
     var testFile = path.join(
-        Directory.current.path, 'test', 'models', 'json', 'super_heroes.json');
+        Directory.current.path, 'models', 'json', 'super_heroes.json');
     var file = File(testFile);
     var jsonString = file.readAsStringSync();
     dynamic squad = MapList(jsonString);

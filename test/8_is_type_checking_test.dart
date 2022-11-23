@@ -19,7 +19,7 @@ void main() {
   });
 
   var testFile = path.join(
-      Directory.current.path, 'test', 'models', 'json', 'super_heroes.json');
+      Directory.current.path, 'models', 'json', 'super_heroes.json');
   var file = File(testFile);
   var jsonString = file.readAsStringSync();
   dynamic root = MapList(jsonString);

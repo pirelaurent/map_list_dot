@@ -13,3 +13,6 @@ Review read.me
 Remove CRLF in inline String with several lines between ''' in dart
 privilege MapListMap and MapListList constructors to be more controlled
 replace exec by eval
+## 0.1.2
+Adjust dart packages to newer versions 
+Replace some assert by assertShow in test to see warning

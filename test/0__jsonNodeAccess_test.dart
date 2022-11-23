@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 
 /*
 
-  Generalize assert to show what is the received response against the expected
+  Generalize assert to show what is the received response against the expected if wrong
 
  */
 void assertShow(var what, var expected) {
@@ -52,8 +52,8 @@ void main() {
     assert(jsonNode(aJson, '[2].length').value == 2);
     // wrong index with error message
     print(
-        '----- this test will generate a warning wrong index 3 and returns null -----');
-    assert(jsonNode(aJson, '[0][3]').value == null);
+        '----- this test will generate a warning "wrong index 3" and returns null -----');
+    assertShow(jsonNode(aJson, '[0][3]').value,null);
     // wrong index but without error message using nullable
     assert(jsonNode(aJson, '[0][3]?').value == null);
   });
@@ -105,15 +105,15 @@ void main() {
       2,
       [11, 12, 13],
       {"A": "AA", "B": "BB"},
-      4
+      4 
     ];
     assert(jsonNode(aJson, 'last').value == 4);
     assert(jsonNode(aJson, '[2].last').value == 13);
     print('----- these tests will generate 2 warning about "last" usage -----');
     // calling "last" must be on a List. Here is on a int . null returned
-    assert(jsonNode(aJson, '[1].last').value == null);
+    assertShow(jsonNode(aJson, '[1].last').value,null);
     // same warning on a map
-    assert(jsonNode(aJson, '[3].last').value == null);
+    assertShow(jsonNode(aJson, '[3].last').value , null);
   });
 
   test('json with length ', () {
@@ -125,19 +125,20 @@ void main() {
     assert(jsonNode(aJson, 'squad.members.length').value == 4);
   });
 
-  test('jsonNode unexisting data : value null but first part ok ', () {
+  test('jsonNode unexisting data : further value null but first part accepted ', () {
     var aJson = {
       "squad": {
         "members": [1, 2, 3, 4]
       }
     };
-    // unknown: result null but leave a chance to create if necessary
+    // unknown: return null , not error : leave a chance to create if necessary
     //(map){members: [1, 2...  --- wrongMembers -> (Null) null
     assert((jsonNode(aJson, 'squad.wrongMembers').fromNode is Map));
     assert(jsonNode(aJson, 'squad.wrongMembers').edge == "wrongMembers");
     assert(jsonNode(aJson, 'squad.wrongMembers').value == null);
     // if not possible to progress, jsonNode cuts asap like above
     assert(jsonNode(aJson, 'squad.wrongMembers.length').value == null);
+    assert(jsonNode(aJson, 'squad.wrongMembers[0]').value == null);
   });
 
-}
+}//main

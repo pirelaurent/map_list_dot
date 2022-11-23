@@ -15,7 +15,7 @@ void main() {
   });
   // ---------------- use store json file
   var testFile =
-      path.join(Directory.current.path, 'test', 'models', 'json', 'store.json');
+      path.join(Directory.current.path, 'models', 'json', 'store.json');
   var file = File(testFile);
   var jsonString = file.readAsStringSync();
   dynamic root = MapList(jsonString);

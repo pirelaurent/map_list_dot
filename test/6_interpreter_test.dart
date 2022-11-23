@@ -23,7 +23,7 @@ void main() {
  a json is taken in a resource file
  */
   var testFile =
-      path.join(Directory.current.path, 'test', 'models', 'json', 'store.json');
+      path.join(Directory.current.path, 'models', 'json', 'store.json');
   var file = File(testFile);
   var jsonStringStore = file.readAsStringSync();
   //

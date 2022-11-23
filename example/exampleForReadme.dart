@@ -28,11 +28,10 @@ void main() {
   dynamic myKB = MapListMap();
   // execute the scripts
   for (String line in script) myKB.eval(line);
-  print( myKB.persons.last.cards.phone);
+
+  print('standard dot notation:'+ myKB.persons.last.cards.phone);
   // or still in script
-  print(myKB.eval('persons.last.cards.phone'));
-
-
+  print('with text script:'+myKB.eval('persons.last.cards.phone'));
 
 }
 

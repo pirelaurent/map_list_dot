@@ -28,7 +28,7 @@ void main() {
    read a yaml file , change it to json
    */
   var testFile =
-      path.join(Directory.current.path, 'test', 'models', 'yaml', 'quiz.yaml');
+      path.join(Directory.current.path, 'models', 'yaml', 'quiz.yaml');
   var file = File(testFile);
   var yamlString = file.readAsStringSync();
   var yamlStructure = loadYaml(yamlString);
