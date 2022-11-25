@@ -36,7 +36,13 @@
         "color": "black",
         "price": 1800
       },
-      {"category": "road", "model": "Propel advanced Disc ", "color": "grey",  "price": 2900, "length": 2.20 }
+      {
+        "category": "road",
+        "model": "Propel advanced Disc ",
+        "color": "grey",
+        "price": 2900,
+        "length": 2.20
+      }
     ]
   }
 }

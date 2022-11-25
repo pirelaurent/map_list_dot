@@ -21,7 +21,7 @@ void main() {
 
     list.add(15);
     list.addAll([1, 2, 3]);
-    list.add({"date":"october 16"});
+    list.add({"date": "october 16"});
     //print(list); //[15, 1, 2, 3, {date: october 16}]
     assert(list.length == 5);
     assert(list[2] == 2);
@@ -59,7 +59,6 @@ void main() {
   });
 
   test('addAll in script', () {
-
     dynamic map = MapList();
     /*
      in interpreter, every json string is converted to dynamic
@@ -86,7 +85,7 @@ void main() {
     // print(aGuy.name); will not work as it is not a MapList
     map.friends.add(aGuy);
     aGuy = MapList({"name": "zaza", "age": 44});
-    assert(aGuy.name =='zaza'); // will return zaza as it is a MapList
+    assert(aGuy.name == 'zaza'); // will return zaza as it is a MapList
     map.friends.add(aGuy);
     aGuy = MapList({"name": "lulu", "age": 66});
     map.friends.add(aGuy);
@@ -96,7 +95,7 @@ void main() {
     // remember pointer aGuy is still linked to the internal json
     aGuy.clear();
     assert(map.friends.last.length == 0);
-    aGuy.addAll({"name" : "lulu", "age":77, "color":"blue"});
+    aGuy.addAll({"name": "lulu", "age": 77, "color": "blue"});
     assert(map.friends[2].age == 77);
 
     aGuy == null;

@@ -338,8 +338,8 @@ An interpreter have some well known use cases :
 - applying create or update on a data set from textual messages
 - free interaction with data not known at compile time (knowledge base, blackboard pattern,...)
 - using maps and lists as an open graph
-## underlying base : jsonNode
-You don't really need to use jsonNode as such, but MapList uses it to walk the graph.  
+## underlying base : JsonNode
+You don't really need to use JsonNode as such, but MapList uses it to walk the graph.  
 JsonNode is a kind of canoe that navigates on the data graph with :
 - fromNode
 - edge
@@ -353,19 +353,19 @@ To view itn the toString returns **(type) fromNode -- last edge in use---> (type
 Below is shown the internal structure to see internal data.
 ``` dart
 var aJson = [ [1, 2, 3], [11, 12],  {"A": "AA", "B": "BB"},  "andSoOn" ];
-print(jsonNode(aJson, '[0][1]')); // (list)[1, 2, 3]  --- 1 -> (int) 2
-print(jsonNode(aJson, '[2]["B"]')); // (map){A: AA, B: BB}  --- B -> (String) BB  
-print(jsonNode(aJson, '[2].length')); // (map){A: AA, B: BB}  --- length -> (int) 2  
+print(JsonNode(aJson, '[0][1]')); // (list)[1, 2, 3]  --- 1 -> (int) 2
+print(JsonNode(aJson, '[2]["B"]')); // (map){A: AA, B: BB}  --- B -> (String) BB  
+print(JsonNode(aJson, '[2].length')); // (map){A: AA, B: BB}  --- length -> (int) 2  
 ```
 #### returning a tree branch
 ``` dart
 var aJson = [ [1, 2, 3], [11, 12],  {"A": "AA", "B": "BB"},  "andSoOn" ];
-print(jsonNode(aJson,'[0]')); // (list)[[1, 2, 3], [11...  --- 0 -> (list) [1, 2, 3]  
-print(jsonNode(aJson,'[2]')); //(list)[[1, 2, 3], [11...  --- 2 -> (map) {A: AA, B: BB} 
+print(JsonNode(aJson,'[0]')); // (list)[[1, 2, 3], [11...  --- 0 -> (list) [1, 2, 3]  
+print(JsonNode(aJson,'[2]')); //(list)[[1, 2, 3], [11...  --- 2 -> (map) {A: AA, B: BB} 
 ```
 If you plan to use directly JsonNode, you can get the data by **.value**  
 (which is a convenient name to get the last toNode )  
-``` assert(jsonNode(aJson, '[2].B').value == "BB");```
+``` assert(JsonNode(aJson, '[2].B').value == "BB");```
 
 #### special words
 JsonNode recognize some keywords:
@@ -385,7 +385,7 @@ Always use *.length* to get the length of a List or a Map. If there is a key len
 #### how a caller can create unknown new data
 When a path ends with an unknown name in a map, the last node is null but not the trip :
 ``` dart
-   print(jsonNode(aJson, 'questions.newData'));// (map){A: AA, B: BB}  --- newData -> (Null) null 
+   print(JsonNode(aJson, 'questions.newData'));// (map){A: AA, B: BB}  --- newData -> (Null) null 
 ```
 A caller, like MapList do, can check the results and set the data with *fromNode\[edge\]* .  
 (if the path starts at the very beginning, the fromNode is also null and the edge must be applied to the root )

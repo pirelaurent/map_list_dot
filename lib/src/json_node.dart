@@ -16,8 +16,8 @@ import 'package:map_list_dot/map_list_dot.dart';
 /// solve only the adress of the script a Left Hand Side
 /// any = assignation is done outside, using the Wagon return
 
-class jsonNode {
-  static final log = Logger('jsonNode');
+class JsonNode {
+  static final log = Logger('JsonNode');
 
   /// detects parts separated by points
   /// group(0) with points show.  videos[0].
@@ -46,10 +46,10 @@ class jsonNode {
 
   /// constructor
   ///   call locate to recurse before returning values
-  jsonNode(this.toNode, this.aScript, [this.originalScript]) {
+  JsonNode(this.toNode, this.aScript, [this.originalScript]) {
     originalScript ??= aScript;
     // copy by hand as we cannot do a return jsn or a this=json
-    jsonNode jsn = locate();
+    JsonNode jsn = locate();
     toNode = jsn.toNode;
     fromNode = jsn.fromNode;
     edge = jsn.edge;
@@ -72,7 +72,7 @@ class jsonNode {
       }
       // clean this part and continue recursively
       aScript = aScript.replaceFirst(reg_scalp_relax, '');
-      return jsonNode(toNode, aScript, originalScript);
+      return JsonNode(toNode, aScript, originalScript);
     }
     /*
      no more match.
@@ -94,7 +94,7 @@ class jsonNode {
     /*
      if other function call with parameter
      must be done at an upper level
-     jsonNode is only a locator of data or subtree
+     JsonNode is only a locator of data or subtree
      */
     if (reg_find_function.firstMatch(aScript)?.group(1) != null) {
       edge = aScript;

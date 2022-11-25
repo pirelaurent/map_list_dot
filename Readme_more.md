@@ -41,7 +41,7 @@ root.eval('a.b.c[2].d["price"] = 33'); // LHS = 'a.b.c[2].d["price"]', RHS = '33
 #### JsonNode
 The access in interpreted don't reuse the noSuchMethod of MapList, but use a specific JsonNode class.  
 A JsonNode instance is constructed with an initial json (the wrapped one of the MapList root) , the current path and the original path:  
-    ```dynamic node = jsonNode(wrapped_json, leftHandSide, originalScript);```  
+    ```dynamic node = JsonNode(wrapped_json, leftHandSide, originalScript);```  
 A JsonNode acts as a graph segment :  ***fromNode ---edge---> toNode***.  
 When it is constructed, if recursively constructs successors that peels the path one step each, up to an empty one.  
 As it is a constructor call, it returns itself and each caller set its segment as the received one. The final node pop up from the recursion.  

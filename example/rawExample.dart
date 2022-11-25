@@ -106,7 +106,6 @@ void main() {
   print('persons[1].contacts[0] -> \t\t${persons[1].contacts[0]}');
   print('persons[1].contacts[0].mail -> \t${persons[1].contacts[0].mail}');
 
-
 //------------------------
   print('\nSample 3: -create data with script   ----- ');
   var scriptList = <String>[
@@ -130,15 +129,15 @@ void main() {
 
   print('---------- some dot notation samples in script----------');
   String script;
-  script='';
+  script = '';
   print("root.eval('$script') -> \n\t${root.eval(script)}");
-  script='contacts';
+  script = 'contacts';
   print("root.eval('$script') -> \n\t  ${root.eval(script)}");
-  script='contacts[0]';
+  script = 'contacts[0]';
   print("root.eval('$script') -> ${root.eval(script)}");
-  script='contacts[0].interest';
+  script = 'contacts[0].interest';
   print("root.eval('$script') -> ${root.eval(script)}");
-  script='contacts[0].interest[1]';
+  script = 'contacts[0].interest[1]';
   print("root.eval('$script') -> ${root.eval(script)}");
   print('-------------------------------------------------');
 

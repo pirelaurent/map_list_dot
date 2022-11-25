@@ -9,7 +9,8 @@ import './example3Messages.dart';
 
 class Knowledge extends MapListMap {
   Knowledge([someInit]) : super(someInit);
-/// most simplified event listener to apply messages
+
+  /// most simplified event listener to apply messages
   void receiveMessage(var aMessage) {
     eval(aMessage);
   }
@@ -38,10 +39,10 @@ void main() {
    */
   for (var someone in myKB.persons) {
     someone.age = (DateTime.now().year - someone.birthDate.year);
-    print('${someone.firstName} ${someone.name} will have now ${someone.age} years');
-    // now add some contacts without creating new class
     print(
-        'He can be contacted by ${someone.cards.length} ways:');
+        '${someone.firstName} ${someone.name} will have now ${someone.age} years');
+    // now add some contacts without creating new class
+    print('He can be contacted by ${someone.cards.length} ways:');
     for (var aCard in someone.cards) {
       var mail = aCard.mail ??= '';
       var phone = aCard.phone ??= '';
@@ -50,5 +51,3 @@ void main() {
     print('-----');
   }
 }
-
-

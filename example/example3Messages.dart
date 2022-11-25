@@ -5,8 +5,7 @@
 ///   leaving dart continuation symbol , at the end of a collection
 
 String fakeMessage1() {
-  return
-  '''
+  return '''
   persons.add({
   "name": "Polo",
   "firstName": "Marco",

@@ -43,29 +43,28 @@ void main() {
     assert(root["show"]["name"] == "quiz on video");
     assert(root["show"]["videos"][1]["name"] == "japanese fashion");
     assert(root["show"]["videos"][1]["questions"][1]["name"] == "games");
-    assert(
-        root["show"]["videos"][1]["questions"][1]["options"][2]["answer"] ==
+    assert(root["show"]["videos"][1]["questions"][1]["options"][2]["answer"] ==
         "go");
   });
 
   test("access to structure with dot notation", () {
     // --- now the same with a dot notation
-    assert(root.show.name=="quiz on video");
-    assert(root.show.videos[1].name =="japanese fashion");
-    assert(root.show.videos[1].questions[1].name =="games");
-    assert(root.show.videos[1].questions[1].options[2].answer =="go");
+    assert(root.show.name == "quiz on video");
+    assert(root.show.videos[1].name == "japanese fashion");
+    assert(root.show.videos[1].questions[1].name == "games");
+    assert(root.show.videos[1].questions[1].options[2].answer == "go");
   });
 
   test("access with classical and dot notation in interpreter ", () {
     dynamic root = MapList(jsonFromYaml);
-    // check access on jsonNode only . value is same as toNode
-    assert( jsonNode(root.json,'["show"]["name"]').value == 'quiz on video');
-    assert(jsonNode(root.json,'show.name').toNode == 'quiz on video');
+    // check access on JsonNode only . value is same as toNode
+    assert(JsonNode(root.json, '["show"]["name"]').value == 'quiz on video');
+    assert(JsonNode(root.json, 'show.name').toNode == 'quiz on video');
     // now check access through MapList
     assert(root.eval('show.name') == "quiz on video");
-    assert(root.eval('show.videos[1].name')=='japanese fashion');
-    assert(root.eval('show.videos[1].questions[1].name')=='games');
-    assert(root.eval('show.videos[1].questions[1].options[2].answer')=='go');
+    assert(root.eval('show.videos[1].name') == 'japanese fashion');
+    assert(root.eval('show.videos[1].questions[1].name') == 'games');
+    assert(root.eval('show.videos[1].questions[1].options[2].answer') == 'go');
   });
 
   test("access with standard notation in interpreter", () {
@@ -74,8 +73,7 @@ void main() {
     assert(root.eval('["show"]["videos"][1]["name"]') == "japanese fashion");
     assert(
         root.eval('["show"]["videos"][1]["questions"][1]["name"]') == "games");
-    assert(
-        root.eval(
+    assert(root.eval(
             '["show"]["videos"][1]["questions"][1]["options"][2]["answer"]') ==
         "go");
   });
@@ -88,8 +86,8 @@ void main() {
     dynamic root = MapList(json.decode(json.encode(yamlStructure)));
     // --- now the same with a dot notation
     //print(root.eval('show').runtimeType);
-    assert(root.eval('show').name =="quiz on video");
-    assert(root.show.eval('videos[1]["name"]')== "japanese fashion");
+    assert(root.eval('show').name == "quiz on video");
+    assert(root.show.eval('videos[1]["name"]') == "japanese fashion");
     assert(root.show.eval('["videos"][1]').questions[1].name == "games");
     assert(root.show.videos[1].eval('questions[1]').options[2].answer == "go");
     assert(root.show.videos[1].eval('questions[1].options[2]').answer == "go");

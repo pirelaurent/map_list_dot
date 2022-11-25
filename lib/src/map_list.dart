@@ -53,7 +53,8 @@ class MapList {
   /// real common constructor behind the factory
   /// we enforce json dynamic types to avoid later error
   MapList.json(dynamic jsonInput) {
-    if (jsonInput is String) json = convert.json.decode(convert.json.encode(jsonInput));
+    if (jsonInput is String)
+      json = convert.json.decode(convert.json.encode(jsonInput));
     json = jsonInput;
   }
 
@@ -70,8 +71,9 @@ class MapList {
   bool containsKey(String aKey) {
     return false;
   }
+
   /// as we want to use the dot notation in code, we need a dynamic
-  dynamic get  me => this;
+  dynamic get me => this;
   // notice early if we are on set or a get
   bool setter;
 
@@ -238,8 +240,8 @@ class MapList {
     originalScript = aScript;
     // some inLine '''xxx''' reformated by dart
     // can leave CR or LF harmful for regex
-    aScript= aScript.replaceAll('\n','');
-    aScript= aScript.replaceAll('\r','');
+    aScript = aScript.replaceAll('\n', '');
+    aScript = aScript.replaceAll('\r', '');
     /*
      split into parts ending by . or =
      if no = can leave a last name like boof.price
@@ -255,7 +257,7 @@ class MapList {
     }
     // now evaluate left hand side
     var lhs = result[0].trim();
-    dynamic node = jsonNode(wrapped_json, lhs, originalScript);
+    dynamic node = JsonNode(wrapped_json, lhs, originalScript);
     // advanceEdge is the last part execute
     /*print(
         ' once back form json: $node  ${node.toNode is List} ${node.toNode is Map} ${node.edge is String} $setter');*/
@@ -277,7 +279,7 @@ class MapList {
       if (node.toNode == null) {
         /*
         as unknown name is a map is allowed,
-        malformed can arrive up to there as jsonNode.reg_dry_name
+        malformed can arrive up to there as JsonNode.reg_dry_name
         to be enhanced with a best test upstream
          */
         var residu = node.edge;

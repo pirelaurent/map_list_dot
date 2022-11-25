@@ -6,8 +6,6 @@ void trace(String help, dynamic x) {
 }
 
 void main() {
-
-
   print('----------- checking standard types before and after json.decode ');
   test(" test several input homogeneous  models ", () {
     var xInCode = {"age": 15, "weight": 65};

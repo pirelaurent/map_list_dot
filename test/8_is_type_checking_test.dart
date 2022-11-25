@@ -11,15 +11,14 @@ void assertShow(var what, var expected) {
 }
 
 void main() {
-
   // set a logger
   Logger.root.level = Level.ALL; // defaults to Level.INFO
   Logger.root.onRecord.listen((record) {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
 
-  var testFile = path.join(
-      Directory.current.path, 'models', 'json', 'super_heroes.json');
+  var testFile =
+      path.join(Directory.current.path, 'models', 'json', 'super_heroes.json');
   var file = File(testFile);
   var jsonString = file.readAsStringSync();
   dynamic root = MapList(jsonString);
@@ -52,10 +51,8 @@ void main() {
     //root = MapList({"members": [ { "name": "Bourne", "age": 33 }]});
 
     assert((root is MapListMap) && (root.json is Map));
-    assert(
-        (root.members is MapListList) && (root.members.json is List));
-    assert((root.members[0] is MapListMap) &&
-        (root.members[0].json is Map));
+    assert((root.members is MapListList) && (root.members.json is List));
+    assert((root.members[0] is MapListMap) && (root.members[0].json is Map));
     // check using pointers, not copies
     dynamic firstMember = root.members[0];
     assert(firstMember.json == root.eval("members[0]").json);

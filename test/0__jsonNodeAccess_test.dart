@@ -33,29 +33,28 @@ void main() {
       "andSoOn"
     ];
 /*
-  print(jsonNode(aJson, '[0][1]'));
-  print(jsonNode(aJson, '[2]["B"]'));
-  print(jsonNode(aJson, '[2].length'));
-  print(jsonNode(aJson,'[0]'));
-  print(jsonNode(aJson,'[2]'));
-  print(jsonNode(aJson, '[2].newData'));
-  print(jsonNode(aJson, '[0]'));
+  print(JsonNode(aJson, '[0][1]'));
+  print(JsonNode(aJson, '[2]["B"]'));
+  print(JsonNode(aJson, '[2].length'));
+  print(JsonNode(aJson,'[0]'));
+  print(JsonNode(aJson,'[2]'));
+  print(JsonNode(aJson, '[2].newData'));
+  print(JsonNode(aJson, '[0]'));
   */
 
-
-    assert(jsonNode(aJson, '[0][1]').value == 2);
-    assert(jsonNode(aJson, '[2].B').value == "BB");
-    assert(jsonNode(aJson, '[2].["B"]').value == "BB");
+    assert(JsonNode(aJson, '[0][1]').value == 2);
+    assert(JsonNode(aJson, '[2].B').value == "BB");
+    assert(JsonNode(aJson, '[2].["B"]').value == "BB");
     // accessing the length of the Lists
-    assert(jsonNode(aJson, 'length').value == 4);
+    assert(JsonNode(aJson, 'length').value == 4);
     // length of a map
-    assert(jsonNode(aJson, '[2].length').value == 2);
+    assert(JsonNode(aJson, '[2].length').value == 2);
     // wrong index with error message
     print(
         '----- this test will generate a warning "wrong index 3" and returns null -----');
-    assertShow(jsonNode(aJson, '[0][3]').value,null);
+    assertShow(JsonNode(aJson, '[0][3]').value, null);
     // wrong index but without error message using nullable
-    assert(jsonNode(aJson, '[0][3]?').value == null);
+    assert(JsonNode(aJson, '[0][3]?').value == null);
   });
 
   test('starts with a map, then a List and a Map with a List', () {
@@ -69,18 +68,18 @@ void main() {
       },
       "more": "andSoOn"
     };
-    assert(jsonNode(aJson, 'lot1[1]').value == 2);
-    assert(jsonNode(aJson, 'more').value == "andSoOn");
-    assert(jsonNode(aJson, 'lot2[0]').value == 11);
-    assert(jsonNode(aJson, 'names.B').value == "BB");
-    assert(jsonNode(aJson, 'names["B"]').value == "BB");
-    assert(jsonNode(aJson, 'names.x[0]').value == 100);
+    assert(JsonNode(aJson, 'lot1[1]').value == 2);
+    assert(JsonNode(aJson, 'more').value == "andSoOn");
+    assert(JsonNode(aJson, 'lot2[0]').value == 11);
+    assert(JsonNode(aJson, 'names.B').value == "BB");
+    assert(JsonNode(aJson, 'names["B"]').value == "BB");
+    assert(JsonNode(aJson, 'names.x[0]').value == 100);
     // check length
-    assert(jsonNode(aJson, 'names.length').value == 3);
-    assert(jsonNode(aJson, 'names.x.length').value == 4);
+    assert(JsonNode(aJson, 'names.length').value == 3);
+    assert(JsonNode(aJson, 'names.x.length').value == 4);
   });
 
-  test(' jsonNode interpreted Empty method ', () {
+  test(' JsonNode interpreted Empty method ', () {
     var aJson = <String, dynamic>{
       "first": [],
       "second": {},
@@ -88,32 +87,32 @@ void main() {
       "fourth": {"A": "AA", "B": "BB"}
     };
     // check root
-    assert(jsonNode(aJson, 'isNotEmpty').value == true);
+    assert(JsonNode(aJson, 'isNotEmpty').value == true);
     // check empty list
-    assert(jsonNode(aJson, 'first.isEmpty').value == true);
+    assert(JsonNode(aJson, 'first.isEmpty').value == true);
     // check empty map
-    assert(jsonNode(aJson, 'second.isEmpty').value == true);
+    assert(JsonNode(aJson, 'second.isEmpty').value == true);
     // check non empty list
-    assert(jsonNode(aJson, 'third.isNotEmpty').value == true);
+    assert(JsonNode(aJson, 'third.isNotEmpty').value == true);
     // check non empty map
-    assert(jsonNode(aJson, 'fourth.isNotEmpty').value == true);
+    assert(JsonNode(aJson, 'fourth.isNotEmpty').value == true);
   });
 
-  test(' jsonNode last interpreted in a List ', () {
+  test(' JsonNode last interpreted in a List ', () {
     var aJson = [
       1,
       2,
       [11, 12, 13],
       {"A": "AA", "B": "BB"},
-      4 
+      4
     ];
-    assert(jsonNode(aJson, 'last').value == 4);
-    assert(jsonNode(aJson, '[2].last').value == 13);
+    assert(JsonNode(aJson, 'last').value == 4);
+    assert(JsonNode(aJson, '[2].last').value == 13);
     print('----- these tests will generate 2 warning about "last" usage -----');
     // calling "last" must be on a List. Here is on a int . null returned
-    assertShow(jsonNode(aJson, '[1].last').value,null);
+    assertShow(JsonNode(aJson, '[1].last').value, null);
     // same warning on a map
-    assertShow(jsonNode(aJson, '[3].last').value , null);
+    assertShow(JsonNode(aJson, '[3].last').value, null);
   });
 
   test('json with length ', () {
@@ -122,10 +121,11 @@ void main() {
         "members": [1, 2, 3, 4]
       }
     };
-    assert(jsonNode(aJson, 'squad.members.length').value == 4);
+    assert(JsonNode(aJson, 'squad.members.length').value == 4);
   });
 
-  test('jsonNode unexisting data : further value null but first part accepted ', () {
+  test('JsonNode unexisting data : further value null but first part accepted ',
+      () {
     var aJson = {
       "squad": {
         "members": [1, 2, 3, 4]
@@ -133,12 +133,11 @@ void main() {
     };
     // unknown: return null , not error : leave a chance to create if necessary
     //(map){members: [1, 2...  --- wrongMembers -> (Null) null
-    assert((jsonNode(aJson, 'squad.wrongMembers').fromNode is Map));
-    assert(jsonNode(aJson, 'squad.wrongMembers').edge == "wrongMembers");
-    assert(jsonNode(aJson, 'squad.wrongMembers').value == null);
-    // if not possible to progress, jsonNode cuts asap like above
-    assert(jsonNode(aJson, 'squad.wrongMembers.length').value == null);
-    assert(jsonNode(aJson, 'squad.wrongMembers[0]').value == null);
+    assert((JsonNode(aJson, 'squad.wrongMembers').fromNode is Map));
+    assert(JsonNode(aJson, 'squad.wrongMembers').edge == "wrongMembers");
+    assert(JsonNode(aJson, 'squad.wrongMembers').value == null);
+    // if not possible to progress, JsonNode cuts asap like above
+    assert(JsonNode(aJson, 'squad.wrongMembers.length').value == null);
+    assert(JsonNode(aJson, 'squad.wrongMembers[0]').value == null);
   });
-
 }//main

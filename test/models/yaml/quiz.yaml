@@ -68,7 +68,7 @@ show:
             - code: CH1
               answer: Yakusa
             - code: CH2
-              answer:  Bushido
+              answer: Bushido
             - code: CH3
               answer: Shogun
             - code: CH4
@@ -88,4 +88,3 @@ show:
             - code: F3
               answer: Saké
           correct: F2
-

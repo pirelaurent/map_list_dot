@@ -4,7 +4,6 @@ import 'package:map_list_dot/map_list_dot.dart';
 /// Here we create a MapListMap as we know we will start with a Map
 /// Then we create a free instance of this data class and manipulate its data
 
-
 void main() {
   // set a logger
   Logger.root.level = Level.ALL; // defaults to Level.INFO

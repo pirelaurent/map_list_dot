@@ -11,7 +11,8 @@ void main() {
   Logger.root.onRecord.listen((record) {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
- /// series of instructions in script text
+
+  /// series of instructions in script text
   var script = [
     'persons=[]',
     '''persons.add({ "name": "Magellan", "firstName": "Fernando",
@@ -29,10 +30,7 @@ void main() {
   // execute the scripts
   for (String line in script) myKB.eval(line);
 
-  print('standard dot notation:'+ myKB.persons.last.cards.phone);
+  print('standard dot notation:' + myKB.persons.last.cards.phone);
   // or still in script
-  print('with text script:'+myKB.eval('persons.last.cards.phone'));
-
+  print('with text script:' + myKB.eval('persons.last.cards.phone'));
 }
-
-
